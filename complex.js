@@ -81,7 +81,7 @@
 		this.x += x; this.y += y; return this;
 	}
 	zadv(z){
-		return this.adv(x, y);
+		return this.adv(z.x, z.y);
 	}
 	scl(x, y = x){
 		this.x *= x; this.y *= y; return this;
