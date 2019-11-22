@@ -540,12 +540,8 @@ class complex {
 				a: Math.sqrt(a*a + b*b + c*c + 2*Z)/3, b: Math.sqrt(a*a + b*b + c*c - 2*Z)/3, c: Math.sqrt(Z) * 2/3, 
 				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg
 			};
-			this.S = {}; // X99 - Steiner point
-			if (a == b) this.asg(C); else
-			if (b == c) this.asg(A); else
-			if (c == a) this.asg(B); else
-				this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b));
-			this.obj(this.S);
+			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
+			this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b)).obj(this.S);
 			this.asg(this.O);
 		}
 		return this;
