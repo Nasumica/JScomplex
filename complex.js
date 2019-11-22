@@ -1,4 +1,4 @@
-﻿class complex {
+class complex {
 /*
 	Complex arithmetic
 	
@@ -249,6 +249,16 @@
 			A, new complex(this).reflect(A, I), 
 			B, new complex(this).reflect(B, I));
 	}
+	harmonicconjg(z1, z2){// z1-------this---z2------result
+		// |z1 this| : |this z2| = |z1 result| : |z2 result|
+		// result -> (this z1 + this z2 - 2 z1 z2)/(2 this - z1 - z2)
+		// result -> (this * (z1 + z2) - 2 * z1 * z2)/(2 * this - (z1 + z2))
+		var z = new complex(z1).zadd(z2), w = new complex(2).zmul(z1).zmul(z2);
+		// result -> (this * z - w)/(2 * this - z)
+		var u = new complex(this).zmul(z).zsub(w), v = new complex(2).zmul(this).zsub(z);
+		// result -> u/v
+		return this.asg(u).zdiv(v);
+	}
 	linecircle(point1, point2, circle){// line - circle intersection
 		function cross(p, q){return p.x * q.y - p.y * q.x;};
 		var u = new complex(point1).zsub(circle);
@@ -492,7 +502,7 @@
 			this.O = {}; // X3 - circumcircle
 			this.O.r = this.bisection(A, B, C).obj(this.O).zdist(A);
 			this.H = {}; // X4 - orthocenter (2OG = GH)
-			this.asg(this.O).anticomplement(this.G).obj(this.H); // allways with respect of G
+			this.asg(this.O).anticomplement(this.G).obj(this.H); // allways with respect to G
 			this.angle = {A: Math.asin(a/2/this.O.r), B: Math.asin(b/2/this.O.r)};
 			this.angle.C = Math.PI - (this.angle.A + this.angle.B);
 			this.N = {}; // X5 - nine-point circle
@@ -510,11 +520,8 @@
 			this.asg(this.I).complement(this.G).obj(this.Sp); this.Sp.r = this.I.r/2;
 			this.F = {}; // X11 - Feuerbach point (common tangent point of incircle and nine-point circle)
 			this.asg(this.I).oncircle(this.N).obj(this.F);
-			this.X12 = {}; // harmonic conjugate of X11
-			this.trilinearxiy(
-				1 + Math.cos(this.angle.B - this.angle.C), 
-				1 + Math.cos(this.angle.C - this.angle.A), 
-				1 + Math.cos(this.angle.A - this.angle.B)).obj(this.X12);
+			this.X12 = {}; // harmonic conjugate of X11 with respect to X1 and X5
+			this.asg(this.F).harmonicconjg(this.I, this.N).obj(this.X12);
 			this.L = {}; // X20 - de Longchamps point (Soddy line I--L)
 			this.asg(this.H).opposite(this.O).obj(this.L);
 			this.Euler = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Euler line (contains G, H, O, N, ...)
@@ -553,11 +560,29 @@
 		var c = this.direction * this.linedist(this.vertex.A, this.vertex.B);
 		return {a: a, b: b, c: c}
 	}
+	get trilinearrad(){// normalized in incircle radius
+		var t = this.trilinear;
+		return {a: t.a/this.I.r, b: t.b/this.I.r, c: t.c/this.I.r}
+	}
 	get barycentric(){// eaxct barycentric <=> a + b + c = Δ
 		var t = this.trilinear;
 		var a = t.a * this.side.a/2;
 		var b = t.b * this.side.b/2;
 		var c = t.c * this.side.c/2;
+		return {a: a, b: b, c: c}
+	}
+	get barycentricnorm(){
+		const scale = 1;
+		var t = this.barycentric;
+		var a = scale * t.a / this.area; 
+		var b = scale * t.b / this.area; 
+		var c = scale - (a + b);
+		return {a: a, b: b, c: c}
+	}
+	get tripolar(){
+		var a = this.zdist(this.vertex.A);
+		var b = this.zdist(this.vertex.B);
+		var c = this.zdist(this.vertex.C);
 		return {a: a, b: b, c: c}
 	}
 	trilinearxiy(a, b, c){// I = {1 : 1 : 1}
@@ -569,5 +594,15 @@
 	}
 	barycentricxiy(a, b, c){// G = {1 : 1 : 1}
 		return this.trilinearxiy(a/this.side.a, b/this.side.b, c/this.side.c);
+	}
+	tripolarxiy(a, b, c){// O = {R : R : R}
+		var A = new complex(this.vertex.A); A.r = a;
+		var B = new complex(this.vertex.B); B.r = b;
+		var C = new complex(this.vertex.C); C.r = c;
+		var z = new complex(C).circlecircle(A, B);
+		var a = C.r - new complex(z.z1).zdist(C);
+		var b = C.r - new complex(z.z2).zdist(C);
+		if (Math.abs(a) < Math.abs(b)) this.asg(z.z1); else this.asg(z.z2);
+		return this;
 	}
 }
