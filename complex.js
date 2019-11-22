@@ -540,6 +540,12 @@ class complex {
 				a: Math.sqrt(a*a + b*b + c*c + 2*Z)/3, b: Math.sqrt(a*a + b*b + c*c - 2*Z)/3, c: Math.sqrt(Z) * 2/3, 
 				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg
 			};
+			this.S = {}; // X99 - Steiner point
+			if (a == b) this.asg(C); else
+			if (b == c) this.asg(A); else
+			if (c == a) this.asg(B); else
+				this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b));
+			this.obj(this.S);
 			this.asg(this.O);
 		}
 		return this;
@@ -595,9 +601,9 @@ class complex {
 	}
 	trilinearxiy(a, b, c){// I = {1 : 1 : 1}
 		var k = 2 * this.area / (a * this.side.a + b * this.side.b + c * this.side.c);
-		a = a * k - this.I.r; c = c * k - this.I.r;
-		this.xiy((a + c * Math.cos(this.angle.B)) / Math.sin(this.angle.B), c).mul(this.direction);
-		this.vrotate(this.vertex.A, this.vertex.B).zadd(this.I);
+		a = a * k - this.I.r; b = b * k - this.I.r; c = c * k - this.I.r;
+		this.xiy((a + c * Math.cos(this.angle.B)) / Math.sin(this.angle.B), -c * this.direction);
+		this.vrotate(this.vertex.B, this.vertex.A).zadd(this.I);
 		return this;
 	}
 	barycentricxiy(a, b, c){// G = {1 : 1 : 1}
