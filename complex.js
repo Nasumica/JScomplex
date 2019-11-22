@@ -507,7 +507,7 @@ class complex {
 			this.angle.C = Math.PI - (this.angle.A + this.angle.B);
 			this.N = {}; // X5 - nine-point circle
 			this.asg(this.O).halfway(this.H).obj(this.N); this.N.r = this.O.r/2;
-			this.K = {}; // X6 - symmedian point (isogonal conjugate of G)
+			this.K = {}; // X6 - symmedian point (isogonal conjugate of G, Lemoinre)
 			this.asg(this.G).isogonalconjg(A, B, this.I).obj(this.K);
 			this.Ge = {}; // X7 - Gergonne point (intersection of vertex--contact lines)
 			this.intersection(A, this.I.A, B, this.I.B).obj(this.Ge);
@@ -532,6 +532,14 @@ class complex {
 				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
 				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
 			}
+			this.shield = {}; // shield circle
+			this.shield.r = this.asg(this.G).halfway(this.H).obj(this.shield).zdist(this.G);
+			var Z = Math.sqrt(a*a*a*a + b*b*b*b + c*c*c*c - (a*a*b*b + b*b*c*c + c*c*a*a));
+			this.Oe = {// Steiner circumellipse
+				x: this.G.x, y: this.G.y,
+				a: Math.sqrt(a*a + b*b + c*c + 2*Z)/3, b: Math.sqrt(a*a + b*b + c*c - 2*Z)/3, c: Math.sqrt(Z) * 2/3, 
+				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg
+			};
 			this.asg(this.O);
 		}
 		return this;
