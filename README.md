@@ -7,8 +7,8 @@ Full set of complex arithmetic, elementary, hyperbolic and trigonometric functio
 
 Basic linear algebra.
 
-Point manipulation operators; projection, reflection, traveling;
-isotonic, isgonoal and harmonic conjugates;
+Point manipulation operators; moving, rotation, projection, reflection;
+isotonic, isogonal and harmonic conjugates;
 directed distance;
 line-line, line-circle and circle-circle intersection, circle tangent, bisection.
 
