@@ -133,11 +133,8 @@ class complex {
 			return this.mul(Math.cos(angle), Math.sin(angle));
 	}
 	zrotate(z){
-		var h = Math.sqrt(z.x * z.x + z.y * z.y);
-		if (h == 0)
-			return this;
-		else
-			return this.zmul(z).div(h);
+		var h = z.x * z.x + z.y * z.y;
+		return h == 0 ? this : this.zmul(z).div(Math.sqrt(h));
 	}
 	vrotate(z1, z2){
 		return this.zrotate(new complex(z2).zsub(z1));
