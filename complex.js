@@ -610,6 +610,7 @@ class complex {
 	}
 }
 
+
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'width', {
 	enumerable: false,
 	configurable: false,
@@ -786,4 +787,9 @@ CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
 	this.arcTo(x,   y+h, x,   y,   r);
 	this.arcTo(x,   y,   x+w, y,   r);
 	return this.endPath();
+}
+
+CanvasRenderingContext2D.prototype.zoval = function (z1, z2, r = 0) {
+	var z = new complex(z2).zsub(z1);
+	return this.oval(z1.x, z1.y, z.x, z.y, r);
 }
