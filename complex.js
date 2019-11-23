@@ -1,6 +1,6 @@
 class complex {
 /*
-	Complex arithmetic
+	Complex arithmetic with canvas extension
 	
 	JavaScript implementation by Србислав Д. Нешић, November 2019
 	srbislav.nesic@gmail.com
