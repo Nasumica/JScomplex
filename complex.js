@@ -533,7 +533,7 @@ class complex {
 				a: Math.sqrt(sq + Z*2)/3, b: Math.sqrt(sq - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
 				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg, F1: {}, F2: {}
 			}; 
-			this.Oe.e = this.Oe.c / this.Oe.a; this.Oe.l = (sq - Z*2)/this.Oe.a/9;
+			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2) / this.Oe.a/9;
 			this.cis(this.Oe.c, this.Oe.r).zadd(this.G).obj(this.Oe.F1).opposite(this.G).obj(this.Oe.F2);
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
 			this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b)).obj(this.S);
