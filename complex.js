@@ -610,6 +610,46 @@ class complex {
 	}
 }
 
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'width', {
+	enumerable: false,
+	configurable: false,
+	get() { return this.canvas.width; }
+});
+
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'height', {
+	enumerable: false,
+	configurable: false,
+	get() { return this.canvas.height; }
+});
+
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'sizeX', {
+	enumerable: false,
+	configurable: false,
+	get() { return this.width; }
+});
+
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'sizeY', {
+	enumerable: false,
+	configurable: false,
+	get() { return this.height; }
+});
+
+CanvasRenderingContext2D.prototype.clear = function(){
+	this.save();
+	this.clearRect(0, 0, this.sizeX, this.sizeY);
+	this.restore();
+	return this;
+}
+
+CanvasRenderingContext2D.prototype.strokefill = function () {
+	this.stroke(); this.fill();
+	return this;
+}
+
+CanvasRenderingContext2D.prototype.startPath = function(){
+	this.beginPath(); return this;
+}
+
 CanvasRenderingContext2D.prototype.endPath = function(){
 	this.closePath(); return this;
 }
@@ -624,7 +664,7 @@ CanvasRenderingContext2D.prototype.zlineTo = function(z){
 
 CanvasRenderingContext2D.prototype.zrect = function(z1, z2){
 	var z = new complex(z2).zsub(z1);
-	this.rect(z1.x, z1.y, z.x, z.y);
+	this.rect(z1.x, z1.y, z.x, z.y); return this;
 }
 
 CanvasRenderingContext2D.prototype.zfillRect = function(z1, z2){
@@ -693,19 +733,19 @@ CanvasRenderingContext2D.prototype.circle = function (x, y, r) {
 }
 
 CanvasRenderingContext2D.prototype.zcircle = function (z, r) {
-	this.circle(z.x, z.y, r); return this;
+	return this.circle(z.x, z.y, r);
 }
 
 CanvasRenderingContext2D.prototype.ccircle = function (c) {
-	this.circle(c.x, c.y, c.r); return this;
+	return this.zcircle(c, c.r);
 }
 
 CanvasRenderingContext2D.prototype.zellipse = function(z, a, b, rot = 0, s = 0, e = 2*Math.PI, c = false){
-	this.ellipse(z.x, z.y, rx, ry, rot, s, e, c); return this;
+	this.ellipse(z.x, z.y, a, b, rot, s, e, c); return this;
 }
 
 CanvasRenderingContext2D.prototype.eellipse = function(z, s = 0, e = 2*Math.PI, c = false){
-	this.ellipse(z.x, z.y, z.a, z.b, z.r, s, e, c); return this;
+	return this.zellipse(z, z.a, z.b, z.r, s, e, c);
 }
 
 
@@ -726,13 +766,24 @@ function(shape = 2, xpos, ypos, xradius = 1, yradius = xradius, azimuth = 0, sym
 
 CanvasRenderingContext2D.prototype.supercircle = 
 function(shape = 2, xpos, ypos, radius = 1, azimuth = 0, symmetry = 4, u = shape, v = u){
-	this.superellipse(shape, xpos, ypos, radius, radius, azimuth, symmetry, u, v); return this;
+	return this.superellipse(shape, xpos, ypos, radius, radius, azimuth, symmetry, u, v);
 }
 
-CanvasRenderingContext2D.prototype.triangle = function(t){this
+CanvasRenderingContext2D.prototype.triangle = function(t) {
+	return this
 	.zmoveTo(t.vertex.A)
 	.zlineTo(t.vertex.B)
 	.zlineTo(t.vertex.C)
 	.endPath();
-	return this;
+}
+
+CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
+	if (w < 2 * r) r = w / 2;
+	if (h < 2 * r) r = h / 2;
+	this.moveTo(x+r, y);
+	this.arcTo(x+w, y,   x+w, y+h, r);
+	this.arcTo(x+w, y+h, x,   y+h, r);
+	this.arcTo(x,   y+h, x,   y,   r);
+	this.arcTo(x,   y,   x+w, y,   r);
+	return this.endPath();
 }
