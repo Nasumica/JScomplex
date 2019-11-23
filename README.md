@@ -19,7 +19,7 @@ Triangle centers solver using cartesian, trilinear, barycentric and tripolar coo
 Arithmetic and logarithmic spiral, Nautilus spiral, sunflowers seed spiral.
 Implementation of Johan Gielis superellipse (in 3 lines of code).
 
-Extension to CanvasRenderingContext2D prototype to using complex numbers as parameters.
+Extension of CanvasRenderingContext2D prototype to using complex numbers as parameters.
 Linkage call as: 
 
 ctx.startPath().zmoveTo(z1).zlineTo(z2).zlineTo(z3).endPath().stroke();
