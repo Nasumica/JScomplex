@@ -527,12 +527,14 @@ class complex {
 			}
 			this.shield = {}; // shield circle
 			this.shield.r = this.asg(this.G).halfway(this.H).obj(this.shield).zdist(this.G);
-			var Z = Math.sqrt(a*a*a*a + b*b*b*b + c*c*c*c - (a*a*b*b + b*b*c*c + c*c*a*a));
+			var Z = Math.sqrt((a*a*a*a + b*b*b*b + c*c*c*c) - (a*a*b*b + b*b*c*c + c*c*a*a)), sq = a*a + b*b + c*c;
 			this.Oe = {// Steiner circumellipse
 				x: this.G.x, y: this.G.y,
-				a: Math.sqrt(a*a + b*b + c*c + Z*2)/3, b: Math.sqrt(a*a + b*b + c*c - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
-				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg
-			};
+				a: Math.sqrt(sq + Z*2)/3, b: Math.sqrt(sq - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
+				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg, F1: {}, F2: {}
+			}; 
+			this.Oe.e = this.Oe.c / this.Oe.a; this.Oe.l = (sq - Z*2)/this.Oe.a/9;
+			this.cis(this.Oe.c, this.Oe.r).zadd(this.G).obj(this.Oe.F1).opposite(this.G).obj(this.Oe.F2);
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
 			this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b)).obj(this.S);
 			this.asg(this.O);
