@@ -696,7 +696,7 @@ CanvasRenderingContext2D.prototype.zarc = function(z, r, s, e, c = false){
 }
 
 CanvasRenderingContext2D.prototype.carc = function(z, s, e, c = false){
-	this.arc(z.x, z.y, z.r, s, e, c); return this;
+	return this.zarc(z, z.r, s, e, c);
 }
 
 CanvasRenderingContext2D.prototype.zarcTo = function(z1, z2, r){
