@@ -78,13 +78,13 @@ class complex {
 		return (this.x - z.x) * (this.y + z.y) / 2;
 	}
 	adv(x, y = x){
-		this.x += x; this.y += y; return this;
+		return this.xiy(this.x + x, this.y + y);
 	}
 	zadv(z){
 		return this.adv(z.x, z.y);
 	}
 	scl(x, y = x){
-		this.x *= x; this.y *= y; return this;
+		return this.xiy(this.x * x, this.y * y);
 	}
 	zscl(z){
 		return this.scl(z.x, z.y);
@@ -108,22 +108,16 @@ class complex {
 		return this.mul(z.x, z.y);
 	}
 	div(x, y = 0){
-		if (y == 0)
-			return this.xiy(this.x / x, this.y / x);
-		else if (x == 0)
-			return this.xiy(this.x / y, this.y / y).divi;
-		else
+		if (y == 0) return this.xiy(this.x / x, this.y / x); else 
+		if (x == 0) return this.xiy(this.x / y, this.y / y).divi; else
 			return this.mul(x, -y).div(x * x + y * y);
 	}
 	zdiv(z){
 		return this.div(z.x, z.y);
 	}
 	get recip(){
-		if (this.y == 0)
-			return this.xiy(1 / this.x);
-		else if (this.x == 0)
-			return this.xiy(1 / this.y).divi;
-		else
+		if (this.y == 0) return this.xiy(1 / this.x); else 
+		if (this.x == 0) return this.xiy(1 / this.y).divi; else
 			return this.conjg.div(this.sqrabs);
 	}
 	get unit(){// unit vector
@@ -132,15 +126,10 @@ class complex {
 	}
 	rotate(angle){
 		var h = Math.PI/2;
-		if (angle == 0)
-			return this;
-		else if (angle == h)
-			return this.muli;
-		else if (-angle == h)
-			return this.divi;
-		else if (Math.abs(angle) == Math.PI)
-			return this.neg;
-		else
+		if (angle == 0) return this; else 
+		if (angle == h) return this.muli; else 
+		if (-angle == h) return this.divi; else 
+		if (Math.abs(angle) == Math.PI) return this.neg; else
 			return this.mul(Math.cos(angle), Math.sin(angle));
 	}
 	zrotate(z){
@@ -221,8 +210,8 @@ class complex {
 	zazimuth(z){
 		return azimuth(z.x, z.y);
 	}
-	linedist(z1, z2 = {x: 0, y: 0}){// distance from line z1--z2 
-		return new complex(z2).zsub(z1).abs * new complex(this).times(z1, z2).y;
+	linedist(z1, z2 = {x: 0, y: 0}){// directed distance from line z1--z2 
+		return new complex(z1).zdist(z2) * new complex(this).times(z1, z2).y;
 	}
 	toward(x, y, len = 1){
 		if (this.isEqual(x, y))
@@ -251,7 +240,6 @@ class complex {
 	}
 	harmonicconjg(z1, z2){// z1-------this---z2------result
 		// |z1 this| : |this z2| = |z1 result| : |z2 result|
-		// result -> (this z1 + this z2 - 2 z1 z2)/(2 this - z1 - z2)
 		// result -> (this * (z1 + z2) - 2 * z1 * z2)/(2 * this - (z1 + z2))
 		var z = new complex(z1).zadd(z2), w = new complex(2).zmul(z1).zmul(z2);
 		// result -> (this * z - w)/(2 * this - z)
@@ -344,12 +332,12 @@ class complex {
 		if (this.isEqual(0, Math.PI)) return this.xiy(-1); else // to Euler
 		return this.cis(Math.exp(this.x), this.y);
 	}
-	get log(){// ln (r cis a) = ln (r * e^(ia)) = ln r + ln (e^(ia)) = ln r + ia
+	get log(){// ln(r cis a) = ln(r * e^(ia)) = ln r + ln(e^(ia)) = ln r + ia
 		if (this.isEqual(-1)) return this.xiy(0, Math.PI); else // ditto
 		return this.xiy(Math.log(this.abs), this.arg);
 	}
 	pow(x, y = 0){
-		return this.log.mul(x, y).exp;
+		return x==0 && y==0 ? this.xiy(1) : this.log.mul(x, y).exp;
 	}
 	zpow(z){
 		return this.pow(z.x, z.y);
@@ -537,7 +525,7 @@ class complex {
 			var Z = Math.sqrt(a*a*a*a + b*b*b*b + c*c*c*c - (a*a*b*b + b*b*c*c + c*c*a*a));
 			this.Oe = {// Steiner circumellipse
 				x: this.G.x, y: this.G.y,
-				a: Math.sqrt(a*a + b*b + c*c + 2*Z)/3, b: Math.sqrt(a*a + b*b + c*c - 2*Z)/3, c: Math.sqrt(Z) * 2/3, 
+				a: Math.sqrt(a*a + b*b + c*c + Z*2)/3, b: Math.sqrt(a*a + b*b + c*c - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
 				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg
 			};
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
