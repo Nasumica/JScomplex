@@ -647,7 +647,8 @@ CanvasRenderingContext2D.prototype.zbezierCurveTo = function(z1, z2, z3){
 }
 
 CanvasRenderingContext2D.prototype.zarc = function(z, r, s, e, c = false){
-	this.arc(z.x, z.y, Math.abs(r), s, e, c);
+	if (r < 0){r = -r; c = !c;}
+	this.arc(z.x, z.y, r, s, e, c);
 }
 
 CanvasRenderingContext2D.prototype.carc = function(z, s, e, c = false){
@@ -655,7 +656,7 @@ CanvasRenderingContext2D.prototype.carc = function(z, s, e, c = false){
 }
 
 CanvasRenderingContext2D.prototype.zarcTo = function(z1, z2, r){
-	this.arcTo(z1.x, z1.y, z2.x, z2.y, r);
+	this.arcTo(z1.x, z1.y, z2.x, z2.y, Math.abs(r));
 }
 
 CanvasRenderingContext2D.prototype.isZPointInPath = function(z){// must be improved
@@ -684,7 +685,7 @@ CanvasRenderingContext2D.prototype.zsetTransform = function(scale, skew, move){
 
 
 CanvasRenderingContext2D.prototype.circle = function (x, y, r) {
-	this.arc(x, y, r, 0, 2 * Math.PI);
+	this.arc(x, y, Math.abs(r), 0, 2 * Math.PI);
 }
 
 CanvasRenderingContext2D.prototype.zcircle = function (z, r) {
@@ -723,7 +724,7 @@ function(shape = 2, xpos, ypos, radius = 1, azimuth = 0, symmetry = 4, u = shape
 	this.superellipse(shape, xpos, ypos, radius, radius, azimuth, symmetry, u, v);
 }
 
-CanvasRenderingContext2D.prototype.triangle = function (t) {
+CanvasRenderingContext2D.prototype.triangle = function(t) {
 	this.zmoveTo(t.vertex.A);
 	this.zlineTo(t.vertex.B);
 	this.zlineTo(t.vertex.C);
