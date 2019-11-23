@@ -154,18 +154,21 @@ class complex {
 	inter(z1, z2 = {x: 0, y: 0}){// inversion of times
 		return this.zmul(new complex(z2).zsub(z1)).zadd(z1);
 	}
+	go(z, t = 1){// simplified usage of inter
+		return this.asg(new complex(t).inter(this, z));
+	}
 	halfway(z){
-		//return this.asg(new complex(1/2).inter(this, z));
+		//return this.go(z, 1/2);
 		return this.zadd(z).div(2);
 	}
 	opposite(z){
-		return this.asg(new complex(2).inter(this, z));
+		return this.go(z, 2);
 	}
 	complement(z){
-		return this.asg(new complex(3/2).inter(this, z));
+		return this.go(z, 3/2);
 	}
 	anticomplement(z){
-		return this.asg(new complex(3).inter(this, z));
+		return this.go(z, 3);
 	}
 	isotonic(z1, z2 = {x: 0, y: 0}){
 		return this.opposite(new complex(z1).halfway(z2));
