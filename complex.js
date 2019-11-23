@@ -28,7 +28,7 @@ class complex {
 	}
 	get abs(){
 		if (this.x == 0 || this.y == 0)
-			return Math.abs(this.x) + Math.abs(this.y);
+			return Math.abs(this.x + this.y);
 		else
 			return Math.sqrt(this.sqrabs);
 	}
@@ -500,7 +500,7 @@ class complex {
 			this.angle.C = Math.PI - (this.angle.A + this.angle.B);
 			this.N = {}; // X5 - nine-point circle
 			this.asg(this.O).halfway(this.H).obj(this.N); this.N.r = this.O.r/2;
-			this.K = {}; // X6 - symmedian point (isogonal conjugate of G, Lemoinre)
+			this.K = {}; // X6 - symmedian point (isogonal conjugate of G, Lemoine)
 			this.asg(this.G).isogonalconjg(A, B, this.I).obj(this.K);
 			this.Ge = {}; // X7 - Gergonne point (intersection of vertex--contact lines)
 			this.intersection(A, this.I.A, B, this.I.B).obj(this.Ge);
@@ -533,8 +533,8 @@ class complex {
 				a: Math.sqrt(sq + Z*2)/3, b: Math.sqrt(sq - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
 				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg, F1: {}, F2: {}
 			}; 
-			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2) / this.Oe.a/9;
-			this.cis(this.Oe.c, this.Oe.r).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2);
+			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
+			this.cis(this.Oe.c, this.Oe.r).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // focii
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
 			this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b)).obj(this.S);
 			this.asg(this.O);
