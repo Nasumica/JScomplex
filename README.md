@@ -1,5 +1,7 @@
 # JScomplex
-JavaScript complex arithmetic class with complex canvas exstension
+JavaScript complex arithmetic class with complex canvas exstension.
+
+var ef = new complex(Math.PI).muli.exp.add(1); // Euler formula: e ^ (π * i) + 1
 
 Full set of complex arithmetic, elementary, hyperbolic and trigonometric functions.
 
@@ -17,4 +19,7 @@ Triangle centers solver using cartesian, trilinear, barycentric and tripolar coo
 Arithmetic and logarithmic spiral, Nautilus spiral, sunflowers seed spiral.
 Implementation of Johan Gielis superellipse (in 3 lines of code).
 
-Extension to canvas protptype to using complex numbers as parameters.
+Extension to CanvasRenderingContext2D prototype to using complex numbers as parameters.
+Linkage call as: 
+
+ctx.startPath().zmoveTo(z1).zlineTo(z2).zlineTo(z2).endPath().stroke();
