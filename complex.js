@@ -531,10 +531,10 @@ class complex {
 			this.Oe = {// Steiner circumellipse
 				x: this.G.x, y: this.G.y,
 				a: Math.sqrt(sq + Z*2)/3, b: Math.sqrt(sq - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
-				r: new complex(this.K).oncircle(this.shield).zsub(this.G).arg, F1: {}, F2: {}
+				o: new complex(this.K).oncircle(this.shield).zsub(this.G).arg, F1: {}, F2: {}
 			}; 
 			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
-			this.cis(this.Oe.c, this.Oe.r).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // focii
+			this.cis(this.Oe.c, this.Oe.o).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // focii
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
 			this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b)).obj(this.S);
 			this.asg(this.O);
@@ -635,6 +635,12 @@ Object.defineProperty(CanvasRenderingContext2D.prototype, 'sizeY', {
 	enumerable: false,
 	configurable: false,
 	get() { return this.height; }
+});
+
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'size', {
+	enumerable: false,
+	configurable: false,
+	get() { return {x: this.sizeX, y: this.sizeY}; }
 });
 
 CanvasRenderingContext2D.prototype.clear = function(){
@@ -748,7 +754,7 @@ CanvasRenderingContext2D.prototype.zellipse = function(z, a, b, rot = 0, s = 0, 
 }
 
 CanvasRenderingContext2D.prototype.eellipse = function(z, s = 0, e = 2*Math.PI, c = false){
-	return this.zellipse(z, z.a, z.b, z.r, s, e, c);
+	return this.zellipse(z, z.a, z.b, z.o, s, e, c);
 }
 
 
@@ -761,15 +767,35 @@ function(shape = 2, xpos, ypos, xradius = 1, yradius = xradius, azimuth = 0, sym
 		if (i == 0)
 			this.zmoveTo(z);
 		else
-			this.zlineTo(z);
+			this.zlineTo(z); // can be improved with spline and less steps
 	}
 	if (steps > 0) this.endPath();
 	return this;
 }
 
+CanvasRenderingContext2D.prototype.zsuperellipse = 
+function(shape = 2, z, xradius = 1, yradius = xradius, azimuth = 0, symmetry = 4, u = shape, v = u){
+	return this.superellipse(shape, z.x, z.y, xradius, yradius, azimuth, symmetry, u, v);
+}
+
+CanvasRenderingContext2D.prototype.esuperellipse = 
+function(shape = 2, z, symmetry = 4, u = shape, v = u){
+	return this.zsuperellipse(shape, z, z.a, z.b, z.o, symmetry, u, v);
+}
+
 CanvasRenderingContext2D.prototype.supercircle = 
 function(shape = 2, xpos, ypos, radius = 1, azimuth = 0, symmetry = 4, u = shape, v = u){
 	return this.superellipse(shape, xpos, ypos, radius, radius, azimuth, symmetry, u, v);
+}
+
+CanvasRenderingContext2D.prototype.zsupercircle = 
+function(shape = 2, z, radius = 1, azimuth = 0){
+	return this.supercircle(shape, z.x, z.y, radius, azimuth);
+}
+
+CanvasRenderingContext2D.prototype.csupercircle = 
+function(shape = 2, z, azimuth = 0){
+	return this.zsupercircle(shape, z, z.r, azimuth);
 }
 
 CanvasRenderingContext2D.prototype.triangle = function(t) {
