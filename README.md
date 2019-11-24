@@ -1,7 +1,7 @@
 # JScomplex
 JavaScript complex arithmetic class with complex canvas exstension.
 
-`var ef = new complex(Math.PI).muli.exp.add(1); //` Euler formula: e ^ (π * i) + 1
+`var ef = new complex(Math.PI).muli.exp.add(1); //` Euler formula: e ^ <sup>(π * i)</sup> + 1
 
 * Full set of complex arithmetic, elementary, hyperbolic and trigonometric functions.
 
