@@ -13,6 +13,9 @@ class complex {
 		if (arguments.length > 0) 
 		if (typeof u === 'object') this.asg(u); else this.xiy(u);
 	}
+	get z(){
+		return {x: this.x, y: this.y};
+	}
 	xiy(x, y = 0){
 		this.x = Number(x); this.y = Number(y); return this;
 	}
@@ -22,6 +25,9 @@ class complex {
 	}
 	asg(z){
 		return this.xiy(z.x, z.y);
+	}
+	obj(z){
+		z.x = this.x; z.y = this.y; return this;
 	}
 	get sqrabs(){// |z|^2 = z * z'
 		return this.x * this.x + this.y * this.y;
@@ -34,9 +40,6 @@ class complex {
 	}
 	get arg(){
 		return Math.atan2(this.y, this.x);
-	}
-	obj(z){
-		z.x = this.x; z.y = this.y; return this;
 	}
 	isEqual(x, y = 0){
 		return this.x == x && this.y == y;
@@ -148,8 +151,18 @@ class complex {
 	times(z1, z2 = {x: 0, y: 0}){// this = z1 + times * (z2 - z1)
 		return this.zsub(z1).zdiv(new complex(z2).zsub(z1)); 
 	}
-	inter(z1, z2 = {x: 0, y: 0}){// inversion of times
+	inter(z1, z2 = {x: 0, y: 0}){// inversion of times; t = this, s = 1-t, result = z1*s + z2*t
 		return this.zmul(new complex(z2).zsub(z1)).zadd(z1);
+	}
+	quadratic(z1, z2, z3){// t = this, s = 1-t, result = z1*s*s + 2z2*s*t + z3*t*t
+		var u = new complex(this).inter(z1, z2);
+		var v = new complex(this).inter(z2, z3);
+		return this.inter(u, v);
+	}
+	bezier(z1, z2, z3, z4){// t = this, s = 1-t, result = z1*s*s*s + 3z2*s*s*t + 3z3*s*t*t + z4*t*t*t
+		var u = new complex(this).quadratic(z1, z2, z3);
+		var v = new complex(this).quadratic(z2, z3, z4);
+		return this.inter(u, v);
 	}
 	go(z, t = 1){// simplified usage of inter
 		return this.asg(new complex(t).inter(this, z));
