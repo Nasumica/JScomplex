@@ -613,6 +613,14 @@ class complex {
 }
 
 
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'begin', {
+	get() { this.beginPath(); return this; }
+});
+
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'close', {
+	get() { this.closePath(); return this; }
+});
+
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'width', {
 	enumerable: false,
 	configurable: false,
@@ -770,15 +778,18 @@ function(F1x, F1y, F2x, F2y, b, s = 0, e = 2*Math.PI, c = false){
 CanvasRenderingContext2D.prototype.superellipse = 
 function(shape = 2, xpos, ypos, xradius = 1, yradius = xradius, azimuth = 0, symmetry = 4, u = shape, v = u){
 	var steps = symmetry * Math.max(9, xradius + yradius);
-	var z = new complex();
-	for (var i = 0; i < steps; i++){
-		z.superellipse(shape, 2 * i * Math.PI/steps, xradius, yradius, symmetry, u, v).rotate(azimuth).add(xpos, ypos);
-		if (i == 0)
-			this.zmoveTo(z);
-		else
-			this.zlineTo(z); // can be improved with spline and less steps
+	if (steps > 0){
+		var z = new complex(), theta;
+		for (var i = 0; i < steps; i++){
+			theta = 2 * i * Math.PI/steps;
+			z.superellipse(shape, theta, xradius, yradius, symmetry, u, v).rotate(azimuth).add(xpos, ypos);
+			if (i == 0)
+				this.zmoveTo(z);
+			else
+				this.zlineTo(z); // to do: can be improved with spline and less steps
+		}
+		this.close;
 	}
-	if (steps > 0) this.endPath();
 	return this;
 }
 
@@ -812,7 +823,7 @@ CanvasRenderingContext2D.prototype.triangle = function(t) {
 	.zmoveTo(t.vertex.A)
 	.zlineTo(t.vertex.B)
 	.zlineTo(t.vertex.C)
-	.endPath();
+	.close;
 }
 
 CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
@@ -823,7 +834,7 @@ CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
 	this.arcTo(x+w, y+h, x,   y+h, r);
 	this.arcTo(x,   y+h, x,   y,   r);
 	this.arcTo(x,   y,   x+w, y,   r);
-	return this.endPath();
+	return this.close;
 }
 
 CanvasRenderingContext2D.prototype.zoval = function (z1, z2, r = 0) {
