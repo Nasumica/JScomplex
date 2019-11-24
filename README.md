@@ -5,12 +5,10 @@ JavaScript complex arithmetic class with complex canvas exstension.
 
 * Full set of complex arithmetic, elementary, hyperbolic and trigonometric functions.
 
-* Basic linear algebra.
-
-* Point manipulation operators; moving, rotation, projection, reflection;
+* Point manipulation operators: translation, rotation, projection, reflection;
 isotonic, isogonal and harmonic conjugates;
 directed distance;
-line-line, line-circle and circle-circle intersection, circle tangent, bisection.
+line-line, line-circle and circle-circle intersection; circle tangent; bisection.
 
 * Random complex numbers: bi-variate deviates for uniform, rectangular, polar, exponential, normal, Poisson distribution.
 
