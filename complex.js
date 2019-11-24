@@ -534,7 +534,7 @@ class complex {
 				o: new complex(this.K).oncircle(this.shield).zsub(this.G).arg, F1: {}, F2: {}
 			}; 
 			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
-			this.cis(this.Oe.c, this.Oe.o).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // focii
+			this.cis(this.Oe.c, this.Oe.o).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // foci
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
 			this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b)).obj(this.S);
 			this.asg(this.O);
@@ -749,12 +749,21 @@ CanvasRenderingContext2D.prototype.ccircle = function (c) {
 	return this.zcircle(c, c.r);
 }
 
-CanvasRenderingContext2D.prototype.zellipse = function(z, a, b, rot = 0, s = 0, e = 2*Math.PI, c = false){
-	this.ellipse(z.x, z.y, a, b, rot, s, e, c); return this;
+CanvasRenderingContext2D.prototype.zellipse = 
+function(z, a, b, rot = 0, s = 0, e = 2*Math.PI, c = false){
+	this.ellipse(z.x, z.y, Math.abs(a), Math.abs(b), rot, s, e, c); return this;
 }
 
-CanvasRenderingContext2D.prototype.eellipse = function(z, s = 0, e = 2*Math.PI, c = false){
+CanvasRenderingContext2D.prototype.eellipse = 
+function(z, s = 0, e = 2*Math.PI, c = false){
 	return this.zellipse(z, z.a, z.b, z.o, s, e, c);
+}
+
+CanvasRenderingContext2D.prototype.fellipse = 
+function(F1x, F1y, F2x, F2y, b, s = 0, e = 2*Math.PI, c = false){
+	var dx = F1x - F2x, dy = F1y - F2y, x = F1x - dx/2, y = F1y - dy/2; o = Math.atan2(dy, dx);
+	var d = dx*dx + dy*dy, a = Math.sqrt(b*b + d); b = Math.abs(b);
+	this.ellipse(x, y, a, b, o, s, e, c); return this;
 }
 
 
