@@ -3,7 +3,7 @@ JavaScript complex arithmetic class with complex canvas exstension.
 
 `var ef = new complex(Math.PI).muli.exp.add(1); //` Euler formula: e<sup>&nbsp;π &middot; i</sup> + 1
 
-* Full set of complex arithmetic, elementary, hyperbolic and trigonometric functions.
+* Full set of complex arithmetic, elementary, hyperbolic and trigonometric functions and inverse.
 
 * Point manipulation operators: translation, rotation, projection, reflection;
 isotonic, isogonal and harmonic conjugates;
