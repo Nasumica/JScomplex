@@ -256,12 +256,25 @@ class complex {
 	inter(z1, z2 = {x: 0, y: 0}){// inversion of times; t = this, s = 1-t, result = z1*s + z2*t
 		return this.zmul(new complex(z2).zsub(z1)).zadd(z1);
 	}
+	quadeq(A, B, C){// quadratic equation solver
+		this.z1 = {}; this.z2 = {}; // result
+		var a = new complex(A).mul(2);
+		var b = new complex(B).neg;
+		var c = new complex(C).mul(2).zmul(a);
+		var d = new complex(b).sqr.zsub(c).sqrt;
+		new complex(b).zadd(d).zdiv(a).obj(this.z1);
+		new complex(b).zsub(d).zdiv(a).obj(this.z2);
+		return this;
+	}
 	quadtimes(z1, z2, z3){// similar to linear times but quadratic
-		var w = new complex(z2).mul(-2).zadd(z1).zadd(z3);
-		var v = new complex(z1).zmul(z3);
-		var u = new complex(z2).sqr.zsub(v).zadd(new complex(this).zmul(w)).sqrt; v.asg(z1).zsub(z2);
-		var t1 = new complex(v).zadd(u).zdiv(w);
-		var t2 = new complex(v).zsub(u).zdiv(w);
+		// solve (z1 + z3 - 2z2) * t^2 + 2 * (z2 - z1) * t + z1 = this
+		this.quadeq(
+			new complex(z2).mul(-2).zadd(z1).zadd(z3), // A
+			new complex(z2).zsub(z1).mul(2),           // B
+			new complex(z1).zsub(this)                 // C
+		);
+		var t1 = new complex(this.z1);
+		var t2 = new complex(this.z2);
 		if (Math.abs(t1.y) < Math.abs(t2.y)) // usually y = 0 and 0 <= x <= 1
 			return this.asg(t1);
 		else
@@ -629,16 +642,6 @@ class complex {
 		var a = C.r - new complex(z.z1).zdist(C);
 		var b = C.r - new complex(z.z2).zdist(C);
 		if (Math.abs(a) < Math.abs(b)) this.asg(z.z1); else this.asg(z.z2);
-		return this;
-	}
-	quadeq(A, B, C){// quadratic equation solver for fun
-		this.z1 = {}; this.z2 = {}; // result
-		var a = new complex(A).mul(2);
-		var b = new complex(B).neg;
-		var c = new complex(C).mul(2).zmul(a);
-		var d = new complex(b).sqr.zsub(c).sqrt;
-		new complex(b).zadd(d).zdiv(a).obj(this.z1);
-		new complex(b).zsub(d).zdiv(a).obj(this.z2);
 		return this;
 	}
 }
