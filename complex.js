@@ -13,6 +13,9 @@ class complex {
 		if (arguments.length > 0) 
 		if (typeof u === 'object') this.asg(u); else this.xiy(u);
 	}
+	nop(){
+		return this;
+	}
 	get z(){
 		return {x: this.x, y: this.y};
 	}
@@ -118,6 +121,18 @@ class complex {
 	zdiv(z){
 		return this.div(z.x, z.y);
 	}
+	get sqr(){
+		return this.zmul(this);
+	}
+	get sqrt(){
+		if (this.y == 0){
+			if (this.x < 0)
+				return this.xiy(Math.sqrt(-this.x)).muli;
+			else
+				return this.xiy(Math.sqrt(this.x));
+		} else
+		return this.cis(Math.sqrt(this.abs), this.arg/2);
+	}
 	get recip(){
 		if (this.y == 0) return this.xiy(1 / this.x); else 
 		if (this.x == 0) return this.xiy(1 / this.y).divi; else
@@ -126,6 +141,87 @@ class complex {
 	get unit(){// unit vector
 		var d = this.abs;
 		return d == 0 ? this : this.div(d);
+	}
+	get round(){
+		return this.xiy(Math.round(this.x), Math.round(this.y));
+	}
+	dcp(x, y = 0){// Re = dot product, Im = cross product (not commutative)
+		return this.conjg.mul(x, y);
+	}
+	zdcp(z){
+		return this.dcp(z.x, z.y);
+	}
+	get theo(){// spiral of Theodorus
+		if (this.isZero)
+			return this.xiy(1);
+		else
+			return this.zadd(new complex(this).unit.muli);
+	}
+	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
+		if (this.isEqual(0, Math.PI)) return this.xiy(-1); else // to Euler
+		return this.cis(Math.exp(this.x), this.y);
+	}
+	get log(){// ln(r cis a) = ln(r * e^(ia)) = ln r + ln(e^(ia)) = ln r + ia
+		if (this.isEqual(-1)) return this.xiy(0, Math.PI); else // ditto
+		return this.xiy(Math.log(this.abs), this.arg);
+	}
+	pow(x, y = 0){
+		if (x == 0 && y == 0) return this.xiy(1); else
+		if (this.isZero) return this; else
+			return this.log.mul(x, y).exp;
+	}
+	zpow(z){
+		return this.pow(z.x, z.y);
+	}
+	root(x, y = 0){
+		return this.log.div(x, y).exp;
+	}
+	zroot(z){
+		return this.root(z.x, z.y);
+	}
+	get sinh(){
+		this.exp; return this.zsub(new complex(this).recip).div(2);
+	}
+	get cosh(){
+		this.exp; return this.zadd(new complex(this).recip).div(2);
+	}
+	get tanh(){
+		this.mul(2).exp; var z = new complex(this).add(1);
+		return this.sub(1).zdiv(z);
+	}
+	get sin(){// i * sinh(z) = sin(i * z) => sin(z) = sinh(z / i) * i
+		return this.divi.sinh.muli;
+	}
+	get cos(){// cosh(z) = cos(i * z) => cos(z) = cosh(z / i)
+		return this.divi.cosh;
+	}
+	get tan(){// i * tanh(z) = tan(i * z)
+		return this.divi.tanh.muli;
+	}
+	get sinc(){
+		var z = new complex(this);
+		return this.isZero ? this.xiy(1) : this.sin.zdiv(z);
+	}
+	get asinh(){// pricipal value
+		var z = new complex(this);
+		return this.sqr.add(1).sqrt.zadd(z).log;
+	}
+	get acosh(){// principal value
+		var z = new complex(this);
+		return this.sqr.sub(1).sqrt.zadd(z).log;
+	}
+	get atanh(){
+		var z = new complex(1).zsub(this);
+		return this.add(1).zdiv(z).log.div(2);
+	}
+	get asin(){
+		return this.muli.asinh.divi;
+	}
+	get acos(){
+		return this.acosh.divi;
+	}
+	get atan(){
+		return this.muli.atanh.divi;
 	}
 	rotate(angle){
 		var h = Math.PI/2;
@@ -320,99 +416,6 @@ class complex {
 		}
 		this.asg(point); this.r = this.zdist(this.z1);
 		return this;
-	}
-	get round(){
-		return this.xiy(Math.round(this.x), Math.round(this.y));
-	}
-	dcp(x, y = 0){// Re = dot product, Im = cross product (not commutative)
-		return this.conjg.mul(x, y);
-	}
-	zdcp(z){
-		return this.dcp(z.x, z.y);
-	}
-	get theo(){// spiral of Theodorus
-		if (this.isZero)
-			return this.xiy(1);
-		else
-			return this.zadd(new complex(this).unit.muli);
-	}
-	get sqr(){
-		return this.zmul(this);
-	}
-	get sqrt(){
-		if (this.y == 0){
-			if (this.x < 0)
-				return this.xiy(Math.sqrt(-this.x)).muli;
-			else
-				return this.xiy(Math.sqrt(this.x));
-		} else
-		return this.cis(Math.sqrt(this.abs), this.arg/2);
-	}
-	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
-		if (this.isEqual(0, Math.PI)) return this.xiy(-1); else // to Euler
-		return this.cis(Math.exp(this.x), this.y);
-	}
-	get log(){// ln(r cis a) = ln(r * e^(ia)) = ln r + ln(e^(ia)) = ln r + ia
-		if (this.isEqual(-1)) return this.xiy(0, Math.PI); else // ditto
-		return this.xiy(Math.log(this.abs), this.arg);
-	}
-	pow(x, y = 0){
-		if (x == 0 && y == 0) return this.xiy(1); else
-		if (this.isZero) return this; else
-			return this.log.mul(x, y).exp;
-	}
-	zpow(z){
-		return this.pow(z.x, z.y);
-	}
-	root(x, y = 0){
-		return this.log.div(x, y).exp;
-	}
-	zroot(z){
-		return this.root(z.x, z.y);
-	}
-	get sinh(){
-		this.exp; return this.zsub(new complex(this).recip).div(2);
-	}
-	get cosh(){
-		this.exp; return this.zadd(new complex(this).recip).div(2);
-	}
-	get tanh(){
-		this.mul(2).exp; var z = new complex(this).add(1);
-		return this.sub(1).zdiv(z);
-	}
-	get sin(){// i * sinh(z) = sin(i * z) => sin(z) = sinh(z / i) * i
-		return this.divi.sinh.muli;
-	}
-	get cos(){// cosh(z) = cos(i * z) => cos(z) = cosh(z / i)
-		return this.divi.cosh;
-	}
-	get tan(){// i * tanh(z) = tan(i * z)
-		return this.divi.tanh.muli;
-	}
-	get sinc(){
-		var z = new complex(this);
-		return this.isZero ? this.xiy(1) : this.sin.zdiv(z);
-	}
-	get asinh(){// pricipal value
-		var z = new complex(this);
-		return this.sqr.add(1).sqrt.zadd(z).log;
-	}
-	get acosh(){// principal value
-		var z = new complex(this);
-		return this.sqr.sub(1).sqrt.zadd(z).log;
-	}
-	get atanh(){
-		var z = new complex(1).zsub(this);
-		return this.add(1).zdiv(z).log.div(2);
-	}
-	get asin(){
-		return this.muli.asinh.divi;
-	}
-	get acos(){
-		return this.acosh.divi;
-	}
-	get atan(){
-		return this.muli.atanh.divi;
 	}
 	arithSpiral(a, b, t){
 		return this.cis(a + b * t, t);
