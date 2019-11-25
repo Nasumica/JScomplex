@@ -154,22 +154,22 @@ class complex {
 	inter(z1, z2 = {x: 0, y: 0}){// inversion of times; t = this, s = 1-t, result = z1*s + z2*t
 		return this.zmul(new complex(z2).zsub(z1)).zadd(z1);
 	}
-	quadratic(z1, z2, z3){// t = this, s = 1-t, result = z1*s*s + 2z2*s*t + z3*t*t
-		return this.inter(new complex(this).inter(z1, z2), new complex(this).inter(z2, z3));
-	}
-	quadtimes(z1, z2, z3){
+	quadtimes(z1, z2, z3){// similar to linear times but quadratic
 		var w = new complex(z2).mul(-2).zadd(z1).zadd(z3);
 		var v = new complex(z1).zmul(z3);
 		var u = new complex(z2).sqr.zsub(v).zadd(new complex(this).zmul(w)).sqrt; v.asg(z1).zsub(z2);
 		var t1 = new complex(v).zadd(u).zdiv(w);
 		var t2 = new complex(v).zsub(u).zdiv(w);
-		if (Math.abs(t1.y) < Math.abs(t2.y)) // probably y = 0 and 0 <= x <= 1
+		if (Math.abs(t1.y) < Math.abs(t2.y)) // usually y = 0 and 0 <= x <= 1
 			return this.asg(t1);
 		else
 			return this.asg(t2);
 	}
+	quadinter(z1, z2, z3){// t = this, s = 1-t, result = z1*s*s + 2z2*s*t + z3*t*t
+		return this.inter(new complex(this).inter(z1, z2), new complex(this).inter(z2, z3));
+	}
 	bezier(z1, z2, z3, z4){// t = this, s = 1-t, result = z1*s*s*s + 3z2*s*s*t + 3z3*s*t*t + z4*t*t*t
-		return this.inter(new complex(this).quadratic(z1, z2, z3), new complex(this).quadratic(z2, z3, z4));
+		return this.inter(new complex(this).quadinter(z1, z2, z3), new complex(this).quadinter(z2, z3, z4));
 	}
 	go(z, t = 1){// simplified usage of inter
 		return this.asg(new complex(t).inter(this, z));
