@@ -425,7 +425,7 @@ class complex {
 	supercircle(shape = 2, angle, radius = 1, symmetry = 4, u = shape, v = u){
 		return this.superellipse(shape, angle, radius, radius, symmetry, u, v);
 	}
-	get rectdev(){
+	get cartdev(){
 		return this.scl(Math.random(), Math.random());
 	}
 	get polardev(){
@@ -436,7 +436,7 @@ class complex {
 			)
 		);
 	}
-	get cartdev(){// Cartesian
+	get rectdev(){
 		return this.scl(
 			2 * Math.random() - 1, 
 			2 * Math.random() - 1
@@ -453,14 +453,6 @@ class complex {
 			new complex().cis(
 				Math.sqrt(-2 * Math.log(1 - Math.random())), 
 				2 * Math.PI * Math.random()
-			)
-		);
-	}
-	get expgaussdev(){
-		return this.zscl(
-			new complex(
-				-Math.log(1 - Math.random()) * (Math.random() < 0.5 ? -1 : 1),
-				Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.sin(2 * Math.PI * Math.random())
 			)
 		);
 	}
