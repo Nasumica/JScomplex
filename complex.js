@@ -80,10 +80,13 @@ class complex {
 	get divi(){// z / i = z rotate -90 = - i * z
 		return this.xiy(this.y, -this.x);
 	}
-	rect(z){
+	get exc(){
+		return this.xiy(this.y, this.x);
+	}
+	rect(z){// rectangle area
 		return (this.x - z.x) * (this.y - z.y);
 	}
-	trap(z){
+	trap(z){// trapezoid area
 		return (this.x - z.x) * (this.y + z.y) / 2;
 	}
 	adv(x, y = x){
