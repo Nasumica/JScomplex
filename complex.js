@@ -32,6 +32,9 @@ class complex {
 	obj(z){
 		z.x = this.x; z.y = this.y; return this;
 	}
+	swap(z){
+		var t = {x: z.x, y: z.y}; return this.obj(z).asg(t);
+	}
 	get sqrabs(){// |z|^2 = z * z'
 		return this.x * this.x + this.y * this.y;
 	}
