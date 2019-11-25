@@ -259,11 +259,15 @@ class complex {
 	quadeq(A, B, C){// quadratic equation solver
 		this.z1 = {}; this.z2 = {}; // result
 		var a = new complex(A).mul(2);
-		var b = new complex(B).neg;
-		var c = new complex(C).mul(2).zmul(a);
-		var d = new complex(b).sqr.zsub(c).sqrt;
-		new complex(b).zadd(d).zdiv(a).obj(this.z1);
-		new complex(b).zsub(d).zdiv(a).obj(this.z2);
+		if (a.isZero){
+			new complex(C).neg.zdiv(new complex(B)).obj(this.z1).obj(this.z2);
+		} else {
+			var b = new complex(B).neg;
+			var c = new complex(C).mul(2).zmul(a);
+			var d = new complex(b).sqr.zsub(c).sqrt;
+			new complex(b).zadd(d).zdiv(a).obj(this.z1);
+			new complex(b).zsub(d).zdiv(a).obj(this.z2);
+		}
 		return this;
 	}
 	quadtimes(z1, z2, z3){// similar to linear times but quadratic
