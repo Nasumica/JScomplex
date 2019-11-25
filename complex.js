@@ -628,6 +628,16 @@ class complex {
 		if (Math.abs(a) < Math.abs(b)) this.asg(z.z1); else this.asg(z.z2);
 		return this;
 	}
+	quadeq(A, B, C){// quadratic equation solver for fun
+		this.z1 = {}; this.z2 = {}; // result
+		var a = new complex(A).mul(2);
+		var b = new complex(B).neg;
+		var c = new complex(C).mul(2).zmul(a);
+		var d = new complex(b).sqr.zsub(c).sqrt;
+		new complex(b).zadd(d).zdiv(a).obj(this.z1);
+		new complex(b).zsub(d).zdiv(a).obj(this.z2);
+		return this;
+	}
 }
 
 
