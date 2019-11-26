@@ -62,10 +62,10 @@ class complex {
 	get inf(){ // complex infinity
 		return this.xiy(1/0, 1/0);
 	}
-	get real(){// project to x-axis
+	get real(){// projection to x-axis
 		return this.xiy(this.x, 0);
 	}
-	get imag(){// project to y-axis
+	get imag(){// projection to y-axis
 		return this.xiy(0, this.y);
 	}
 	get conjg(){// reflection to x-axis
@@ -435,7 +435,7 @@ class complex {
 	zazimuth(z){
 		return azimuth(z.x, z.y);
 	}
-	linedist(z1, z2 = {x: 0, y: 0}){// directed distance from line z1--z2 
+	linedist(z1, z2 = {x: 0, y: 0}){// directed distance of this to line z1--z2 
 		return new complex(z1).zdist(z2) * new complex(this).times(z1, z2).y;
 	}
 	toward(x, y, len = 1){
