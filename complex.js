@@ -299,9 +299,9 @@ class complex {
 		var b = new complex(B).neg; // b = -B
 		var c = new complex(C);     // c = C
 		if (a.isZero)// B z + C = 0
-			c.zdiv(b).obj(this.z1).obj(this.z2); // z1 = z2 = - C/B
+			c.zdiv(b).obj(this.z1).obj(this.z2); // z1 = z2 = -C/B
 		else if (b.isZero)// A z² + C = 0
-			c.neg.zdiv(a).sqrt.obj(this.z1).neg.obj(this.z2);
+			c.neg.zdiv(a).sqrt.obj(this.z1).neg.obj(this.z2); // -z2 = z1 = sqrt(-C/A)
 		else if (c.isZero)// (A z + B) z = 0
 			b.zdiv(a).obj(this.z1).xiy(0).obj(this.z2); // z1 = -B/A, z2 = 0
 		else {// A z² + B z + C = 0
@@ -334,8 +334,7 @@ class complex {
 		} else {
 			var d = new complex(D); // d = D
 			if (d.isZero){// (A z² + B z + C) z = 0
-				this.quadraticeq(A, B, C);
-				this.z3 = {x: 0, y: 0};
+				this.quadraticeq(A, B, C); d.obj(this.z3);
 			} else {
 				const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°
 				var b = new complex(B); // b = B
@@ -393,7 +392,7 @@ class complex {
 	anticomplement(z){
 		return this.go(z, 3);
 	}
-	isotonic(z1, z2 = {x: 0, y: 0}){
+	crossover(z1, z2 = {x: 0, y: 0}){
 		return this.opposite(new complex(z1).halfway(z2));
 	}
 	perp(z1, z2 = {x: 0, y: 0}){// this--result is perpendicular to z1--z2
@@ -456,8 +455,8 @@ class complex {
 	}
 	isotonicconjg(A, B, C){
 		return this.intersection(
-			A, new complex().intersection(A, this, B, C).isotonic(B, C), 
-			B, new complex().intersection(B, this, C, A).isotonic(C, A));
+			A, new complex().intersection(A, this, B, C).crossover(B, C), 
+			B, new complex().intersection(B, this, C, A).crossover(C, A));
 	}
 	isogonalconjg(A, B, I){
 		return this.intersection(
