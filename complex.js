@@ -130,6 +130,9 @@ class complex {
 	get sqr(){
 		return this.zmul(this);
 	}
+	get cub(){
+		return this.zmul(new complex(this).sqr);
+	}
 	get sqrt(){
 		if (this.y == 0){
 			if (this.x < 0)
@@ -289,26 +292,24 @@ class complex {
 	}
 	cubiceq(A, B, C, D){// cubic equation solver
 		this.z1 = {}; this.z2 = {}; this.z3 = {}; // result
-		var a = new complex(A).mul(3); // a = 3 A
+		var a = new complex(A).mul(-3); // a = -3 A
 		if (a.isZero){
 			this.quadraticeq(B, C, D);
 			this.z3.x = this.z2.x;
 			this.z3.y = this.z2.y;
 		} else {
+			const r = new complex(-1, Math.sqrt(3)).div(2); // new complex().cis(2*Math.PI/3)
 			var b = new complex(B); // b = B
-			var c = new complex(C).zmul(a); // c = 3 A C
+			var c = new complex(C).zmul(a); // c = -3 A C
 			var d = new complex(D); // d = D
 			var g = new complex(b).sqr; // g = B^2
-			var D0 = new complex(g).zsub(c); // D0 = B^2 - 3 A C
-			g.zmul(b).mul(2); // g = 2 B^3
-			c.zmul(b).mul(3); // c = 9 A B C
-			var e = new complex(a).sqr.zmul(d).mul(3); // e = 27 A^2 D
-			var D1 = new complex(g).zsub(c).zadd(e); // D1 = 2 B^2 - 9 A B C + 27 A^2 D
-			var f = new complex(D0).sqr.zmul(D0).mul(-4).zadd(new complex(D1).sqr).sqrt.zadd(D1).div(2).root(3); // f = cbrt((D1 + sqrt(D1^2 - 4 D0^3)) / 2)
-			const xi = new complex(-1, Math.sqrt(3)).div(2); // new complex().cis(2*Math.PI/3)
-			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).neg.obj(this.z1); f.zmul(xi);
-			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).neg.obj(this.z2); f.zmul(xi);
-			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).neg.obj(this.z3);
+			var D0 = new complex(g).zadd(c); // D0 = B^2 - 3 A C
+			g.zmul(b).mul(2); c.zmul(b).mul(3); // g = 2 B^3; c = -9 A B C
+			var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(g).zadd(c); // D1 = 2 B^2 - 9 A B C + 27 A^2 D
+			var f = new complex(D0).cub.mul(-4).zadd(new complex(D1).sqr).sqrt.zadd(D1).div(2).root(3); // f = cbrt((D1 + sqrt(D1^2 - 4 D0^3)) / 2)
+			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z1); f.zmul(r); // z1 = -(B + f + D0/f) / (3 A); f rotate 120
+			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z2); f.zmul(r);
+			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z3);
 		}
 		return this;
 	}
