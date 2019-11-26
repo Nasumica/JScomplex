@@ -295,15 +295,20 @@ class complex {
 	}
 	quadraticeq(A, B, C){// quadratic equation solver
 		this.z1 = {}; this.z2 = {}; // result
-		var a = new complex(A).mul(2); // a = 2 A
-		var b = new complex(B).neg;    // b = -B
+		var a = new complex(A);     // a = A
+		var b = new complex(B).neg; // b = -B
+		var c = new complex(C);     // c = C
 		if (a.isZero){
-			new complex(C).zdiv(b).obj(this.z1).obj(this.z2); // z1 = z2 = - C/B
+			c.zdiv(b).obj(this.z1).obj(this.z2); // z1 = z2 = - C/B
 		} else {
-			var c = new complex(C).mul(2).zmul(a);   // c = 4 A C
-			var d = new complex(b).sqr.zsub(c).sqrt; // d = sqrt(B² - 4 A C)
-			new complex(b).zadd(d).zdiv(a).obj(this.z1);
-			new complex(b).zsub(d).zdiv(a).obj(this.z2);
+			if (c.isZero){
+				b.zdiv(a).obj(this.z1);
+				this.z2 = {x: 0, y: 0};
+			} else {
+				var d = new complex(b).sqr.zsub(c.mul(2).zmul(a.mul(2))).sqrt; // d = sqrt(B² - 4 A C); a = 2 A
+				new complex(b).zadd(d).zdiv(a).obj(this.z1);
+				new complex(b).zsub(d).zdiv(a).obj(this.z2);
+			}
 		}
 		return this;
 	}
@@ -323,24 +328,36 @@ class complex {
 	}
 	cubiceq(A, B, C, D){// cubic equation solver
 		this.z1 = {}; this.z2 = {}; this.z3 = {}; // result
-		var a = new complex(A).mul(-3);	        // a = -3 A
+		var a = new complex(A).mul(-3); // a = -3 A
 		if (a.isZero){
 			this.quadraticeq(B, C, D);
 			this.z3 = {x: this.z2.x, y: this.z2.y};
 		} else {
-			const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°
-			var b = new complex(B);             // b = B
-			var c = new complex(C).zmul(a);     // c = -3 A C
-			var d = new complex(D);             // d = D
-			var e = new complex(b).sqr;         // e = B²
-			var D0 = new complex(e).zadd(c);    // D0 = B² - 3 A C
-			e.zmul(b).mul(2); c.zmul(b).mul(3); // e = 2 B³; c = -9 A B C
-			var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B³ - 9 A B C + 27 A² D
-			var f = new complex(D1).sqr;        // f = D1²
-			var g = new complex(D0).cub.mul(-4).zadd(f).sqrt.zadd(D1).div(2).cbrt;   // g = cbrt((D1 + sqrt(D1² - 4 D0³))/2)
-			new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z1); g.zmul(r); // z1 = (B + g + D0/g)/a; g rotate 120°
-			new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z2); g.zmul(r);
-			new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z3);
+			var d = new complex(D); // d = D
+			if (d.isZero){
+				this.quadraticeq(A, B, C);
+				this.z3 = {x: 0, y: 0};
+			} else {
+				const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°
+				var b = new complex(B);             // b = B
+				var c = new complex(C).zmul(a);     // c = -3 A C
+				var e = new complex(b).sqr;         // e = B²
+				var D0 = new complex(e).zadd(c);    // D0 = B² - 3 A C
+				e.zmul(b).mul(2); c.zmul(b).mul(3); // e = 2 B³; c = -9 A B C
+				var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B³ - 9 A B C + 27 A² D
+				var f = new complex(D1).sqr;        // f = D1²
+				var g = new complex(D0).cub.mul(-4).zadd(f).sqrt.zadd(D1).div(2).cbrt;   // g = cbrt((D1 + sqrt(D1² - 4 D0³))/2)
+				if (g.isZero){
+					g = d.neg.zdiv(new complex(A)).cbrt;
+					g.obj(this.z1); g.zmul(r);
+					g.obj(this.z2); g.zmul(r);
+					g.obj(this.z3);
+				} else {
+					new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z1); g.zmul(r); // z1 = (B + g + D0/g)/a; g rotate 120°
+					new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z2); g.zmul(r);
+					new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z3);
+				}
+			}
 		}
 		return this;
 	}
