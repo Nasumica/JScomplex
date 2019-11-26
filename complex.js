@@ -323,7 +323,7 @@ class complex {
 	}
 	cubiceq(A, B, C, D){// cubic equation solver
 		this.z1 = {}; this.z2 = {}; this.z3 = {}; // result
-		var a = new complex(A).mul(-3);         // a = -3 A
+		var a = new complex(A).mul(-3);	        // a = -3 A
 		if (a.isZero){
 			this.quadraticeq(B, C, D);
 			this.z3 = {x: this.z2.x, y: this.z2.y};
