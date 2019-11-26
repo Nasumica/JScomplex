@@ -13,32 +13,32 @@ class complex {
 		if (arguments.length > 0) 
 		if (typeof u === 'object') this.asg(u); else this.xiy(u);
 	}
-	nop(){
+	nop(){// no operation
 		return this;
 	}
-	get z(){
+	get z(){// as object
 		return {x: this.x, y: this.y};
 	}
-	xiy(x, y = 0){
+	xiy(x, y = 0){// this = x + i y
 		this.x = Number(x); this.y = Number(y); return this;
 	}
 	cis(rho, theta){// r * e^(ia) = r cis a = r * (cos a + i sin a)
 		if (arguments.length < 2) {theta = rho; rho = 1;}
 		return this.xiy(rho * Math.cos(theta), rho * Math.sin(theta));
 	}
-	asg(z){
+	asg(z){// copy z to this
 		return this.xiy(z.x, z.y);
 	}
-	obj(z){
+	obj(z){// copy this to z
 		z.x = this.x; z.y = this.y; return this;
 	}
-	swap(z){
+	swap(z){// swap values with z
 		var t = {x: z.x, y: z.y}; return this.obj(z).asg(t);
 	}
 	get sqrabs(){// |z|^2 = z * z'
 		return this.x * this.x + this.y * this.y;
 	}
-	get abs(){
+	get abs(){// I don't like hypot
 		if (this.x == 0 || this.y == 0)
 			return Math.abs(this.x + this.y);
 		else
@@ -80,7 +80,7 @@ class complex {
 	get divi(){// z / i = z rotate -90 = - i * z
 		return this.xiy(this.y, -this.x);
 	}
-	get exc(){
+	get exc(){// this = y + i x
 		return this.xiy(this.y, this.x);
 	}
 	rect(z){// rectangle area
@@ -92,60 +92,85 @@ class complex {
 	adv(x, y = x){
 		return this.xiy(this.x + x, this.y + y);
 	}
-	zadv(z){
+	zadv(z){// advance
 		return this.adv(z.x, z.y);
 	}
 	scl(x, y = x){
 		return this.xiy(this.x * x, this.y * y);
 	}
-	zscl(z){
+	zscl(z){// scale up
 		return this.scl(z.x, z.y);
+	}
+	lcs(x, y = x){
+		return this.xiy(this.x / x, this.y / y);
+	}
+	zlcs(z){// scale down
+		return this.lsc(z.x, z.y);
 	}
 	add(x, y = 0){
 		return this.xiy(this.x + x, this.y + y);
 	}
-	zadd(z){
+	zadd(z){// this + z
 		return this.add(z.x, z.y);
 	}
 	sub(x, y = 0){
 		return this.xiy(this.x - x, this.y - y);
 	}
-	zsub(z){
+	zsub(z){// this - z
 		return this.sub(z.x, z.y);
+	}
+	bus(x, y = 0){
+		return this.sub(x, y).neg;
+	}
+	zbus(z){// z - this
+		return this.bus(z.x, z.y);
 	}
 	mul(x, y = 0){
 		return this.xiy(this.x * x - this.y * y, this.x * y + this.y * x);
 	}
-	zmul(z){
+	zmul(z){ // this * z
 		return this.mul(z.x, z.y);
 	}
 	div(x, y = 0){
-		if (y == 0) return this.xiy(this.x / x, this.y / x); else 
-		if (x == 0) return this.xiy(this.x / y, this.y / y).divi; else
-			return this.mul(x, -y).div(x * x + y * y);
+		if (y == 0) return this.lcs(x); else 
+		if (x == 0) return this.lcs(y).divi; else
+			return this.mul(x, -y).lcs(x * x + y * y);
 	}
-	zdiv(z){
+	zdiv(z){// this / z
 		return this.div(z.x, z.y);
 	}
-	get sqr(){
+	vid(x, y = 0){
+		return this.asg(new complex(x, y).zdiv(this));
+	}
+	zvid(z){// z / this
+		return this.vid(z.x, z.y);
+	}
+	get recip(){// 1 / this
+		if (this.y == 0) return this.xiy(1 / this.x); else 
+		if (this.x == 0) return this.xiy(1 / this.y).divi; else
+			return this.conjg.lcs(this.sqrabs);
+	}
+	get sqr(){// this^2
 		return this.zmul(this);
 	}
-	get cub(){
+	get cub(){// this^3
 		return this.zmul(new complex(this).sqr);
 	}
 	get sqrt(){
-		if (this.y == 0){
-			if (this.x < 0)
-				return this.xiy(Math.sqrt(-this.x)).muli;
-			else
-				return this.xiy(Math.sqrt(this.x));
-		} else
-		return this.cis(Math.sqrt(this.abs), this.arg/2);
+		if (this.isZero) return this; else
+			if (this.y == 0){
+				if (this.x < 0)
+					return this.xiy(Math.sqrt(-this.x)).muli;
+				else
+					return this.xiy(Math.sqrt(this.x));
+			} else return this.cis(Math.sqrt(this.abs), this.arg/2);
 	}
-	get recip(){
-		if (this.y == 0) return this.xiy(1 / this.x); else 
-		if (this.x == 0) return this.xiy(1 / this.y).divi; else
-			return this.conjg.div(this.sqrabs);
+	get cbrt(){
+		if (this.isZero) return this; else
+			if (this.y == 0)
+				return this.xiy(Math.sign(this.x) * Math.pow(Math.abs(this.x), 1/3));
+			else
+				return this.root(3);
 	}
 	get unit(){// unit vector
 		var d = this.abs;
@@ -188,13 +213,13 @@ class complex {
 	zroot(z){
 		return this.root(z.x, z.y);
 	}
-	get sinh(){
+	get sinh(){// (e^z - e^-z)/2
 		this.exp; return this.zsub(new complex(this).recip).div(2);
 	}
-	get cosh(){
+	get cosh(){// (e^z + e^-z)/2
 		this.exp; return this.zadd(new complex(this).recip).div(2);
 	}
-	get tanh(){
+	get tanh(){// (e^2z - 1)/(e^2z + 1)
 		this.mul(2).exp; var z = new complex(this).add(1);
 		return this.sub(1).zdiv(z);
 	}
@@ -207,19 +232,19 @@ class complex {
 	get tan(){// i * tanh(z) = tan(i * z)
 		return this.divi.tanh.muli;
 	}
-	get sinc(){
+	get sinc(){// sin(z)/z
 		var z = new complex(this);
 		return this.isZero ? this.xiy(1) : this.sin.zdiv(z);
 	}
-	get asinh(){// pricipal value
+	get asinh(){// ln(z + sqrt(z^2 + 1))
 		var z = new complex(this);
 		return this.sqr.add(1).sqrt.zadd(z).log;
 	}
-	get acosh(){// principal value
+	get acosh(){// ln(z + sqrt(z^2 - 1))
 		var z = new complex(this);
 		return this.sqr.sub(1).sqrt.zadd(z).log;
 	}
-	get atanh(){
+	get atanh(){// ln((1 + z)/(1 - z))/2 = (ln(1 + z) - ln(1 - z))/2
 		var z = new complex(1).zsub(this);
 		return this.add(1).zdiv(z).log.div(2);
 	}
@@ -280,12 +305,9 @@ class complex {
 			new complex(z2).zsub(z1).mul(2),           // B
 			new complex(z1).zsub(this)                 // C
 		);
-		var t1 = new complex(this.z1);
-		var t2 = new complex(this.z2);
-		if (Math.abs(t1.y) < Math.abs(t2.y)) // usually y = 0 and 0 <= x <= 1
-			return this.asg(t1);
-		else
-			return this.asg(t2);
+		this.asg(this.z1); // usually 0 <= x <= 1 and y = 0
+		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
+		return this;
 	}
 	quadinter(z1, z2, z3){// t = this, s = 1-t, result = z1*s*s + 2z2*s*t + z3*t*t
 		return this.inter(new complex(this).inter(z1, z2), new complex(this).inter(z2, z3));
@@ -295,18 +317,17 @@ class complex {
 		var a = new complex(A).mul(-3); // a = -3 A
 		if (a.isZero){
 			this.quadraticeq(B, C, D);
-			this.z3.x = this.z2.x;
-			this.z3.y = this.z2.y;
+			this.z3 = {x: this.z2.x, y: this.z2.y};
 		} else {
 			const r = new complex(-1, Math.sqrt(3)).div(2); // new complex().cis(2*Math.PI/3)
 			var b = new complex(B); // b = B
 			var c = new complex(C).zmul(a); // c = -3 A C
 			var d = new complex(D); // d = D
-			var g = new complex(b).sqr; // g = B^2
-			var D0 = new complex(g).zadd(c); // D0 = B^2 - 3 A C
-			g.zmul(b).mul(2); c.zmul(b).mul(3); // g = 2 B^3; c = -9 A B C
-			var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(g).zadd(c); // D1 = 2 B^2 - 9 A B C + 27 A^2 D
-			var f = new complex(D0).cub.mul(-4).zadd(new complex(D1).sqr).sqrt.zadd(D1).div(2).root(3); // f = cbrt((D1 + sqrt(D1^2 - 4 D0^3)) / 2)
+			var e = new complex(b).sqr; // e = B^2
+			var D0 = new complex(e).zadd(c); // D0 = B^2 - 3 A C
+			e.zmul(b).mul(2); c.zmul(b).mul(3); // e = 2 B^3; c = -9 A B C
+			var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B^2 - 9 A B C + 27 A^2 D
+			var f = new complex(D0).cub.mul(-4).zadd(new complex(D1).sqr).sqrt.zadd(D1).div(2).cbrt; // f = cbrt((D1 + sqrt(D1^2 - 4 D0^3)) / 2)
 			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z1); f.zmul(r); // z1 = -(B + f + D0/f) / (3 A); f rotate 120
 			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z2); f.zmul(r);
 			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z3);
@@ -494,7 +515,7 @@ class complex {
 		return this.cis(size * Math.sqrt(n), angle + n * f);
 	}
 	superellipse(shape = 2, angle, xradius = 1, yradius = xradius, symmetry = 4, u = shape, v = u){
-		this.cis(angle * symmetry/4).pos.scl(1/xradius, 1/yradius);
+		this.cis(angle * symmetry/4).pos.lcs(xradius, yradius);
 		this.xiy(Math.pow(this.x, u), Math.pow(this.y, v));
 		return this.cis(Math.pow(this.x + this.y, -1/shape), angle);
 	}
