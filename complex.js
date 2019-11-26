@@ -258,13 +258,13 @@ class complex {
 	}
 	quadeq(A, B, C){// quadratic equation solver
 		this.z1 = {}; this.z2 = {}; // result
-		var a = new complex(A).mul(2);
+		var a = new complex(A).mul(2); // a = 2 A
 		if (a.isZero){
 			new complex(C).neg.zdiv(new complex(B)).obj(this.z1).obj(this.z2);
 		} else {
-			var b = new complex(B).neg;
-			var c = new complex(C).mul(2).zmul(a);
-			var d = new complex(b).sqr.zsub(c).sqrt;
+			var b = new complex(B).neg; // b = -B
+			var c = new complex(C).mul(2).zmul(a); // c = 4 A C
+			var d = new complex(b).sqr.zsub(c).sqrt; // d = sqrt(B^2 - 4 A C)
 			new complex(b).zadd(d).zdiv(a).obj(this.z1);
 			new complex(b).zsub(d).zdiv(a).obj(this.z2);
 		}
@@ -306,7 +306,20 @@ class complex {
 		new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).neg.obj(this.z3);
 		return this;
 	}
-	bezier(z1, z2, z3, z4){// t = this, s = 1-t, result = z1*s*s*s + 3z2*s*s*t + 3z3*s*t*t + z4*t*t*t
+	beziertimes(z1, z2, z3, z4){// similar to quadratic times but cubic
+		// solve (z4 - z1 + 3(z2 - z3)) t^3 + 3 (z1 + z3 - 2 z2) t^2 + 3 (z2 - z1) t + z1 = this
+		this.cubiceq(
+			new complex(z2).zsub(z3).mul(3).zadd(z4).zsub(z1), // A
+			new complex(z2).mul(-2).zadd(z1).zadd(z3).mul(3),  // B
+			new complex(z2).zsub(z1).mul(3),                   // C
+			new complex(z1).zsub(this)                         // D
+		);
+		this.asg(this.z1);
+		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
+		if (Math.abs(this.y) > Math.abs(this.z3.y)) this.asg(this.z3);
+		return this;
+	}
+	bezierinter(z1, z2, z3, z4){// t = this, s = 1-t, result = z1*s*s*s + 3z2*s*s*t + 3z3*s*t*t + z4*t*t*t
 		return this.inter(new complex(this).quadinter(z1, z2, z3), new complex(this).quadinter(z2, z3, z4));
 	}
 	go(z, t = 1){// simplified usage of inter
