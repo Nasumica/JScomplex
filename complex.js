@@ -19,11 +19,11 @@ class complex {
 	get z(){// as object
 		return {x: this.x, y: this.y};
 	}
-	xiy(x, y = 0){// this = x + i y
+	xiy(x, y = 0){// x + iy
 		this.x = Number(x); this.y = Number(y); return this;
 	}
-	cis(rho, theta){// r * e^(ia) = r cis a = r * (cos a + i sin a)
-		if (arguments.length < 2) {theta = rho; rho = 1;}
+	cis(rho, theta){// ρ cis θ = ρ (cos θ + i sin θ) = ρ e^(iθ)
+		if (arguments.length < 2) {theta = rho; rho = 1;} // if ρ is ommited then ρ = 1
 		return this.xiy(rho * Math.cos(theta), rho * Math.sin(theta));
 	}
 	asg(z){// copy z to this
@@ -35,16 +35,16 @@ class complex {
 	swap(z){// swap values with z
 		var t = {x: z.x, y: z.y}; return this.obj(z).asg(t);
 	}
-	get sqrabs(){// |z|² = z * z'
+	get sqrabs(){// |z|² = z * z' = ρ²
 		return this.x * this.x + this.y * this.y;
 	}
-	get abs(){// I don't like hypot
+	get abs(){// ρ (I don't like hypot)
 		if (this.x == 0 || this.y == 0)
 			return Math.abs(this.x + this.y);
 		else
 			return Math.sqrt(this.sqrabs);
 	}
-	get arg(){
+	get arg(){// θ
 		return Math.atan2(this.y, this.x);
 	}
 	isEqual(x, y = 0){
@@ -56,16 +56,16 @@ class complex {
 	get isZero(){
 		return this.isEqual(0);
 	}
-	get i(){// +sqrt(-1)
+	get i(){// sqrt(-1)
 		return this.xiy(0, 1);
 	}
 	get inf(){ // complex infinity
 		return this.xiy(1/0, 1/0);
 	}
-	get real(){
+	get real(){// project to x-axis
 		return this.xiy(this.x, 0);
 	}
-	get imag(){
+	get imag(){// project to y-axis
 		return this.xiy(0, this.y);
 	}
 	get conjg(){// reflection to x-axis
@@ -89,7 +89,7 @@ class complex {
 	rect(z){// rectangle area
 		return (this.x - z.x) * (this.y - z.y);
 	}
-	trap(z){// trapezoid area
+	trap(z){// signed trapezoid area
 		return (this.x - z.x) * (this.y + z.y) / 2;
 	}
 	adv(x, y = x){
@@ -179,8 +179,14 @@ class complex {
 		var d = this.abs;
 		return d == 0 ? this : this.div(d);
 	}
-	get round(){
-		return this.xiy(Math.round(this.x), Math.round(this.y));
+	round(r = 1){
+		return this.scl(r).xiy(Math.round(this.x), Math.round(this.y)).lcs(r); 
+	}
+	floor(r = 1){
+		return this.scl(r).xiy(Math.floor(this.x), Math.floor(this.y)).lcs(r); 
+	}
+	ceil(r = 1){
+		return this.scl(r).xiy(Math.ceil(this.x), Math.ceil(this.y)).lcs(r); 
 	}
 	dcp(x, y = 0){// Re = dot product, Im = cross product (not commutative)
 		return this.conjg.mul(x, y);
@@ -198,7 +204,7 @@ class complex {
 		if (this.isEqual(0, Math.PI)) return this.xiy(-1); else // to Euler
 		return this.cis(Math.exp(this.x), this.y);
 	}
-	get log(){// ln(r cis a) = ln(r * e^(ia)) = ln r + ln(e^(ia)) = ln r + ia
+	get log(){// ln(ρ cis θ) = ln(ρ * e^(iθ)) = ln ρ + ln(e^(iθ)) = ln ρ + iθ
 		if (this.isEqual(-1)) return this.xiy(0, Math.PI); else // ditto
 		return this.xiy(Math.log(this.abs), this.arg);
 	}
@@ -706,9 +712,9 @@ class complex {
 		var B = new complex(this.vertex.B); B.r = b;
 		var C = new complex(this.vertex.C); C.r = c;
 		var z = new complex(C).circlecircle(A, B);
-		var a = C.r - new complex(z.z1).zdist(C);
-		var b = C.r - new complex(z.z2).zdist(C);
-		if (Math.abs(a) < Math.abs(b)) this.asg(z.z1); else this.asg(z.z2);
+		var u = C.r - new complex(z.z1).zdist(C);
+		var v = C.r - new complex(z.z2).zdist(C);
+		if (Math.abs(u) < Math.abs(v)) this.asg(z.z1); else this.asg(z.z2);
 		return this;
 	}
 }
