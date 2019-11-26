@@ -323,7 +323,7 @@ class complex {
 	}
 	cubiceq(A, B, C, D){// cubic equation solver
 		this.z1 = {}; this.z2 = {}; this.z3 = {}; // result
-		var a = new complex(A).mul(-3); // a = -3 A
+		var a = new complex(A).mul(-3);         // a = -3 A
 		if (a.isZero){
 			this.quadraticeq(B, C, D);
 			this.z3 = {x: this.z2.x, y: this.z2.y};
@@ -336,8 +336,8 @@ class complex {
 			var D0 = new complex(e).zadd(c);    // D0 = B² - 3 A C
 			e.zmul(b).mul(2); c.zmul(b).mul(3); // e = 2 B³; c = -9 A B C
 			var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B³ - 9 A B C + 27 A² D
-			var f = new complex(D1).sqr; // f = D1²
-			var g = new complex(D0).cub.mul(-4).zadd(f).sqrt.zadd(D1).div(2).cbrt; // g = cbrt((D1 + sqrt(D1² - 4 D0³))/2)
+			var f = new complex(D1).sqr;        // f = D1²
+			var g = new complex(D0).cub.mul(-4).zadd(f).sqrt.zadd(D1).div(2).cbrt;   // g = cbrt((D1 + sqrt(D1² - 4 D0³))/2)
 			new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z1); g.zmul(r); // z1 = (B + g + D0/g)/a; g rotate 120°
 			new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z2); g.zmul(r);
 			new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z3);
@@ -345,9 +345,9 @@ class complex {
 		return this;
 	}
 	beziertimes(z1, z2, z3, z4){// similar to quadratic times but cubic
-		// solve (z4 - z1 + 3 (z2 - z3)) t³ + 3 (z1 + z3 - 2 z2) t² + 3 (z2 - z1) t + z1 = this
+		// solve (3 (z2 - z3) + z4 - z1) t³ + 3 (z1 + z3 - 2 z2) t² + 3 (z2 - z1) t + z1 = this
 		this.cubiceq(
-			new complex(z2).zsub(z3).mul(3).zadd(z4).zsub(z1), // A = z4 - z1 + 3 (z2 - z3)
+			new complex(z2).zsub(z3).mul(3).zadd(z4).zsub(z1), // A = 3 (z2 - z3) + z4 - z1
 			new complex(z2).mul(-2).zadd(z1).zadd(z3).mul(3),  // B = 3 (z1 + z3 - 2 z2)
 			new complex(z2).zsub(z1).mul(3),                   // C = 3 (z2 - z1)
 			new complex(z1).zsub(this)                         // D = z1 - this
