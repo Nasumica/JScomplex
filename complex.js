@@ -290,11 +290,11 @@ class complex {
 	quadraticeq(A, B, C){// quadratic equation solver
 		this.z1 = {}; this.z2 = {}; // result
 		var a = new complex(A).mul(2); // a = 2 A
+		var b = new complex(B).neg;    // b = -B
 		if (a.isZero){
-			new complex(C).neg.zdiv(new complex(B)).obj(this.z1).obj(this.z2);
+			new complex(C).zdiv(b).obj(this.z1).obj(this.z2); // z1 = z2 = - C/B
 		} else {
-			var b = new complex(B).neg; // b = -B
-			var c = new complex(C).mul(2).zmul(a); // c = 4 A C
+			var c = new complex(C).mul(2).zmul(a);   // c = 4 A C
 			var d = new complex(b).sqr.zsub(c).sqrt; // d = sqrt(B² - 4 A C)
 			new complex(b).zadd(d).zdiv(a).obj(this.z1);
 			new complex(b).zsub(d).zdiv(a).obj(this.z2);
