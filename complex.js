@@ -35,7 +35,7 @@ class complex {
 	swap(z){// swap values with z
 		var t = {x: z.x, y: z.y}; return this.obj(z).asg(t);
 	}
-	get sqrabs(){// |z|^2 = z * z'
+	get sqrabs(){// |z|² = z * z'
 		return this.x * this.x + this.y * this.y;
 	}
 	get abs(){// I don't like hypot
@@ -56,8 +56,11 @@ class complex {
 	get isZero(){
 		return this.isEqual(0);
 	}
-	get i(){
+	get i(){// +sqrt(-1)
 		return this.xiy(0, 1);
+	}
+	get inf(){ // complex infinity
+		return this.xiy(1/0, 1/0);
 	}
 	get real(){
 		return this.xiy(this.x, 0);
@@ -65,22 +68,22 @@ class complex {
 	get imag(){
 		return this.xiy(0, this.y);
 	}
-	get conjg(){
+	get conjg(){// reflection to x-axis
 		return this.xiy(this.x, -this.y);
 	}
 	get pos(){// 1st quadrant
 		return this.xiy(Math.abs(this.x), Math.abs(this.y));
 	}
-	get neg(){// -z = z rotate 180
+	get neg(){// -z = z rotate 180°
 		return this.xiy(-this.x, -this.y);
 	}
-	get muli(){// z * i = z rotate 90
+	get muli(){// z * i = z rotate 90°
 		return this.xiy(-this.y, this.x);
 	}
-	get divi(){// z / i = z rotate -90 = - i * z
+	get divi(){// z / i = z rotate -90° = - i * z
 		return this.xiy(this.y, -this.x);
 	}
-	get exc(){// this = y + i x
+	get exc(){// reflection to line x = y
 		return this.xiy(this.y, this.x);
 	}
 	rect(z){// rectangle area
@@ -150,10 +153,10 @@ class complex {
 		if (this.x == 0) return this.xiy(1 / this.y).divi; else
 			return this.conjg.lcs(this.sqrabs);
 	}
-	get sqr(){// this^2
+	get sqr(){// this²
 		return this.zmul(this);
 	}
-	get cub(){// this^3
+	get cub(){// this³
 		return this.zmul(new complex(this).sqr);
 	}
 	get sqrt(){
@@ -236,11 +239,11 @@ class complex {
 		var z = new complex(this);
 		return this.isZero ? this.xiy(1) : this.sin.zdiv(z);
 	}
-	get asinh(){// ln(z + sqrt(z^2 + 1))
+	get asinh(){// ln(z + sqrt(z² + 1))
 		var z = new complex(this);
 		return this.sqr.add(1).sqrt.zadd(z).log;
 	}
-	get acosh(){// ln(z + sqrt(z^2 - 1))
+	get acosh(){// ln(z + sqrt(z² - 1))
 		var z = new complex(this);
 		return this.sqr.sub(1).sqrt.zadd(z).log;
 	}
@@ -257,7 +260,7 @@ class complex {
 	get atan(){
 		return this.muli.atanh.divi;
 	}
-	rotate(angle){
+	rotate(angle){// rotate this about origin
 		var h = Math.PI/2;
 		if (angle == 0) return this; else 
 		if (angle == h) return this.muli; else 
@@ -265,17 +268,17 @@ class complex {
 		if (Math.abs(angle) == Math.PI) return this.neg; else
 			return this.mul(Math.cos(angle), Math.sin(angle));
 	}
-	zrotate(z){
+	zrotate(z){// rotate this about origin by angle of vector (0, 0)--z
 		var h = z.x * z.x + z.y * z.y;
 		return h == 0 ? this : this.zmul(z).div(Math.sqrt(h));
 	}
-	vrotate(z1, z2){
+	vrotate(z1, z2){// rotate this about origin by angle of vector z1--z2
 		return this.zrotate(new complex(z2).zsub(z1));
 	}
 	about(x, y, angle){// rotate this about point (x, y)
 		return this.sub(x, y).rotate(angle).add(x, y);
 	}
-	zabout(z, angle){
+	zabout(z, angle){// rotate this about point z
 		return this.about(z.x, z.y, angle);
 	}
 	times(z1, z2 = {x: 0, y: 0}){// this = z1 + times * (z2 - z1)
@@ -292,18 +295,18 @@ class complex {
 		} else {
 			var b = new complex(B).neg; // b = -B
 			var c = new complex(C).mul(2).zmul(a); // c = 4 A C
-			var d = new complex(b).sqr.zsub(c).sqrt; // d = sqrt(B^2 - 4 A C)
+			var d = new complex(b).sqr.zsub(c).sqrt; // d = sqrt(B² - 4 A C)
 			new complex(b).zadd(d).zdiv(a).obj(this.z1);
 			new complex(b).zsub(d).zdiv(a).obj(this.z2);
 		}
 		return this;
 	}
 	quadtimes(z1, z2, z3){// similar to linear times but quadratic
-		// solve (z1 + z3 - 2z2) * t^2 + 2 * (z2 - z1) * t + z1 = this
+		// solve (z1 + z3 - 2 z2) t² + 2 (z2 - z1) t + z1 = this
 		this.quadraticeq(
-			new complex(z2).mul(-2).zadd(z1).zadd(z3), // A
-			new complex(z2).zsub(z1).mul(2),           // B
-			new complex(z1).zsub(this)                 // C
+			new complex(z2).mul(-2).zadd(z1).zadd(z3), // A = z1 + z3 - 2 z2
+			new complex(z2).zsub(z1).mul(2),           // B = 2 (z2 - z1)
+			new complex(z1).zsub(this)                 // C = z1 - this
 		);
 		this.asg(this.z1); // usually 0 <= x <= 1 and y = 0
 		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
@@ -319,28 +322,28 @@ class complex {
 			this.quadraticeq(B, C, D);
 			this.z3 = {x: this.z2.x, y: this.z2.y};
 		} else {
-			const r = new complex(-1, Math.sqrt(3)).div(2); // new complex().cis(2*Math.PI/3)
+			const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°
 			var b = new complex(B); // b = B
 			var c = new complex(C).zmul(a); // c = -3 A C
 			var d = new complex(D); // d = D
-			var e = new complex(b).sqr; // e = B^2
-			var D0 = new complex(e).zadd(c); // D0 = B^2 - 3 A C
-			e.zmul(b).mul(2); c.zmul(b).mul(3); // e = 2 B^3; c = -9 A B C
-			var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B^2 - 9 A B C + 27 A^2 D
-			var f = new complex(D0).cub.mul(-4).zadd(new complex(D1).sqr).sqrt.zadd(D1).div(2).cbrt; // f = cbrt((D1 + sqrt(D1^2 - 4 D0^3)) / 2)
-			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z1); f.zmul(r); // z1 = -(B + f + D0/f) / (3 A); f rotate 120
+			var e = new complex(b).sqr; // e = B²
+			var D0 = new complex(e).zadd(c); // D0 = B² - 3 A C
+			e.zmul(b).mul(2); c.zmul(b).mul(3); // e = 2 B³; c = -9 A B C
+			var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B³ - 9 A B C + 27 A² D
+			var f = new complex(D0).cub.mul(-4).zadd(new complex(D1).sqr).sqrt.zadd(D1).div(2).cbrt; // f = cbrt((D1 + sqrt(D1² - 4 D0³)) / 2)
+			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z1); f.zmul(r); // z1 = -(B + f + D0/f) / (3 A); f rotate 120°
 			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z2); f.zmul(r);
 			new complex(D0).zdiv(f).zadd(f).zadd(b).zdiv(a).obj(this.z3);
 		}
 		return this;
 	}
 	beziertimes(z1, z2, z3, z4){// similar to quadratic times but cubic
-		// solve (z4 - z1 + 3(z2 - z3)) t^3 + 3 (z1 + z3 - 2 z2) t^2 + 3 (z2 - z1) t + z1 = this
+		// solve (z4 - z1 + 3 (z2 - z3)) t³ + 3 (z1 + z3 - 2 z2) t² + 3 (z2 - z1) t + z1 = this
 		this.cubiceq(
-			new complex(z2).zsub(z3).mul(3).zadd(z4).zsub(z1), // A
-			new complex(z2).mul(-2).zadd(z1).zadd(z3).mul(3),  // B
-			new complex(z2).zsub(z1).mul(3),                   // C
-			new complex(z1).zsub(this)                         // D
+			new complex(z2).zsub(z3).mul(3).zadd(z4).zsub(z1), // A = z4 - z1 + 3 (z2 - z3)
+			new complex(z2).mul(-2).zadd(z1).zadd(z3).mul(3),  // B = 3 (z1 + z3 - 2 z2)
+			new complex(z2).zsub(z1).mul(3),                   // C = 3 (z2 - z1)
+			new complex(z1).zsub(this)                         // D = z1 - this
 		);
 		this.asg(this.z1);
 		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
@@ -378,7 +381,7 @@ class complex {
 		var v = new complex(z4).zsub(z3);
 		var d = cross(u, v);
 		if (d == 0){// parallel
-			return this.xiy(1/0, 1/0); // complex infinity
+			return this.inf;
 		} else {
 			var a = cross(u, z1);
 			var b = cross(v, z3);
@@ -421,7 +424,7 @@ class complex {
 	ztoward(z, len = 1){
 		return this.toward(z.x, z.y, len);
 	}
-	oncircle(circle){
+	oncircle(circle){// nearest point on circle
 		if (this.isSame(circle))
 			return this;
 		else
