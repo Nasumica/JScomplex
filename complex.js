@@ -266,6 +266,12 @@ class complex {
 	get atan(){
 		return this.muli.atanh.divi;
 	}
+	horner(){// Horner's scheme
+		var z = new complex();
+		for (var i = 0; i < arguments.length; i++)
+			z.zmul(this).zadd(new complex(arguments[i]));
+		return this.asg(z);
+	}
 	rotate(angle){// rotate this about origin
 		var h = Math.PI/2;
 		if (angle == 0) return this; else 
@@ -338,7 +344,7 @@ class complex {
 				this.quadraticeq(A, B, C);
 				d.obj(this.z3); // z3 = 0
 			} else {
-				const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°
+				const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°; r³ = 1
 				var b = new complex(B); // b = B
 				var c = new complex(C); // c = C
 				if (b.isZero && c.isZero){// A z³ + D = 0
