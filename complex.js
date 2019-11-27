@@ -216,6 +216,17 @@ class complex {
 	zpow(z){
 		return this.pow(z.x, z.y);
 	}
+	npow(n){// thisⁿ (integer n); De Moivre's formula: (cis θ)ⁿ = cis (θ·n)
+		var z = new complex(this);
+		var i = Math.floor(Math.abs(n));
+		this.xiy(1);
+		while (i > 0){
+			if (i % 2 == 1) this.zmul(z);
+			z.sqr;  i >>>= 1;
+		}
+		if (n < 0) this.recip;
+		return this;
+	}
 	root(x, y = 0){
 		return this.log.div(x, y).exp;
 	}
@@ -272,6 +283,16 @@ class complex {
 			z.zmul(this).zadd(new complex(arguments[i]));
 		return this.asg(z);
 	}
+	spline(){// first arg for this = 0, last arg for this = 1, else somwhere between smoothly
+		var t = new complex(this), s = new complex(1).zsub(t); // t = this, s = 1 - t
+		var n = arguments.length - 1, m = 0, b = 1;
+		this.xiy(0);
+		while (n >= 0){// $b = {arguments.length - 1 \choose n}$
+			this.zadd(new complex(arguments[n]).mul(b).zmul(new complex(s).npow(m)).zmul(new complex(t).npow(n)));
+			m++; b *= n; b /= m; n--;
+		}
+		return this;
+	}
 	rotate(angle){// rotate this about origin
 		var h = Math.PI/2;
 		if (angle == 0) return this; else 
@@ -297,6 +318,7 @@ class complex {
 		return this.zsub(z1).zdiv(new complex(z2).zsub(z1)); 
 	}
 	inter(z1, z2 = {x: 0, y: 0}){// inversion of times; t = this, s = 1-t, result = z1*s + z2*t
+		//return this.spline(z1, z2);
 		return this.zmul(new complex(z2).zsub(z1)).zadd(z1);
 	}
 	quadraticeq(A, B, C){// quadratic equation solver
@@ -330,6 +352,7 @@ class complex {
 		return this;
 	}
 	quadinter(z1, z2, z3){// t = this, s = 1-t, result = z1*s*s + 2z2*s*t + z3*t*t
+		//return this.spline(z1, z2, z3);
 		return this.inter(new complex(this).inter(z1, z2), new complex(this).inter(z2, z3));
 	}
 	cubiceq(A, B, C, D){// cubic equation solver
@@ -381,6 +404,7 @@ class complex {
 		return this;
 	}
 	bezierinter(z1, z2, z3, z4){// t = this, s = 1-t, result = z1*s*s*s + 3z2*s*s*t + 3z3*s*t*t + z4*t*t*t
+		//return this.spline(z1, z2, z3, z4);
 		return this.inter(new complex(this).quadinter(z1, z2, z3), new complex(this).quadinter(z2, z3, z4));
 	}
 	go(z, t = 1){// simplified usage of inter
@@ -958,6 +982,8 @@ CanvasRenderingContext2D.prototype.triangle = function(t) {
 }
 
 CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
+	// https://stackoverflow.com/questions/1255512/
+	// https://stackoverflow.com/users/167531/grumdrig
 	if (w < 2 * r) r = w / 2;
 	if (h < 2 * r) r = h / 2;
 	this.moveTo(x+r, y);
