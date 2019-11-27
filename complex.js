@@ -295,19 +295,20 @@ class complex {
 	}
 	quadraticeq(A, B, C){// quadratic equation solver
 		this.z1 = {}; this.z2 = {}; // result
-		var a = new complex(A);     // a = A
-		var b = new complex(B).neg; // b = -B
-		var c = new complex(C);     // c = C
+		var a = new complex(A); // a = A
+		var b = new complex(B); // b = B
+		var c = new complex(C); // c = C
 		if (a.isZero)// B z + C = 0
-			c.zdiv(b).obj(this.z1).obj(this.z2); // z1 = z2 = -C/B
+			c.zdiv(b).neg.obj(this.z1).obj(this.z2); // z1 = z2 = -C/B
 		else if (b.isZero)// A z² + C = 0
-			c.neg.zdiv(a).sqrt.obj(this.z1).neg.obj(this.z2); // -z2 = z1 = sqrt(-C/A)
+			c.zdiv(a).neg.sqrt.obj(this.z1).neg.obj(this.z2); // -z2 = z1 = sqrt(-C/A)
 		else if (c.isZero)// (A z + B) z = 0
 			b.zdiv(a).obj(this.z1).xiy(0).obj(this.z2); // z1 = -B/A, z2 = 0
 		else {// A z² + B z + C = 0
-			var d = new complex(b).sqr.zsub(c.mul(2).zmul(a.mul(2))).sqrt; // d = sqrt(B² - 4 A C); a = 2 A
-			new complex(b).zadd(d).zdiv(a).obj(this.z1);
-			new complex(b).zsub(d).zdiv(a).obj(this.z2);
+			var d = new complex(b.neg).sqr.zsub(c.mul(2).zmul(a.mul(2))).sqrt;
+			// b = -B; a = 2 A; c = 4 A C; d = sqrt(B² - 4 A C); 
+			c.asg(b).zadd(d).zdiv(a).obj(this.z1);
+			c.asg(b).zsub(d).zdiv(a).obj(this.z2);
 		}
 		return this;
 	}
@@ -334,16 +335,17 @@ class complex {
 		} else {
 			var d = new complex(D); // d = D
 			if (d.isZero){// (A z² + B z + C) z = 0
-				this.quadraticeq(A, B, C); d.obj(this.z3);
+				this.quadraticeq(A, B, C);
+				d.obj(this.z3); // z3 = 0
 			} else {
 				const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°
 				var b = new complex(B); // b = B
 				var c = new complex(C); // c = C
 				if (b.isZero && c.isZero){// A z³ + D = 0
-					d.neg.zdiv(a).cbrt
-						.obj(this.z1).zmul(r)
-						.obj(this.z2).zmul(r)
-						.obj(this.z3);
+					d.zdiv(a).neg.cbrt
+						.obj(this.z1).zmul(r) // z1 = cbrt(-D/A)
+						.obj(this.z2).zmul(r) // z2 = z1 rotated 120°
+						.obj(this.z3);        // z3 = z2 rotated 120°
 				} else {// A z³ + B z² + C z + D = 0
 					a.mul(-3); c.zmul(a);               // a = -3 A; c = -3 A C
 					var e = new complex(b).sqr;         // e = B²
@@ -352,9 +354,9 @@ class complex {
 					var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B³ - 9 A B C + 27 A² D
 					var f = new complex(D1).sqr;        // f = D1²
 					var g = new complex(D0).cub.mul(-4).zadd(f).sqrt.zadd(D1).div(2).cbrt;   // g = cbrt((D1 + sqrt(D1² - 4 D0³))/2)
-					new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z1); g.zmul(r); // z1 = (B + g + D0/g)/a; g rotate 120°
-					new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z2); g.zmul(r);
-					new complex(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z3);
+					d.asg(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z1); g.zmul(r); // z1 = (B + g + D0/g)/a; g rotate 120°
+					d.asg(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z2); g.zmul(r);
+					d.asg(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z3);
 				}
 			}
 		}
