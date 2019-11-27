@@ -8,6 +8,38 @@ class complex {
 	Euler identity e ^ (i * π) + 1 = 0: new complex(Math.PI).muli.exp.add(1);
 */
 	constructor(u, v){
+	/*
+		var z = new complex();                   // z = 0
+		var z = new complex(a);                  // z = a
+		var z = new complex(a, b);               // z = a + i b
+		var z = new complex({});                 // z = 0
+		var z = new complex({x: 3});             // z = 3
+		var z = new complex({y: 4});             // z = 4 i
+		var z = new complex({x: 3, y: 4});       // z = 3 + 4 i
+		var z = new complex({r: 2, y: 4, x: 3}); // z = 3 + 4 i (r is ignored)
+		var z = new complex([]);                 // z = 0
+		var z = new complex([5]);                // z = 5
+		var z = new complex([6, 7]);             // z = 6 + 7 i
+		var z = new complex([{x: 1, y: 2}]);     // z = NaN
+
+		solve: 
+			3 + 5 i = z³ - (2 + 5 i) z² - (5 - 8 i) z + (9 + 2 i)
+		code:
+			var z = new complex(3, 5).cubiceq(1, [-2, -5], [-5, 8], [9, 2]);
+			or
+			var z = new complex(3, 5).cubiceq(
+				new complex(1),
+				new complex(2, 5).neg,
+				new complex(5, -8).neg,
+				new complex(9, 2)
+			);
+		solution: 
+			z.z1 = 1 + 2 i, z.z2 = 1, z.z3 = 3 i
+		check:
+			z.asg(z.z1).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
+			z.asg(z.z2).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
+			z.asg(z.z3).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
+	*/
 		this.x = 0; this.y = 0;
 		if (arguments.length > 1) this.xiy(u, v); else
 		if (arguments.length > 0) 
@@ -24,7 +56,7 @@ class complex {
 	get z(){// as object
 		return {x: this.x, y: this.y};
 	}
-	xiy(x, y = 0){// x + iy
+	xiy(x = 0, y = 0){// x + i y
 		this.x = Number(x); this.y = Number(y); return this;
 	}
 	cis(rho, theta){// ρ cis θ = ρ (cos θ + i sin θ) = ρ e^(iθ)
@@ -32,7 +64,10 @@ class complex {
 		return this.xiy(rho * Math.cos(theta), rho * Math.sin(theta));
 	}
 	asg(z){// copy z to this
-		return this.xiy(z.x, z.y);
+		this.xiy();
+		if (typeof z.x !== 'undefined') this.x = Number(z.x);
+		if (typeof z.y !== 'undefined') this.y = Number(z.y);
+		return this;
 	}
 	obj(z){// copy this to z
 		z.x = this.x; z.y = this.y; return this;
@@ -329,11 +364,11 @@ class complex {
 		//return this.spline(z1, z2);
 		return this.zmul(new complex(z2).zsub(z1)).zadd(z1);
 	}
-	quadraticeq(A, B, C){// quadratic equation solver
+	quadraticeq(A, B, C){// quadratic equation solver A z² + B z + C = this
 		this.z1 = {}; this.z2 = {}; // result
 		var a = new complex(A); // a = A
 		var b = new complex(B); // b = B
-		var c = new complex(C); // c = C
+		var c = new complex(C).zsub(this); // c = C - this
 		if (a.isZero)// B z + C = 0
 			c.zdiv(b).neg.obj(this.z1).obj(this.z2); // z1 = z2 = -C/B
 		else if (b.isZero)// A z² + C = 0
@@ -353,7 +388,7 @@ class complex {
 		this.quadraticeq(
 			new complex(z2).mul(-2).zadd(z1).zadd(z3), // A = z1 + z3 - 2 z2
 			new complex(z2).zsub(z1).mul(2),           // B = 2 (z2 - z1)
-			new complex(z1).zsub(this)                 // C = z1 - this
+			new complex(z1)                            // C = z1
 		);
 		this.asg(this.z1); // usually 0 <= x <= 1 and y = 0
 		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
@@ -363,14 +398,14 @@ class complex {
 		//return this.spline(z1, z2, z3);
 		return this.inter(new complex(this).inter(z1, z2), new complex(this).inter(z2, z3));
 	}
-	cubiceq(A, B, C, D){// cubic equation solver
+	cubiceq(A, B, C, D){// cubic equation solver A z³ + B z² + C z + D = this
 		this.z1 = {}; this.z2 = {}; this.z3 = {}; // result
 		var a = new complex(A); // a = A
 		if (a.isZero){// B z² + C z + D = 0
 			this.quadraticeq(B, C, D);
 			this.z3 = {x: this.z2.x, y: this.z2.y};
 		} else {
-			var d = new complex(D); // d = D
+			var d = new complex(D).zsub(this); // d = D - this
 			if (d.isZero){// (A z² + B z + C) z = 0
 				this.quadraticeq(A, B, C);
 				d.obj(this.z3); // z3 = 0
@@ -404,7 +439,7 @@ class complex {
 			new complex(z2).zsub(z3).mul(3).zadd(z4).zsub(z1), // A = 3 (z2 - z3) + z4 - z1
 			new complex(z2).mul(-2).zadd(z1).zadd(z3).mul(3),  // B = 3 (z1 + z3 - 2 z2)
 			new complex(z2).zsub(z1).mul(3),                   // C = 3 (z2 - z1)
-			new complex(z1).zsub(this)                         // D = z1 - this
+			new complex(z1)                                    // D = z1
 		);
 		this.asg(this.z1);
 		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
