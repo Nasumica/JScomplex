@@ -283,7 +283,7 @@ class complex {
 			z.zmul(this).zadd(new complex(arguments[i]));
 		return this.asg(z);
 	}
-	spline(){// first arg for this = 0, last arg for this = 1, else somwhere between smoothly
+	spline(){// first arg for this = 0, last arg for this = 1, else somewhere between smoothly
 		var t = new complex(this), s = new complex(1).zsub(t); // t = this, s = 1 - t
 		var n = arguments.length - 1, m = 0, b = 1;
 		this.xiy(0);
