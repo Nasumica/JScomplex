@@ -11,7 +11,12 @@ class complex {
 		this.x = 0; this.y = 0;
 		if (arguments.length > 1) this.xiy(u, v); else
 		if (arguments.length > 0) 
-		if (typeof u === 'object') this.asg(u); else this.xiy(u);
+		if (typeof u === 'object') {
+			if (Array.isArray(u)){
+				if (u.length > 1) this.xiy(u[0], u[1]); else
+				if (u.length > 0) this.xiy(u[0]);
+			} else this.asg(u); 
+		} else this.xiy(u);
 	}
 	nop(){// no operation
 		return this;
@@ -187,6 +192,9 @@ class complex {
 	}
 	ceil(r = 1){
 		return this.scl(r).xiy(Math.ceil(this.x), Math.ceil(this.y)).lcs(r); 
+	}
+	get integer(){
+		return this.round();
 	}
 	dcp(x, y = 0){// Re = dot product, Im = cross product (not commutative)
 		return this.conjg.mul(x, y);
@@ -475,7 +483,7 @@ class complex {
 		else
 			return this.zadd(new complex(x, y).zsub(this).unit.mul(len));
 	}
-	ztoward(z, len = 1){
+	ztoward(z, len = 1){// go toward z by given length
 		return this.toward(z.x, z.y, len);
 	}
 	oncircle(circle){// nearest point on circle
