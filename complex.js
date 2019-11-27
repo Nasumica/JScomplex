@@ -352,11 +352,10 @@ class complex {
 					var D0 = new complex(e).zadd(c);    // D0 = B² - 3 A C
 					e.zmul(b).mul(2); c.zmul(b).mul(3); // e = 2 B³; c = -9 A B C
 					var D1 = new complex(a).sqr.zmul(d).mul(3).zadd(e).zadd(c); // D1 = 2 B³ - 9 A B C + 27 A² D
-					var f = new complex(D1).sqr;        // f = D1²
-					var g = new complex(D0).cub.mul(-4).zadd(f).sqrt.zadd(D1).div(2).cbrt;   // g = cbrt((D1 + sqrt(D1² - 4 D0³))/2)
-					d.asg(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z1); g.zmul(r); // z1 = (B + g + D0/g)/a; g rotate 120°
-					d.asg(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z2); g.zmul(r);
-					d.asg(D0).zdiv(g).zadd(g).zadd(b).zdiv(a).obj(this.z3);
+					c.asg(D0).cub.mul(-4).zadd(d.asg(D1).sqr).sqrt.zadd(D1).div(2).cbrt; // c = cbrt((D1 + sqrt(D1² - 4 D0³))/2)
+					d.asg(D0).zdiv(c).zadd(c).zadd(b).zdiv(a).obj(this.z1); c.zmul(r); // z1 = (B + c + D0/c)/a; c rotate 120°
+					d.asg(D0).zdiv(c).zadd(c).zadd(b).zdiv(a).obj(this.z2); c.zmul(r);
+					d.asg(D0).zdiv(c).zadd(c).zadd(b).zdiv(a).obj(this.z3);
 				}
 			}
 		}
