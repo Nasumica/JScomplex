@@ -865,7 +865,7 @@ class complex {
 	polysolve(){// simple Newton polynomial roots solver
 	/*
 		find all polynomial roots in complex plane: 
-			p[n] zⁿ + p[n - 1] zⁿ⁻¹ ··· + p[2] z² + p[1] z + p[0] = this
+			p[n] zⁿ + p[n - 1] zⁿ⁻¹ + ··· + p[2] z² + p[1] z + p[0] = this
 			
 		solwe:
 			z⁴ - 4 z³ - 19 z² - 46 z + 120 = 0
