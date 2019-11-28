@@ -873,17 +873,17 @@ class complex {
 	}
 	polysolve(a){// simple Newton polynomial roots solver
 	/*
-		polysolve( [3,  4,  5] )  =>  3    +  4 z    + 5 z² =  this
-		polysolve(  3,  4,  5  )  =>  3 z² +  4 z    + 5    =  this
-		polysolve( [3,  4], 5  )  =>  (3   +  4 i) z + 5    =  this
-		polysolve(  3, [4,  5] )  =>  3 z  + (4      + 5 i) =  this
-		polysolve( [[3, 4], 5] )  =>  3    +  4 i    + 5 z  =  this
+		polysolve(  3,  4,  5  )  <=>  3 z² +  4 z    + 5    =  this
+		polysolve( [3,  4,  5] )  <=>  3    +  4 z    + 5 z² =  this
+		polysolve( [3,  4], 5  )  <=> (3    +  4 i) z + 5    =  this
+		polysolve(  3, [4,  5] )  <=>  3 z  + (4      + 5 i) =  this
+		polysolve( [[3, 4], 5] )  <=>  3    +  4 i    + 5 z  =  this
 
 		find all polynomial roots in complex plane: 
 			p[n] zⁿ + p[n - 1] zⁿ⁻¹ + ··· + p[2] z² + p[1] z + p[0] = this
 			
 		solwe:
-			z⁴ - 4 z³ - 19 z² - 46 z + 120 = 0
+			z⁴ - 4 z³ - 19 z² + 46 z + 120 = 0
 		code:
 			var z = new complex().polysolve(1, -4, -19, 46, 120);
 		roots:
@@ -913,7 +913,7 @@ class complex {
 		this.w = []; // roots
 		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;} // precission
 		var p = [], q = [];
-		if (arguments.length == 1 && Array.isArray(a)){
+		if (arguments.length == 1 && Array.isArray(a)) {
 			for (var i = 0; i < a.length; i++) // copy array as complex polynomial
 				p.push(new complex(a[i]).z);
 		} else {
