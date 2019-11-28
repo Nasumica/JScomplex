@@ -630,9 +630,9 @@ class complex {
 		const a = 1, b = 0.30634896253003312211567570119977; // ln(φ) / (π/2)
 		return this.logSpiral(a, b, t);
 	}
-	seed(n, size = 1, angle = 0){// sunflower seeds
+	seed(n, size = 1, rate = 1, angle = 0){// sunflower seeds
 		const f = 2.3999632297286533222315555066336; // π * (3 - sqrt(5))
-		return this.cis(size * Math.sqrt(n), angle + n * f);
+		return this.cis(size * Math.pow(n, rate/2), angle + n * f);
 	}
 	superellipse(shape = 2, angle, xradius = 1, yradius = xradius, symmetry = 4, u = shape, v = u){
 		this.cis(angle * symmetry/4).pos.lcs(xradius, yradius);
@@ -871,7 +871,7 @@ class complex {
 			}
 		}
 	}
-	polysolve(a){// simple Newton polynomial roots solver
+	polysolve(a){// simple Newton polynom roots solver
 	/*
 		polysolve(  3,  4,  5  )  <=>  3 z² +  4 z    + 5    =  this
 		polysolve( [3,  4,  5] )  <=>  3    +  4 z    + 5 z² =  this
@@ -879,7 +879,7 @@ class complex {
 		polysolve(  3, [4,  5] )  <=>  3 z  + (4      + 5 i) =  this
 		polysolve( [[3, 4], 5] )  <=>  3    +  4 i    + 5 z  =  this
 
-		find all polynomial roots in complex plane: 
+		find all polynom roots in complex plane: 
 			p[n] zⁿ + p[n - 1] zⁿ⁻¹ + ··· + p[2] z² + p[1] z + p[0] = this
 			
 		solwe:
@@ -909,12 +909,19 @@ class complex {
 			var z = new complex().polysolve(1, [-7, -6], [-1, 30], [67, -4], [-60, -80]);
 		roots:
 			4, 2 + i, i - 2, 3 + 4 i
+
+		solve:
+			z⁴ + z³ + z² + z + 1 = 1
+		code:
+			var z = new complex(1).polysolve(1, 1, 1, 1, 1);
+		roots:
+			0, -1, i, -i
 	*/
 		this.w = []; // roots
 		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;} // precission
 		var p = [], q = [];
 		if (arguments.length == 1 && Array.isArray(a)) {
-			for (var i = 0; i < a.length; i++) // copy array as complex polynomial
+			for (var i = 0; i < a.length; i++) // copy array as complex polynom
 				p.push(new complex(a[i]).z);
 		} else {
 			for (var i = arguments.length - 1; i >= 0; i--) // collect parameters
@@ -953,7 +960,7 @@ class complex {
 							f.asg(w).polyvalue(p); // evaluate p(w)
 							if (f.isZero) break;   // good luck - exact zero
 							g.asg(w).polyvalue(q); // evaluate p'(w)
-							if (g.isZero) {        // bad  luck - extreme value
+							if (g.isZero) {        // bad  luck - critical point
 								w.asg(1, 1).polardev;
 								i++; // back half step
 							} else {
