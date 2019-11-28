@@ -830,12 +830,12 @@ class complex {
 	}
 	get stringed(){
 		var z = new complex(this).round(100000);
-		var x = ''+z.x;
-		var y = Math.abs(z.y); y = (y == 1 ? '' : y + ' ')+'і';
+		var x = z.x + '';
+		var y = Math.abs(z.y); y = (y == 1 ? '' : y + ' ') + 'і';
 		if (z.isZero) return '0'; else
 		if (z.y == 0) return x; else
-		if (z.x == 0) return y; else
-			return z.x+(z.y<0?' - ':' + ')+y;
+		if (z.x == 0) return (z.y < 0 ? '-' : '') + y; else
+			return z.x + (z.y < 0 ?' - ':' + ') + y;
 	}
 	polyvalue(p){
 		var z = new complex(this); 
@@ -911,21 +911,16 @@ class complex {
 			4, 2 + i, i - 2, 3 + 4 i
 	*/
 		this.w = []; // roots
-		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;}
+		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;} // precission
 		var p = [], q = [];
 		if (arguments.length == 1 && Array.isArray(a)){
-			for (var i = 0; i < a.length; i++){// copy array as complex polynomial
-				var z = new complex(a[i]);
-				if (i == 0) z.zsub(this);
-				p.push(z.z);
-			}
+			for (var i = 0; i < a.length; i++) // copy array as complex polynomial
+				p.push(new complex(a[i]).z);
 		} else {
-			for (var i = arguments.length - 1; i >= 0; i--){// collect parameters
-				var z = new complex(arguments[i]);
-				if (i + 1 == arguments.length) z.zsub(this);
-				p.push(z.z);
-			}
+			for (var i = arguments.length - 1; i >= 0; i--) // collect parameters
+				p.push(new complex(arguments[i]).z);
 		}
+		if (p.length > 0) new complex(p[0]).zsub(this).obj(p[0]); // subtract this from free item
 		// for (var i = 0; i < p.length; i++) console.log('p[',i,'] = ',new complex(p[i]).stringed); // debug
 		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
 		// if (p.length == 0) this.w.push(new complex().inf.z); else
@@ -938,7 +933,7 @@ class complex {
 				for (var i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++;
 				if (d > 0 && d == n - 2){// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
 					v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
-					for (var i = 0; i < n; i++){
+					for (var i = 0; i < n; i++){// roots are vertices of regular central n-polygon
 						w.asg(v).rotate(2 * Math.PI * i / n);
 						this.w.push(w.z);
 					}
