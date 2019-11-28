@@ -862,7 +862,7 @@ class complex {
 			}
 		}
 	}
-	polysolve(){// simple Newton polynomial roots solver
+	polysolve(a){// simple Newton polynomial roots solver
 	/*
 		find all polynomial roots in complex plane: 
 			p[n] zⁿ + p[n - 1] zⁿ⁻¹ + ··· + p[2] z² + p[1] z + p[0] = this
@@ -898,12 +898,22 @@ class complex {
 		this.w = []; // roots
 		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;}
 		var p = [], q = [];
-		for (var i = arguments.length - 1; i >= 0; i--){// collect parameters
-			var z = new complex(arguments[i]);
-			if (i + 1 == arguments.length) z.zsub(this);
-			p.push(z.z);
+		if (arguments.length > 0) {
+			if (Array.isArray(a)){
+				for (var i = 0; i < a.length; i++){// copy array as complex polynomial
+					var z = new complex(a[i]);
+					if (i == 0) z.zsub(this);
+					p.push(z.z);
+				}
+			} else {
+				for (var i = arguments.length - 1; i >= 0; i--){// collect parameters
+					var z = new complex(arguments[i]);
+					if (i + 1 == arguments.length) z.zsub(this);
+					p.push(z.z);
+				}
+			}
+			while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
 		}
-		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
 		// if (p.length == 0) this.w.push(new complex().inf.z); else
 		// if (p.length == 1) this.w.push(new complex().nan.z); else
 		{
@@ -912,7 +922,7 @@ class complex {
 			while (p.length > 1){
 				var n = p.length - 1, d = 0;  
 				for (var i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++;
-				if (d > 0 && d == n - 2){// n-th root of -(p[0] / p[n])
+				if (d > 0 && d == n - 2){// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
 					v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
 					for (var i = 0; i < n; i++){
 						w.asg(v).rotate(2 * Math.PI * i / n);
@@ -922,8 +932,9 @@ class complex {
 				} else {
 					var i = 64, k = 0; // max 32 to 48 iterations
 					if (new complex(p[0]).isZero) w.xiy(0); else 
-					if (n == 1) w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg; else 
-					{
+					if (n == 1) 
+						w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg;  // last is linear
+					else {
 						q = [];  this.polyprime(p, q); // q(z) = p'(z)
 						w.xiy(1, 1).polardev; // random point in unit circle
 						u.inf;  v.inf;
