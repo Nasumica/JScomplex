@@ -828,6 +828,15 @@ class complex {
 		if (Math.abs(u) < Math.abs(v)) this.asg(z.z1); else this.asg(z.z2);
 		return this;
 	}
+	get stringed(){
+		var z = new complex(this).round(100000);
+		var x = ''+z.x;
+		var y = Math.abs(z.y); y = (y == 1 ? '' : y + ' ')+'і';
+		if (z.isZero) return '0'; else
+		if (z.y == 0) return x; else
+		if (z.x == 0) return y; else
+			return z.x+(z.y<0?' - ':' + ')+y;
+	}
 	polyvalue(p){
 		var z = new complex(this); 
 		this.xiy(0);
@@ -864,10 +873,11 @@ class complex {
 	}
 	polysolve(a){// simple Newton polynomial roots solver
 	/*
-		polysolve([3,  4,  5])  =>  3    +  4 z    + 5 z² =  this
-		polysolve([3,  4], 5)   =>  (3   +  4 i) z + 5    =  this
-		polysolve( 3,  4,  5)   =>  3 z² +  4 z    + 5    =  this
-		polysolve( 3, [4,  5])  =>  3 z  + (4      + 5 i) =  this
+		polysolve( [3,  4,  5] )  =>  3    +  4 z    + 5 z² =  this
+		polysolve(  3,  4,  5  )  =>  3 z² +  4 z    + 5    =  this
+		polysolve( [3,  4], 5  )  =>  (3   +  4 i) z + 5    =  this
+		polysolve(  3, [4,  5] )  =>  3 z  + (4      + 5 i) =  this
+		polysolve( [[3, 4], 5] )  =>  3    +  4 i    + 5 z  =  this
 
 		find all polynomial roots in complex plane: 
 			p[n] zⁿ + p[n - 1] zⁿ⁻¹ + ··· + p[2] z² + p[1] z + p[0] = this
@@ -916,6 +926,7 @@ class complex {
 				p.push(z.z);
 			}
 		}
+		// for (var i = 0; i < p.length; i++) console.log('p[',i,'] = ',new complex(p[i]).stringed); // debug
 		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
 		// if (p.length == 0) this.w.push(new complex().inf.z); else
 		// if (p.length == 1) this.w.push(new complex().nan.z); else
