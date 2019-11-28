@@ -933,8 +933,8 @@ class complex {
 							if (f.isZero) break; // exact zero
 							g.asg(w).polyhorner(q);
 							if (g.isZero) {
-								w.asg(1, 1).polardev;  // wrong case
-								i++;
+								w.asg(1, 1).polardev; // bad luck
+								i++; // back half step
 							} else {
 								w.zsub(f.zdiv(g)); // next approximation w -= p(w) / p'(w)
 								if (h(w.sqrabs, u.sqrabs) || h(w.sqrabs, v.sqrabs))
