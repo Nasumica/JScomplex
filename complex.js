@@ -21,24 +21,6 @@ class complex {
 		var z = new complex([5]);                // z = 5
 		var z = new complex([6, 7]);             // z = 6 + 7 i
 		var z = new complex([{x: 1, y: 2}]);     // z = NaN
-
-		solve: 
-			3 + 5 i = z³ - (2 + 5 i) z² - (5 - 8 i) z + (9 + 2 i)
-		code:
-			var z = new complex(3, 5).cubiceq(1, [-2, -5], [-5, 8], [9, 2]);
-			or
-			var z = new complex(3, 5).cubiceq(
-				new complex(1),
-				new complex(2, 5).neg,
-				new complex(5, -8).neg,
-				new complex(9, 2)
-			);
-		solution: 
-			z.z1 = 1 + 2 i, z.z2 = 1, z.z3 = 3 i
-		check:
-			z.asg(z.z1).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
-			z.asg(z.z2).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
-			z.asg(z.z3).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
 	*/
 		this.x = 0; this.y = 0;
 		if (arguments.length > 1) this.xiy(u, v); else
@@ -95,6 +77,12 @@ class complex {
 	}
 	get isZero(){
 		return this.isEqual(0);
+	}
+	get isInf(){
+		return Math.abs(this.x) === Infinity || Math.abs(this.y) === Infinity;
+	}
+	get isNaN(){
+		return Number.isNaN(this.x) || Number.isNaN(this.y);
 	}
 	get i(){// sqrt(-1)
 		return this.xiy(0, 1);
@@ -260,6 +248,7 @@ class complex {
 	pow(x, y = 0){
 		if (x == 0 && y == 0) return this.xiy(1); else
 		if (this.isZero) return this; else
+		if (x == -1 && y == 0) return this.recip; else
 			return this.log.mul(x, y).exp;
 	}
 	zpow(z){
@@ -277,7 +266,10 @@ class complex {
 		return this;
 	}
 	root(x, y = 0){
-		return this.log.div(x, y).exp;
+		if (new complex(x, y).isInf) return this.xiy(1); else
+		if (x == 1 && y == 0) return this; else
+		if (x == -1 && y == 0) return this.recip; else
+			return this.log.div(x, y).exp;
 	}
 	zroot(z){
 		return this.root(z.x, z.y);
@@ -346,7 +338,7 @@ class complex {
 		var h = Math.PI/2;
 		if (angle == 0) return this; else 
 		if (angle == h) return this.muli; else 
-		if (-angle == h) return this.divi; else 
+		if (angle == -h || angle == 3 * h) return this.divi; else 
 		if (Math.abs(angle) == Math.PI) return this.neg; else
 			return this.mul(Math.cos(angle), Math.sin(angle));
 	}
@@ -405,6 +397,25 @@ class complex {
 		return this.inter(new complex(this).inter(z1, z2), new complex(this).inter(z2, z3));
 	}
 	cubiceq(A, B, C, D){// cubic equation solver A z³ + B z² + C z + D = this
+	/*
+		solve: 
+			3 + 5 i = z³ - (2 + 5 i) z² - (5 - 8 i) z + (9 + 2 i)
+		code:
+			var z = new complex(3, 5).cubiceq(1, [-2, -5], [-5, 8], [9, 2]);
+			or
+			var z = new complex(3, 5).cubiceq(
+				new complex(1),
+				new complex(2, 5).neg,
+				new complex(5, -8).neg,
+				new complex(9, 2)
+			);
+		roots: 
+			z.z1 = 1 + 2 i, z.z2 = 1, z.z3 = 3 i
+		check:
+			z.asg(z.z1).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
+			z.asg(z.z2).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
+			z.asg(z.z3).horner(1, [-2, -5], [-5, 8], [9, 2]); // z = 3 + 5 i
+	*/
 		this.z1 = {}; this.z2 = {}; this.z3 = {}; // result
 		var a = new complex(A); // a = A
 		if (a.isZero){// B z² + C z + D = 0
@@ -850,21 +861,36 @@ class complex {
 	}
 	polysolve(){// simple Newton polynomial roots solver
 	/*
-		z⁴ - 4 z³ - 19 z² - 46 z + 120 = 0
-		roots: -3, -2, 4, 5
-		var z = new complex().polysolve(1, -4, -19, 46, 120);
+		find all polynomial roots in complex plane: 
+			p[n] zⁿ + p[n - 1] zⁿ⁻¹ ··· + p[2] z² + p[1] z + p[0] = this
+			
+		solwe:
+			z⁴ - 4 z³ - 19 z² - 46 z + 120 = 0
+		code:
+			var z = new complex().polysolve(1, -4, -19, 46, 120);
+		roots:
+			-3, -2, 4, 5
 
-		z⁶ - 6 z⁵ - 26 z⁴ + 144 z³ + -47 z² - 210 z = 0
-		roots: -5, -1, 0, 2, 3, 7
-		var z = new complex().polysolve(1, -6, -26, 144, -47, -210, 0);
+		solve:
+			z⁶ - 6 z⁵ - 26 z⁴ + 144 z³ + -47 z² - 210 z = 0
+		code:
+			var z = new complex().polysolve(1, -6, -26, 144, -47, -210, 0);
+		roots:
+			-5, -1, 0, 2, 3, 7
 
-		z⁴ = 1
-		roots: 1, -1, i, -i
-		var z = new complex(1).polysolve(1, 0, 0, 0, 0);
+		solve:
+			z⁴ = 1
+		code: 
+			var z = new complex(1).polysolve(1, 0, 0, 0, 0);
+		roots:
+			1, -1, i, -i
 
-		z⁴ - (7 + 6 i) z³ - (1 - 30 i) z² + (67 - 4 i) z - (60 + 80 i) == 0
-		roots: 4, 2 + i, -2 + i, 3 + 4 i
-		var z = new complex().polysolve(1, [-7, -6], [-1, 30], [67, -4], [-60, -80]);
+		solve:
+			z⁴ - (7 + 6 i) z³ - (1 - 30 i) z² + (67 - 4 i) z - (60 + 80 i) = 0
+		code:
+			var z = new complex().polysolve(1, [-7, -6], [-1, 30], [67, -4], [-60, -80]);
+		roots:
+			4, 2 + i, i - 2, 3 + 4 i
 	*/
 		this.w = []; // roots
 		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;}
@@ -880,19 +906,18 @@ class complex {
 		var f = new complex(),  g = new complex();
 		while (p.length > 1){
 			var d = 0;  for (var i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++;
-			if (d == n - 1){// n-th root
-				w.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
-				v.cis(2 * Math.PI / n);
+			if (d == n - 2){// n-th root of -(p[0] / p[n])
+				v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
 				for (var i = 0; i < n; i++){
+					w.asg(v).rotate(2 * Math.PI * i / n);
 					this.w.push(w.z);
-					w.zmul(v);
 				}
-				p.length = 1;
+				p.length = 1; // done
 			} else {
 				if (new complex(p[0]).isZero) w.xiy(0); else {
 					q = [];  this.polyprim(p, q); // q(z) = p'(z)
 					w.xiy(1, 1).rectdev;  u.inf;  v.inf;
-					var i = 64; // 32 to 48 iterations
+					var i = 64; // max 32 to 48 iterations
 					while (i > 0) {
 						i--;
 						u.asg(v);  v.asg(w);
