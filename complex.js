@@ -219,6 +219,12 @@ class complex {
 		var d = this.abs;
 		return d == 0 ? this : this.div(d);
 	}
+	get inc(){
+		return this.zadd(new complex(this).unit);
+	}
+	get dec(){
+		return this.zsub(new complex(this).unit);
+	}
 	round(r = 1){
 		return this.scl(r).xiy(Math.round(this.x), Math.round(this.y)).lcs(r); 
 	}
@@ -806,6 +812,108 @@ class complex {
 		var u = C.r - new complex(z.z1).zdist(C);
 		var v = C.r - new complex(z.z2).zdist(C);
 		if (Math.abs(u) < Math.abs(v)) this.asg(z.z1); else this.asg(z.z2);
+		return this;
+	}
+	polyhorner(p){
+		var z = new complex(this); 
+		this.xiy(0);
+		for (var i = p.length - 1; i >= 0; i--)
+			this.zmul(z).zadd(new complex(p[i]));
+		return this;
+	}
+	polyprim(p, q){
+		var z = new complex();
+		for (var i = 1; i < p.length; i++){
+			z.asg(new complex(p[i])).mul(i);
+			q.push(z.z);
+		}
+	}
+	polydiv(p, q){
+		var m = p.length - 1, n = q.length - 1, l = m - n;
+		if (l < 0) p = [0]; else {
+			var r = new Array(l + 1);
+			for (var k = l; k >= 0; k--){
+				var i = n + k;
+				r[k] = {};
+				var z = new complex(p[i]).zdiv(new complex(q[n])).obj(r[k]);
+				for (var j = n; j >= 0; j--){
+					var w = new complex(q[j]).zmul(z).zbus(new complex(p[k + j]));
+					p[k + j] = {}; w.obj(p[k + j]);
+				}
+			}
+			p.length = r.length;
+			for (var k = 0; k < r.length; k++){
+				var z = new complex(r[k]);
+				p[k] = {}; z.obj(p[k]);
+			}
+		}
+	}
+	polysolve(){// simple Newton polynomial roots solver
+	/*
+		z⁴ - 4 z³ - 19 z² - 46 z + 120 = 0
+		roots: -3, -2, 4, 5
+		var z = new complex().polysolve(1, -4, -19, 46, 120);
+
+		z⁶ - 6 z⁵ - 26 z⁴ + 144 z³ + -47 z² - 210 z = 0
+		roots: -5, -1, 0, 2, 3, 7
+		var z = new complex().polysolve(1, -6, -26, 144, -47, -210, 0);
+
+		z⁴ = 1
+		roots: 1, -1, i, -i
+		var z = new complex(1).polysolve(1, 0, 0, 0, 0);
+
+		z⁴ - (7 + 6 i) z³ - (1 - 30 i) z² + (67 - 4 i) z - (60 + 80 i) == 0
+		roots: 4, 2 + i, -2 + i, 3 + 4 i
+		var z = new complex().polysolve(1, [-7, -6], [-1, 30], [67, -4], [-60, -80]);
+	*/
+		this.w = []; // roots
+		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;}
+		var p = [], q = [];
+		for (var i = arguments.length - 1; i >= 0; i--){// collect parameters
+			var z = new complex(arguments[i]);
+			if (i + 1 == arguments.length) z.zsub(this);
+			p.push(z.z);
+		}
+		while (p.length > 1 && new complex(p[p.length - 1]).isZero) p.length--;
+		var n = p.length - 1;
+		var u = new complex(),  v = new complex(),  w = new complex();
+		var f = new complex(),  g = new complex();
+		while (p.length > 1){
+			var d = 0;  for (var i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++;
+			if (d == n - 1){// n-th root
+				w.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
+				v.cis(2 * Math.PI / n);
+				for (var i = 0; i < n; i++){
+					this.w.push(w.z);
+					w.zmul(v);
+				}
+				p.length = 1;
+			} else {
+				if (new complex(p[0]).isZero) w.xiy(0); else {
+					q = [];  this.polyprim(p, q); // q(z) = p'(z)
+					w.xiy(1, 1).rectdev;  u.inf;  v.inf;
+					var i = 64; // 32 to 48 iterations
+					while (i > 0) {
+						i--;
+						u.asg(v);  v.asg(w);
+						f.asg(w).polyhorner(p);
+						if (f.isZero) break;
+						g.asg(w).polyhorner(q);
+						if (g.isZero) {
+							w.asg(1, 1).rectdev; 
+							i++;
+						} else {
+							w.zsub(f.zdiv(g));
+							if (h(w.sqrabs, u.sqrabs) || h(w.sqrabs, v.sqrabs))
+							if (i > 10) i = 10;
+						}
+						i--;
+					}
+				}
+				this.w.push(w.z);
+				this.polydiv(p, [w.neg.z, 1]); // p /= (z - w)
+			}
+		}
 		return this;
 	}
 }
