@@ -864,6 +864,11 @@ class complex {
 	}
 	polysolve(a){// simple Newton polynomial roots solver
 	/*
+		polysolve([3,  4,  5])  =>  3    +  4 z    + 5 z² =  this
+		polysolve([3,  4], 5)   =>  (3   +  4 i) z + 5    =  this
+		polysolve( 3,  4,  5)   =>  3 z² +  4 z    + 5    =  this
+		polysolve( 3, [4,  5])  =>  3 z  + (4      + 5 i) =  this
+
 		find all polynomial roots in complex plane: 
 			p[n] zⁿ + p[n - 1] zⁿ⁻¹ + ··· + p[2] z² + p[1] z + p[0] = this
 			
@@ -898,22 +903,20 @@ class complex {
 		this.w = []; // roots
 		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;}
 		var p = [], q = [];
-		if (arguments.length > 0) {
-			if (Array.isArray(a)){
-				for (var i = 0; i < a.length; i++){// copy array as complex polynomial
-					var z = new complex(a[i]);
-					if (i == 0) z.zsub(this);
-					p.push(z.z);
-				}
-			} else {
-				for (var i = arguments.length - 1; i >= 0; i--){// collect parameters
-					var z = new complex(arguments[i]);
-					if (i + 1 == arguments.length) z.zsub(this);
-					p.push(z.z);
-				}
+		if (arguments.length == 1 && Array.isArray(a)){
+			for (var i = 0; i < a.length; i++){// copy array as complex polynomial
+				var z = new complex(a[i]);
+				if (i == 0) z.zsub(this);
+				p.push(z.z);
 			}
-			while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
+		} else {
+			for (var i = arguments.length - 1; i >= 0; i--){// collect parameters
+				var z = new complex(arguments[i]);
+				if (i + 1 == arguments.length) z.zsub(this);
+				p.push(z.z);
+			}
 		}
+		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
 		// if (p.length == 0) this.w.push(new complex().inf.z); else
 		// if (p.length == 1) this.w.push(new complex().nan.z); else
 		{
