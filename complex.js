@@ -90,6 +90,9 @@ class complex {
 	get inf(){ // complex infinity
 		return this.xiy(1/0, 1/0);
 	}
+	get nan(){ // not a number
+		return this.xiy(0/0, 0/0);
+	}
 	get real(){// projection to x-axis
 		return this.xiy(this.x, 0);
 	}
@@ -900,43 +903,49 @@ class complex {
 			if (i + 1 == arguments.length) z.zsub(this);
 			p.push(z.z);
 		}
-		while (p.length > 1 && new complex(p[p.length - 1]).isZero) p.length--;
-		var n = p.length - 1;
-		var u = new complex(),  v = new complex(),  w = new complex();
-		var f = new complex(),  g = new complex();
-		while (p.length > 1){
-			var d = 0;  for (var i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++;
-			if (d == n - 2){// n-th root of -(p[0] / p[n])
-				v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
-				for (var i = 0; i < n; i++){
-					w.asg(v).rotate(2 * Math.PI * i / n);
-					this.w.push(w.z);
-				}
-				p.length = 1; // done
-			} else {
-				if (new complex(p[0]).isZero) w.xiy(0); else {
-					q = [];  this.polyprim(p, q); // q(z) = p'(z)
-					w.xiy(1, 1).rectdev;  u.inf;  v.inf;
-					var i = 64; // max 32 to 48 iterations
-					while (i > 0) {
-						i--;
-						u.asg(v);  v.asg(w);
-						f.asg(w).polyhorner(p);
-						if (f.isZero) break;
-						g.asg(w).polyhorner(q);
-						if (g.isZero) {
-							w.asg(1, 1).rectdev; 
-							i++;
-						} else {
-							w.zsub(f.zdiv(g));
-							if (h(w.sqrabs, u.sqrabs) || h(w.sqrabs, v.sqrabs))
-							if (i > 10) i = 10;
-						}
-						i--;
+		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
+		// if (p.length == 0) this.w.push(new complex().inf.z); else
+		// if (p.length == 1) this.w.push(new complex().nan.z); else
+		{
+			var u = new complex(),  v = new complex(),  w = new complex();
+			var f = new complex(),  g = new complex();
+			while (p.length > 1){
+				var n = p.length - 1, d = 0;  
+				for (var i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++;
+				if (d > 0 && d == n - 2){// n-th root of -(p[0] / p[n])
+					v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
+					for (var i = 0; i < n; i++){
+						w.asg(v).rotate(2 * Math.PI * i / n);
+						this.w.push(w.z);
 					}
+					p.length = 1; // done
+				} else {
+					var i = 64, k = 0; // max 32 to 48 iterations
+					if (new complex(p[0]).isZero) w.xiy(0); else 
+					if (n == 1) w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg; else 
+					{
+						q = [];  this.polyprim(p, q); // q(z) = p'(z)
+						w.xiy(1, 1).polardev;  u.inf;  v.inf;
+						while (i > 0) {
+							i--; k++;
+							u.asg(v);  v.asg(w);
+							f.asg(w).polyhorner(p);
+							if (f.isZero) break; // exact zero
+							g.asg(w).polyhorner(q);
+							if (g.isZero) {
+								w.asg(1, 1).polardev;  // wrong case
+								i++;
+							} else {
+								w.zsub(f.zdiv(g)); // next approximation w -= p(w) / p'(w)
+								if (h(w.sqrabs, u.sqrabs) || h(w.sqrabs, v.sqrabs))
+								if (i > 10) i = 10; // few more iterations
+							}
+							i--;
+						}
+					}
+					this.w.push(w.z);
+					this.polydiv(p, [w.neg.z, 1]); // p /= (z - w)
 				}
-				this.w.push(w.z);
-				this.polydiv(p, [w.neg.z, 1]); // p /= (z - w)
 			}
 		}
 		return this;
