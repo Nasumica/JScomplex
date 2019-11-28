@@ -372,7 +372,7 @@ class complex {
 		else if (b.isZero)// A z² + C = 0
 			c.zdiv(a).neg.sqrt.obj(this.z1).neg.obj(this.z2); // -z2 = z1 = sqrt(-C/A)
 		else if (c.isZero)// (A z + B) z = 0
-			b.zdiv(a).obj(this.z1).xiy(0).obj(this.z2); // z1 = -B/A, z2 = 0
+			b.zdiv(a).neg.obj(this.z1).xiy(0).obj(this.z2); // z1 = -B/A, z2 = 0
 		else {// A z² + B z + C = 0
 			var d = new complex(b.neg).sqr.zsub(c.mul(2).zmul(a.mul(2))).sqrt;
 			// b = -B; a = 2 A; c = 4 A C; d = sqrt(B² - 4 A C); 
