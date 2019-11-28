@@ -890,7 +890,7 @@ class complex {
 			-3, -2, 4, 5
 
 		solve:
-			z⁶ - 6 z⁵ - 26 z⁴ + 144 z³ + -47 z² - 210 z = 0
+			z⁶ - 6 z⁵ - 26 z⁴ + 144 z³ - 47 z² - 210 z = 0
 		code:
 			var z = new complex().polysolve(1, -6, -26, 144, -47, -210, 0);
 		roots:
