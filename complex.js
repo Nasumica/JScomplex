@@ -828,14 +828,14 @@ class complex {
 		if (Math.abs(u) < Math.abs(v)) this.asg(z.z1); else this.asg(z.z2);
 		return this;
 	}
-	polyhorner(p){
+	polyvalue(p){
 		var z = new complex(this); 
 		this.xiy(0);
 		for (var i = p.length - 1; i >= 0; i--)
 			this.zmul(z).zadd(new complex(p[i]));
 		return this;
 	}
-	polyprim(p, q){
+	polyprime(p, q){
 		var z = new complex();
 		for (var i = 1; i < p.length; i++){
 			z.asg(new complex(p[i])).mul(i);
@@ -924,16 +924,17 @@ class complex {
 					if (new complex(p[0]).isZero) w.xiy(0); else 
 					if (n == 1) w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg; else 
 					{
-						q = [];  this.polyprim(p, q); // q(z) = p'(z)
-						w.xiy(1, 1).polardev;  u.inf;  v.inf;
+						q = [];  this.polyprime(p, q); // q(z) = p'(z)
+						w.xiy(1, 1).polardev; // random point in unit circle
+						u.inf;  v.inf;
 						while (i > 0) {
 							i--; k++;
 							u.asg(v);  v.asg(w);
-							f.asg(w).polyhorner(p);
-							if (f.isZero) break; // exact zero
-							g.asg(w).polyhorner(q);
-							if (g.isZero) {
-								w.asg(1, 1).polardev; // bad luck
+							f.asg(w).polyvalue(p); // evaluate p(w)
+							if (f.isZero) break;   // good luck - exact zero
+							g.asg(w).polyvalue(q); // evaluate p'(w)
+							if (g.isZero) {        // bad  luck - extreme value
+								w.asg(1, 1).polardev;
 								i++; // back half step
 							} else {
 								w.zsub(f.zdiv(g)); // next approximation w -= p(w) / p'(w)
