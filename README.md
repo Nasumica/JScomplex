@@ -25,8 +25,8 @@ Linkage call as:
 `ctx.begin.zmoveTo(z1).zlineTo(z2).zlineTo(z3).close.stroke();`
 
 * Triangle centers solver using cartesian, trilinear, barycentric and tripolar coordinates.<br>
-`var t = new complex(600, 300).triside(250, 350, 400, 15/180 * Math.PI);`<br>
-creates triangle inclined by 15° with sides a = 250, b = 350, c = 400, and circumcenter at (600, 300).<br>
+`var t = new complex(500, 300).triside(250, 350, 400, 15/180 * Math.PI);`<br>
+creates triangle inclined by 15° with sides a = 250, b = 350, c = 400, and circumcenter at (500, 300).<br>
 `ctx.begin.triangle(t).stroke();`<br>
 draws him. To draw incircle enter code:<br>
 `ctx.begin.ccircle(t.I).stroke();`<br>
