@@ -709,7 +709,7 @@ class complex {
 		var a = this.side.a, b = this.side.b, c = this.side.c;
 		this.success = (a < b + c) && (b < c + a) && (c < a + b);
 		if (this.success){
-			var o = new complex(A).trap(B) + new complex(B).trap(C) + new complex(C).trap(A);
+			var o = A.trap(B) + B.trap(C) + C.trap(A);
 			this.direction = Math.sign(o);
 			var P = a + b + c,  s = P/2,  D = Math.abs(o); // Δ = D
 			this.height = {a: 2*D/a, b: 2*D/b, c: 2*D/c};
