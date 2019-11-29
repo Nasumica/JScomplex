@@ -789,6 +789,21 @@ class complex {
 		}
 		return this;
 	}
+	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
+		//function o(u, v, w){return 1 / (1/u + 1/v + 1/w);}
+		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // more precise
+		this.height = {a: a, b: b, c: c};
+		var I = o( a,  b,  c); // inradius I
+		var A = o(-a,  b,  c); // exradius A
+		var B = o( a, -b,  c); // exradius B
+		var C = o( a,  b, -c); // exradius C
+		this.success = (A > 0) && (B > 0) && (C > 0);
+		if (this.success){
+			var E = 2 * Math.sqrt(I * A * B * C); // double area
+			this.triside(E/a, E/b, E/c, inclination, conjugate); // construct from sides
+		}
+		return this;
+	}
 	get trilinear(){// exact trilinear <=> directed distance from sides
 		var a = this.direction * this.linedist(this.vertex.B, this.vertex.C);
 		var b = this.direction * this.linedist(this.vertex.C, this.vertex.A);
