@@ -34,8 +34,8 @@ Mark centroid G, incenter I, orthocenter H, circumcenter O and circumellipse foc
 `[t.G, t.I, t.H, t.O, t.Oe.F1, t.Oe.F2].map(function(z){ctx.begin.zcircle(z, 2).fill();});`
 
 * Spiral of Theodorus, arithmetic and logarithmic spiral, Nautilus spiral, sunflower seeds spiral.
-Implementation of superellipse. To draw Piet Hein supercircle with center at (300, 200) and radius 150 enter<br>
-`ctx.begin.supercircle(2.5, 300, 200, 150).stroke();;`
+Implementation of superellipse. To draw Piet Hein supercircle (shape = 5/2) with center at (300, 200) and radius 150 enter<br>
+`ctx.begin.supercircle(5/2, 300, 200, 150).stroke();;`
 
 * Extension of CanvasRenderingContext2D prototype to using complex numbers as parameters.
 Linkage call as: 
