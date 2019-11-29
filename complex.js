@@ -705,7 +705,7 @@ class complex {
 			this.side = {a: B.zdist(C), b: C.zdist(A), c: A.zdist(B)};
 			this.bisection(A, B, C).obj(this.O);
 		} else this.obj(this.O);
-		this.O.r = this.obj(this.O).zdist(A);
+		this.O.r = this.asg(this.O).zdist(A);
 		var a = this.side.a, b = this.side.b, c = this.side.c;
 		this.success = (a < b + c) && (b < c + a) && (c < a + b);
 		if (this.success){
@@ -770,7 +770,7 @@ class complex {
 		}
 		return this;
 	}
-	triside(a, b, c, inclination = 0, negative = true){// triangle construction from sides
+	triside(a, b, c, inclination = 0, conjugate = true){// triangle construction from sides
 		this.side = {a: a, b: b, c: c};
 		this.success = (a < b + c) && (b < c + a) && (c < a + b);
 		if (this.success){
@@ -779,7 +779,7 @@ class complex {
 			var B = new complex(c, 0);
 			var C = new complex(b*b + c*c - a*a, 4*D).div(2*c);
 			var Z = new complex().cis(inclination);
-			if (negative) {C.conjg; Z.conjg;}
+			if (conjugate) {C.conjg; Z.conjg;}
 			var O = new complex().bisection(A, B, C); // circumcenter
 			// translate to (0, 0), rotate by inclination, translate to origin
 			A.zsub(O).zmul(Z).zadd(this);  
