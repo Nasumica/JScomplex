@@ -916,7 +916,10 @@ class complex {
 			0, -1, i, -i
 	*/
 		this.w = []; // roots
-		function eps(s, t, e = 1e-17){return Math.abs(s.sqrabs - t.sqrabs) < e;} // precision
+		function eps(s, t = {x: 0, y: 0}, e = 1e-17){// precision - Kahan summation
+			var a = new complex(s).abs, b = new complex(t).abs, c = a - b, d = (c - a) + b;
+			return (Math.abs(c) <= e) && (Math.abs(d) <= e);
+		}
 		var p = [], n, i, c = false; // polynom array, degree, index and consistency
 		if (arguments.length == 1 && Array.isArray(a)) {// only one array parameter
 			n = a.length - 1;
@@ -960,12 +963,13 @@ class complex {
 							u.asg(v);  v.asg(w);   // previous 2 iterations
 							f.asg(w).polyvalue(p); // evaluate p(w)
 							if (f.isZero) break;   // good luck - exact zero
+							if (eps(f))   break;   // good enough
 							g.asg(w).polyvalue(q); // evaluate p'(w)
 							if (g.isZero) {        // bad  luck - critical point
 								w.asg(1, 1).polardev;
 								i += 3; // back 3/4 step
 							} else {
-								w.zsub(f.zdiv(g)); // next approximation w -= p(w) / p'(w)
+								w.zsub(f.zdiv(g)); // w -= p(w) / p'(w)
 								if (eps(w, u) || eps(w, v)) // almost done
 								if (i > 20) i = 20; // few more iterations
 							}
