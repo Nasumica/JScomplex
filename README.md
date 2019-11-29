@@ -40,6 +40,6 @@ Mark centroid G, incenter I, orthocenter H, circumcenter O and circumellipse foc
 * Spiral of Theodorus, arithmetic and logarithmic spiral, Nautilus spiral, sunflower seeds spiral.
 Implementation of superellipse. To draw Piet Hein supercircle (shape = 5/2) with center at (300, 200) and radius 150 enter<br>
 `ctx.begin.supercircle(5/2, 300, 200, 150).stroke();`<br>
-To draw 1000 sunflower seed with center at (300, 200) enter something like this<br>
+To draw 1000 sunflower seeds with center at (300, 200) enter something like this<br>
 `for (var n = 1; n <= 1000; n++) ctx.begin.zcircle(new complex(300, 200).seed(n, 4), 2).fill();`
 
