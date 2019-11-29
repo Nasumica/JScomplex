@@ -29,9 +29,9 @@ draws him. To draw incircle enter code:<br>
 or circumcircle<br>
 `ctx.begin.ccircle(t.O).stroke();`<br>
 or circumellipse<br>
-`ctx.begin.eellipse(t.Oe).stroke();`
-
-
+`ctx.begin.eellipse(t.Oe).stroke();`<br>
+Mark centroid G, incenter I, orthocenter H, circumcenter O and circumellipse foci F<sub>1</sub> and F<sub>2</sub><br>
+`[t.G, t.I, t.H, t.O, t.Oe.F1, t.Oe.F2].map(function(z){ctx.begin.zcircle(z, 2).fill();});`
 
 * Spiral of Theodorus, arithmetic and logarithmic spiral, Nautilus spiral, sunflower seeds spiral.
 Implementation of superellipse. To draw Piet Hein supercircle with center at (300, 200) and radius 150 enter<br>
