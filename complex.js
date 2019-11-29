@@ -948,19 +948,31 @@ class complex {
 			var u = new complex(),  v = new complex(),  w = new complex();
 			var f = new complex(),  g = new complex(),  q = [],  d;
 			while (p.length > 1){
-				n = p.length - 1; d = 0;  
-				for (i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++; // can be better
-				if (d > 0 && d == n - 2){// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
-					v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n); // 1st vertex
-					for (i = 0; i < n; i++)// roots are vertices of regular central n-polygon
-						this.w.push(w.asg(v).cyclic(i, n).z);
+				n = p.length - 1; 
+				if (new complex(p[0]).isZero) w.xiy(0); else
+				switch (n) {
+				case 1: // linear
+					w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg;
+					break;
+				case 2: // quadratic
+					u.xiy(0).quadraticeq(p[2], p[1], p[0]);
+					this.w.push(u.z1); this.w.push(u.z2);
 					p.length = 1; // done
-				} else {
-					i = 128; // max 32 to 96 iterations
-					if (new complex(p[0]).isZero) w.xiy(0); else 
-					if (n == 1)
-						w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg; // last is linear
-					else {
+					break;
+				case 3: // cubic
+					u.xiy(0).cubiceq(p[3], p[2], p[1], p[0]);
+					this.w.push(u.z1); this.w.push(u.z2); this.w.push(u.z3);
+					p.length = 1; // done
+					break;
+				default:
+					d = 0; for (i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++; // can be better
+					if (d > 0 && d == n - 2) {// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
+						v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n); // 1st vertex
+						for (i = 0; i < n; i++)// roots are vertices of regular central n-polygon
+							this.w.push(w.asg(v).cyclic(i, n).z);
+						p.length = 1; // done
+					} else { // Newton part
+						i = 32 + 96; // max 32 to 96 iterations
 						q = [];  this.polyprime(p, q); // q(z) = p'(z)
 						w.xiy(1, 1).polardev; // start with random point in unit circle
 						u.inf;  v.inf;
@@ -981,6 +993,8 @@ class complex {
 							}
 						}
 					}
+				}
+				if (p.length > 1){
 					this.w.push(w.z); // put root in list
 					this.polydiv(p, [w.neg.z, 1]); // p /= (z - w) removes root w from polynom p
 				}
