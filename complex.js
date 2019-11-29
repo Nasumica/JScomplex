@@ -361,7 +361,7 @@ class complex {
 	zabout(z, angle){// rotate this about point z
 		return this.about(z.x, z.y, angle);
 	}
-	cycle(m, n = 1){// rotate by m/n part of full circle
+	cyclic(m, n = 1){// rotate by m/n part of full circle
 		return this.rotate(2 * Math.PI * m/n);
 	}
 	times(z1, z2 = {x: 0, y: 0}){// this = z1 + times * (z2 - z1)
@@ -638,7 +638,7 @@ class complex {
 	}
 	seed(n, size = 1, rate = 1, angle = 0){// sunflower seeds
 		const f = 2.3999632297286533222315555066336; // π * (3 - sqrt(5))
-		return this.cis(size * Math.pow(n, rate/2), angle + n * f);
+		return this.zadd(new complex().cis(size * Math.pow(n, rate/2), angle + n * f));
 	}
 	superellipse(shape = 2, angle, xradius = 1, yradius = xradius, symmetry = 4, u = shape, v = u){
 		this.cis(angle * symmetry/4).pos.lcs(xradius, yradius);
@@ -698,7 +698,12 @@ class complex {
 			max: {x: Math.max(A.x, B.x, C.x), y: Math.max(A.y, B.y, C.y)}
 		}; 
 		this.box.size = {x: this.box.max.x - this.box.min.x, y: this.box.max.y - this.box.min.y};
-		if (changed) this.side = {a: B.zdist(C), b: C.zdist(A), c: A.zdist(B)};
+		this.O = {}; // X3 - circumcircle
+		if (changed) {
+			this.side = {a: B.zdist(C), b: C.zdist(A), c: A.zdist(B)};
+			this.bisection(A, B, C).obj(this.O);
+		} else this.obj(this.O);
+		this.O.r = this.obj(this.O).zdist(A);
 		var a = this.side.a, b = this.side.b, c = this.side.c;
 		this.success = (a < b + c) && (b < c + a) && (c < a + b);
 		if (this.success){
@@ -716,8 +721,6 @@ class complex {
 			var p = a*b + b*c + c*a; this.I.a = this.I.r * Math.sqrt(p*p - a*b*c*s - p*s*s)/(p - s*s); // Adams radius
 			this.G = {}; // X2 - centroid 
 			this.xiy(0).zadd(A).zadd(B).zadd(C).div(3).obj(this.G);
-			this.O = {}; // X3 - circumcircle
-			this.O.r = this.bisection(A, B, C).obj(this.O).zdist(A);
 			this.H = {}; // X4 - orthocenter (2OG = GH)
 			this.asg(this.O).anticomplement(this.G).obj(this.H); // allways with respect to G
 			this.angle = {A: Math.asin(a/2/this.O.r), B: Math.asin(b/2/this.O.r)};
@@ -765,20 +768,21 @@ class complex {
 		}
 		return this;
 	}
-	triside(a, b, c, origin = {x: 0, y: 0}, inclination = 0){// triangle construction from sides
+	triside(a, b, c, inclination = 0, negative = true){// triangle construction from sides
 		this.side = {a: a, b: b, c: c};
 		this.success = (a < b + c) && (b < c + a) && (c < a + b);
 		if (this.success){
 			var P = a + b + c,  s = P/2,  D = Math.sqrt(s * (s - a) * (s - b) * (s - c));  
 			var A = new complex(0, 0);
 			var B = new complex(c, 0);
-			var C = new complex(b*b + c*c - a*a, 4*D).div(2*c).conjg;
-			var O = new complex().bisection(A, B, C); // origin
-			var z = new complex().cis(inclination).conjg;
+			var C = new complex(b*b + c*c - a*a, 4*D).div(2*c);
+			var Z = new complex().cis(inclination);
+			if (negative) {C.conjg; Z.conjg;}
+			var O = new complex().bisection(A, B, C); // circumcenter
 			// translate to (0, 0), rotate by inclination, translate to origin
-			A.zsub(O).zmul(z).zadd(origin);  
-			B.zsub(O).zmul(z).zadd(origin);  
-			C.zsub(O).zmul(z).zadd(origin);  
+			A.zsub(O).zmul(Z).zadd(this);  
+			B.zsub(O).zmul(Z).zadd(this);  
+			C.zsub(O).zmul(Z).zadd(this);  
 			this.trivertex(A, B, C, false);
 		}
 		return this;
@@ -947,7 +951,7 @@ class complex {
 				if (d > 0 && d == n - 2){// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
 					v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n); // 1st vertex
 					for (i = 0; i < n; i++)// roots are vertices of regular central n-polygon
-						this.w.push(w.asg(v).cycle(i, n).z);
+						this.w.push(w.asg(v).cyclic(i, n).z);
 					p.length = 1; // done
 				} else {
 					i = 128; // max 32 to 96 iterations
@@ -1189,6 +1193,11 @@ function(shape = 2, z, radius = 1, azimuth = 0){
 CanvasRenderingContext2D.prototype.csupercircle = 
 function(shape = 2, z, azimuth = 0){
 	return this.zsupercircle(shape, z, z.r, azimuth);
+}
+
+CanvasRenderingContext2D.prototype.supertable = 
+function(shape = 2, xpos, ypos, radius = 1, azimuth = 0, symmetry = 4, u = shape, v = u){
+	return this.superellipse(shape, xpos, ypos, radius, radius * (Math.sqrt(5) - 1)/2, azimuth, symmetry, u, v);
 }
 
 CanvasRenderingContext2D.prototype.triangle = function(t) {
