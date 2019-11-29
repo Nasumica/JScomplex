@@ -213,11 +213,13 @@ class complex {
 		var d = this.abs;
 		return d == 0 ? this : this.div(d);
 	}
-	get inc(){
-		return this.zadd(new complex(this).unit);
+	inc(i = 1){
+		return this.izZero ? this.xiy(1) : this.zadd(new complex(this).unit.mul(i));
+		//return this.isZero ? this.xiy(1) : this.mul(1 + i/this.abs);
 	}
-	get dec(){
-		return this.zsub(new complex(this).unit);
+	dec(d = 1){
+		return this.izZero ? this.xiy(-1) : this.zsub(new complex(this).unit.mul(d));
+		//return this.isZero ? this.xiy(-1) : this.mul(1 - d/this.abs);
 	}
 	round(r = 1){
 		return this.scl(r).xiy(Math.round(this.x), Math.round(this.y)).lcs(r); 
