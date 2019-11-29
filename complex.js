@@ -916,7 +916,7 @@ class complex {
 			0, -1, i, -i
 	*/
 		this.w = []; // roots
-		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;} // precission
+		function eps(s, t, e = 1e-17){return Math.abs(s.sqrabs - t.sqrabs) < e;} // precision
 		var p = [], n, i, c = false; // polynom array, degree, index and consistency
 		if (arguments.length == 1 && Array.isArray(a)) {// only one array parameter
 			n = a.length - 1;
@@ -966,7 +966,7 @@ class complex {
 								i += 3; // back 3/4 step
 							} else {
 								w.zsub(f.zdiv(g)); // next approximation w -= p(w) / p'(w)
-								if (h(w.sqrabs, u.sqrabs) || h(w.sqrabs, v.sqrabs))
+								if (eps(w, u) || eps(w, v)) // almost done
 								if (i > 20) i = 20; // few more iterations
 							}
 						}
