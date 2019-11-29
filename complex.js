@@ -78,6 +78,9 @@ class complex {
 	get isZero(){
 		return this.isEqual(0);
 	}
+	get isNum(){
+		return Number.isFinite(this.x) && Number.isFinite(this.y);
+	}
 	get isInf(){
 		return Math.abs(this.x) === Infinity || Math.abs(this.y) === Infinity;
 	}
@@ -337,7 +340,7 @@ class complex {
 		}
 		return this;
 	}
-	rotate(angle){// rotate this about origin
+	rotate(angle){// rotate this about origin by given angle
 		var h = Math.PI/2;
 		if (angle == 0) return this; else 
 		if (angle == h) return this.muli; else 
@@ -357,6 +360,9 @@ class complex {
 	}
 	zabout(z, angle){// rotate this about point z
 		return this.about(z.x, z.y, angle);
+	}
+	cycle(m, n = 1){// rotate by m/n part of full circle
+		return this.rotate(2 * Math.PI * m/n);
 	}
 	times(z1, z2 = {x: 0, y: 0}){// this = z1 + times * (z2 - z1)
 		return this.zsub(z1).zdiv(new complex(z2).zsub(z1)); 
@@ -845,30 +851,22 @@ class complex {
 		return this;
 	}
 	polyprime(p, q){
-		var z = new complex();
-		for (var i = 1; i < p.length; i++){
-			z.asg(new complex(p[i])).mul(i);
-			q.push(z.z);
-		}
+		for (var i = 1; i < p.length; i++)
+			q.push(new complex(p[i]).mul(i).z);
 	}
 	polydiv(p, q){
 		var m = p.length - 1, n = q.length - 1, l = m - n;
 		if (l < 0) p = [0]; else {
 			var r = new Array(l + 1);
 			for (var k = l; k >= 0; k--){
-				var i = n + k;
 				r[k] = {};
-				var z = new complex(p[i]).zdiv(new complex(q[n])).obj(r[k]);
-				for (var j = n; j >= 0; j--){
-					var w = new complex(q[j]).zmul(z).zbus(new complex(p[k + j]));
-					p[k + j] = {}; w.obj(p[k + j]);
-				}
+				var z = new complex(p[n + k]).zdiv(new complex(q[n])).obj(r[k]);
+				for (var j = n; j >= 0; j--)
+					new complex(q[j]).zmul(z).zbus(p[j + k]).obj(p[j + k]);
 			}
 			p.length = r.length;
-			for (var k = 0; k < r.length; k++){
-				var z = new complex(r[k]);
-				p[k] = {}; z.obj(p[k]);
-			}
+			for (var k = 0; k < r.length; k++)
+				new complex(r[k]).obj(p[k]);
 		}
 	}
 	polysolve(a){// simple Newton polynom roots solver
@@ -919,63 +917,66 @@ class complex {
 	*/
 		this.w = []; // roots
 		function h(m, n, eps = 1e-17){return Math.abs(m - n) < eps;} // precission
-		var p = [], q = [];
-		if (arguments.length == 1 && Array.isArray(a)) {
-			for (var i = 0; i < a.length; i++) // copy array as complex polynom
+		var p = [], n, i, c = false; // polynom array, degree, index and consistency
+		if (arguments.length == 1 && Array.isArray(a)) {// only one array parameter
+			n = a.length - 1;
+			for (i = 0; i <= n; i++){ // incremental copy array as complex polynom
 				p.push(new complex(a[i]).z);
-		} else {
-			for (var i = arguments.length - 1; i >= 0; i--) // collect parameters
+				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
+			}
+		} else {// zero or more than one parameters or first parameter is not array
+			n = arguments.length - 1;
+			for (i = n; i >= 0; i--){ //decremental collect parameters
 				p.push(new complex(arguments[i]).z);
+				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
+			}
 		}
-		if (p.length > 0) new complex(p[0]).zsub(this).obj(p[0]); // subtract this from free item
-		// for (var i = 0; i < p.length; i++) console.log('p[',i,'] = ',new complex(p[i]).stringed); // debug
 		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
-		// if (p.length == 0) this.w.push(new complex().inf.z); else
-		// if (p.length == 1) this.w.push(new complex().nan.z); else
-		{
+		if (p.length > 0) {c = true; i = 0; while (i < p.length && (c = new complex(p[i]).isNum)) i++;}
+
+		if (c) {// All is there; solve: p[n]·zⁿ + p[n - 1]·zⁿ⁻¹ + ··· + p[2]·z² + p[1]·z + p[0] = 0
+			// for (i = p.length - 1; i >=0; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // debug
 			var u = new complex(),  v = new complex(),  w = new complex();
-			var f = new complex(),  g = new complex();
+			var f = new complex(),  g = new complex(),  q = [],  d;
 			while (p.length > 1){
-				var n = p.length - 1, d = 0;  
-				for (var i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++;
+				n = p.length - 1; d = 0;  
+				for (i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++; // can be better
 				if (d > 0 && d == n - 2){// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
-					v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n);
-					for (var i = 0; i < n; i++){// roots are vertices of regular central n-polygon
-						w.asg(v).rotate(2 * Math.PI * i / n);
-						this.w.push(w.z);
-					}
+					v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n); // 1st vertex
+					for (i = 0; i < n; i++)// roots are vertices of regular central n-polygon
+						this.w.push(w.asg(v).cycle(i, n).z);
 					p.length = 1; // done
 				} else {
-					var i = 64, k = 0; // max 32 to 48 iterations
+					i = 128; // max 32 to 96 iterations
 					if (new complex(p[0]).isZero) w.xiy(0); else 
-					if (n == 1) 
-						w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg;  // last is linear
+					if (n == 1)
+						w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg; // last is linear
 					else {
 						q = [];  this.polyprime(p, q); // q(z) = p'(z)
-						w.xiy(1, 1).polardev; // random point in unit circle
+						w.xiy(1, 1).polardev; // start with random point in unit circle
 						u.inf;  v.inf;
 						while (i > 0) {
-							i--; k++;
-							u.asg(v);  v.asg(w);
+							i -= 4;
+							u.asg(v);  v.asg(w);   // previous 2 iterations
 							f.asg(w).polyvalue(p); // evaluate p(w)
 							if (f.isZero) break;   // good luck - exact zero
 							g.asg(w).polyvalue(q); // evaluate p'(w)
 							if (g.isZero) {        // bad  luck - critical point
 								w.asg(1, 1).polardev;
-								i++; // back half step
+								i += 3; // back 3/4 step
 							} else {
 								w.zsub(f.zdiv(g)); // next approximation w -= p(w) / p'(w)
 								if (h(w.sqrabs, u.sqrabs) || h(w.sqrabs, v.sqrabs))
-								if (i > 10) i = 10; // few more iterations
+								if (i > 20) i = 20; // few more iterations
 							}
-							i--;
 						}
 					}
-					this.w.push(w.z);
-					this.polydiv(p, [w.neg.z, 1]); // p /= (z - w)
+					this.w.push(w.z); // put root in list
+					this.polydiv(p, [w.neg.z, 1]); // p /= (z - w) removes root w from polynom p
 				}
 			}
 		}
+
 		return this;
 	}
 }
