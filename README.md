@@ -20,6 +20,10 @@ line-line, line-circle and circle-circle intersection; circle tangent; bisection
 
 * Random complex numbers: bi-variate deviates for uniform, rectangular, polar, exponential, normal, Poisson distribution.
 
+* Extension of CanvasRenderingContext2D prototype to using complex numbers as parameters.
+Linkage call as: 
+`ctx.begin.zmoveTo(z1).zlineTo(z2).zlineTo(z3).close.stroke();`
+
 * Triangle centers solver using cartesian, trilinear, barycentric and tripolar coordinates.<br>
 `var t = new complex().triside(250, 350, 400, [600, 300], 15/180 * Math.PI);`<br>
 creates triangle inclined by 15° with sides a = 250, b = 350, c = 400, and circumcenter at (600, 300).<br>
@@ -36,7 +40,3 @@ Mark centroid G, incenter I, orthocenter H, circumcenter O and circumellipse foc
 * Spiral of Theodorus, arithmetic and logarithmic spiral, Nautilus spiral, sunflower seeds spiral.
 Implementation of superellipse. To draw Piet Hein supercircle (shape = 5/2) with center at (300, 200) and radius 150 enter<br>
 `ctx.begin.supercircle(5/2, 300, 200, 150).stroke();`
-
-* Extension of CanvasRenderingContext2D prototype to using complex numbers as parameters.
-Linkage call as: 
-`ctx.begin.zmoveTo(z1).zlineTo(z2).zlineTo(z3).close.stroke();`
