@@ -880,6 +880,7 @@ class complex {
 		return this;
 	}
 	polyprime(p, q){
+		q.length = 0;
 		for (var i = 1; i < p.length; i++)
 			q.push(new complex(p[i]).mul(i).z);
 	}
@@ -971,12 +972,12 @@ class complex {
 			var a = new complex(s).abs, b = new complex(t).abs, c = a - b, d = (c - a) + b;
 			return (Math.abs(c) <= e) && (Math.abs(d) <= e);
 		}
-		var p = [], n, i, c = false; // polynom array, degree, index and consistency
+		var p = [], n, i; // polynom array, degree and index
 		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
 		// for (i = p.length - 1; i >=0; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // debug
-		if (p.length > 0) {c = true; i = 0; while (i < p.length && (c = new complex(p[i]).isNum)) i++;}
+		if (p.length > 0) {i = 0; while (i < p.length && new complex(p[i]).isNum) i++;}
 
-		if (c) {// All is there; solve: p[n]·zⁿ + p[n - 1]·zⁿ⁻¹ + ··· + p[2]·z² + p[1]·z + p[0] = 0
+		if (p.length > 1 && i == p.length) {// Solve: p[n]·zⁿ + p[n - 1]·zⁿ⁻¹ + ··· + p[2]·z² + p[1]·z + p[0] = 0
 			var u = new complex(),  v = new complex(),  w = new complex();
 			var f = new complex(),  g = new complex(),  q = [],  d;
 			while (p.length > 1){
@@ -1004,8 +1005,8 @@ class complex {
 							roots.push(w.asg(v).cyclic(i, n).z);
 						p.length = 1; // done
 					} else { // Newton part
-						i = 32 + 96; // max 32 to 96 iterations
-						q = [];  this.polyprime(p, q); // q(z) = p'(z)
+						i = n * 4 * 1024; // max iterations
+						this.polyprime(p, q); // q(z) = p'(z)
 						w.xiy(1, 1).polardev; // start with random point in unit circle
 						u.inf;  v.inf;
 						while (i > 0) {
