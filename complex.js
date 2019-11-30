@@ -342,6 +342,14 @@ class complex {
 		}
 		return this;
 	}
+	get smoothstep(){
+		var x = this.x;
+		if (x <=  0) this.x = 0; else
+		if (x >=  1) this.x = 1; else
+		if (x > 0.5) this.bus(1).smoothstep.bus(1); else
+		if (x < 0.5) this.x = x * x * (3 - 2 * x); // Hermite cubic spline
+		return this;
+	}
 	rotate(angle){// rotate this about origin by given angle
 		var h = Math.PI/2;
 		if (angle == 0) return this; else 
@@ -709,10 +717,10 @@ class complex {
 		var a = this.side.a, b = this.side.b, c = this.side.c;
 		this.success = (a < b + c) && (b < c + a) && (c < a + b);
 		if (this.success){
-			var o = A.trap(B) + B.trap(C) + C.trap(A);
-			this.direction = Math.sign(o);
+			var o = A.trap(B) + B.trap(C) + C.trap(A); // signed area
+			this.direction = Math.sign(o); // direction of vertices
 			var P = a + b + c,  s = P/2,  D = Math.abs(o); // Δ = D
-			this.height = {a: 2*D/a, b: 2*D/b, c: 2*D/c};
+			this.alt = {a: 2*D/a, b: 2*D/b, c: 2*D/c}; // altitudes, heights
 			this.perimeter = P; this.area = D; this.semi = s;
 			this.omega = Math.atan2(4*D, a*a + b*b + c*c); // Brocard angle
 			this.I = {r: D/s}; // X1 - incircle (weighted average (Aa + Bb + Cc)/(a + b + c))
@@ -723,20 +731,20 @@ class complex {
 			var p = a*b + b*c + c*a; this.I.a = this.I.r * Math.sqrt(p*p - a*b*c*s - p*s*s)/(p - s*s); // Adams radius
 			this.G = {}; // X2 - centroid 
 			this.xiy(0).zadd(A).zadd(B).zadd(C).div(3).obj(this.G);
-			this.H = {}; // X4 - orthocenter (2OG = GH)
+			this.H = {}; // X4 - orthocenter O----G----+----H
 			this.asg(this.O).anticomplement(this.G).obj(this.H); // allways with respect to G
 			this.angle = {A: Math.asin(a/2/this.O.r), B: Math.asin(b/2/this.O.r)};
 			this.angle.C = Math.PI - (this.angle.A + this.angle.B);
-			this.N = {}; // X5 - nine-point circle
+			this.N = {}; // X5 - nine-point circle O-------N-------H
 			this.asg(this.O).halfway(this.H).obj(this.N); this.N.r = this.O.r/2;
 			this.K = {}; // X6 - symmedian point (isogonal conjugate of G, Lemoine)
-			this.asg(this.G).isogonalconjg(A, B, this.I).obj(this.K);
+			this.asg(this.G).isogonalconjg(A, B, this.I).obj(this.K); // allways with respect to I
 			this.Ge = {}; // X7 - Gergonne point (intersection of vertex--contact lines)
 			this.intersection(A, this.I.A, B, this.I.B).obj(this.Ge);
 			this.Na = {}; // X8 - Nagel point (isotonic conjugate of Ge, anticomplement of I)
 			//this.asg(this.Ge).isotonicconjg(A, B, C).obj(this.Na);
 			this.asg(this.I).anticomplement(this.G).obj(this.Na);
-			this.M = {}; // X9 - Mittentpunkt (complement of Ge)
+			this.M = {}; // X9 - Mittentpunkt (complement of Ge) Ge----+----G----M
 			this.asg(this.Ge).complement(this.G).obj(this.M);
 			this.Sp = {}; // X10 - Spieker center (complement of I)
 			this.asg(this.I).complement(this.G).obj(this.Sp); this.Sp.r = this.I.r/2;
@@ -754,7 +762,7 @@ class complex {
 				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
 				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
 			}
-			this.shield = {}; // shield circle
+			this.shield = {}; // shield circle // G----o----H
 			this.shield.r = this.asg(this.G).halfway(this.H).obj(this.shield).zdist(this.G);
 			var Z = Math.sqrt((a*a*a*a + b*b*b*b + c*c*c*c) - (a*a*b*b + b*b*c*c + c*c*a*a)), sq = a*a + b*b + c*c;
 			this.Oe = {// Steiner circumellipse
@@ -792,7 +800,7 @@ class complex {
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		//function o(u, v, w){return 1 / (1/u + 1/v + 1/w);}
 		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // more precise
-		this.height = {a: a, b: b, c: c};
+		this.alt = {a: a, b: b, c: c};
 		var I = o( a,  b,  c); // inradius I
 		var A = o(-a,  b,  c); // exradius A
 		var B = o( a, -b,  c); // exradius B
@@ -818,7 +826,7 @@ class complex {
 		var t = this.trilinear;
 		var a = t.a * this.side.a/2;
 		var b = t.b * this.side.b/2;
-		var c = t.c * this.side.c/2;
+		var c = this.area - (a + b);
 		return {a: a, b: b, c: c}
 	}
 	get barycentricnorm(){
@@ -890,13 +898,35 @@ class complex {
 				new complex(r[k]).obj(p[k]);
 		}
 	}
-	polysolve(a){// simple Newton polynom roots solver
+	polytrim(p){
+		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
+		return p;
+	}
+	polyarg(p, ...arg){
+		var n, i, a;
+		p.length = 0; 
+		if (arg.length == 1 && Array.isArray(arg[0])) {// only one array parameter
+			a = arg[0]; n = a.length - 1;
+			for (i = 0; i <= n; i++){ // incremental copy array as complex polynom
+				p.push(new complex(a[i]).z);
+				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
+			}
+		} else {// zero or more than one parameters or first parameter is not array
+			a = arg; n = a.length - 1;
+			for (i = n; i >= 0; i--){ //decremental collect parameters
+				p.push(new complex(a[i]).z);
+				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
+			}
+		}
+		return p;
+	}
+	polysolve(roots, ...arg){// simple Newton polynom roots solver
 	/*
-		polysolve(  3,  4,  5  )  <=>  3 z² +  4 z    + 5    =  this
-		polysolve( [3,  4,  5] )  <=>  3    +  4 z    + 5 z² =  this
-		polysolve( [3,  4], 5  )  <=> (3    +  4 i) z + 5    =  this
-		polysolve(  3, [4,  5] )  <=>  3 z  + (4      + 5 i) =  this
-		polysolve( [[3, 4], 5] )  <=>  3    +  4 i    + 5 z  =  this
+		polysolve(roots,  3,  4,  5  )  <=>  3 z² +  4 z    + 5     = this
+		polysolve(roots, [3,  4,  5] )  <=>  3    +  4 z    + 5 z²  = this
+		polysolve(roots, [3,  4], 5  )  <=> (3    +  4 i) z + 5     = this
+		polysolve(roots,  3, [4,  5] )  <=>  3 z  + (4      + 5 i)  = this
+		polysolve(roots, [[3, 4], 5] )  <=>  3    +  4 i    + 5 z   = this
 
 		find all polynom roots in complex plane: 
 			p[n] zⁿ + p[n - 1] zⁿ⁻¹ + ··· + p[2] z² + p[1] z + p[0] = this
@@ -904,62 +934,49 @@ class complex {
 		solwe:
 			z⁴ - 4 z³ - 19 z² + 46 z + 120 = 0
 		code:
-			var z = new complex().polysolve(1, -4, -19, 46, 120);
+			var roots = []; new complex().polysolve(roots, 1, -4, -19, 46, 120);
 		roots:
 			-3, -2, 4, 5
 
 		solve:
 			z⁶ - 6 z⁵ - 26 z⁴ + 144 z³ - 47 z² - 210 z = 0
 		code:
-			var z = new complex().polysolve(1, -6, -26, 144, -47, -210, 0);
+			var roots = []; new complex().polysolve(roots, 1, -6, -26, 144, -47, -210, 0);
 		roots:
 			-5, -1, 0, 2, 3, 7
 
 		solve:
 			z⁴ = 1
 		code: 
-			var z = new complex(1).polysolve(1, 0, 0, 0, 0);
+			var roots = []; new complex(1).polysolve(roots, 1, 0, 0, 0, 0);
 		roots:
 			1, -1, i, -i
 
 		solve:
 			z⁴ - (7 + 6 i) z³ - (1 - 30 i) z² + (67 - 4 i) z - (60 + 80 i) = 0
 		code:
-			var z = new complex().polysolve(1, [-7, -6], [-1, 30], [67, -4], [-60, -80]);
+			var roots = []; new complex().polysolve(roots, 1, [-7, -6], [-1, 30], [67, -4], [-60, -80]);
 		roots:
 			4, 2 + i, i - 2, 3 + 4 i
 
 		solve:
 			z⁴ + z³ + z² + z + 1 = 1
 		code:
-			var z = new complex(1).polysolve(1, 1, 1, 1, 1);
+			var roots = []; new complex(1).polysolve(roots, 1, 1, 1, 1, 1);
 		roots:
 			0, -1, i, -i
 	*/
-		this.w = []; // roots
+		roots.length = 0; // reset roots array
 		function eps(s, t = {x: 0, y: 0}, e = 1e-17){// precision - Kahan summation
 			var a = new complex(s).abs, b = new complex(t).abs, c = a - b, d = (c - a) + b;
 			return (Math.abs(c) <= e) && (Math.abs(d) <= e);
 		}
 		var p = [], n, i, c = false; // polynom array, degree, index and consistency
-		if (arguments.length == 1 && Array.isArray(a)) {// only one array parameter
-			n = a.length - 1;
-			for (i = 0; i <= n; i++){ // incremental copy array as complex polynom
-				p.push(new complex(a[i]).z);
-				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
-			}
-		} else {// zero or more than one parameters or first parameter is not array
-			n = arguments.length - 1;
-			for (i = n; i >= 0; i--){ //decremental collect parameters
-				p.push(new complex(arguments[i]).z);
-				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
-			}
-		}
-		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
+		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
+		// for (i = p.length - 1; i >=0; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // debug
 		if (p.length > 0) {c = true; i = 0; while (i < p.length && (c = new complex(p[i]).isNum)) i++;}
 
 		if (c) {// All is there; solve: p[n]·zⁿ + p[n - 1]·zⁿ⁻¹ + ··· + p[2]·z² + p[1]·z + p[0] = 0
-			// for (i = p.length - 1; i >=0; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // debug
 			var u = new complex(),  v = new complex(),  w = new complex();
 			var f = new complex(),  g = new complex(),  q = [],  d;
 			while (p.length > 1){
@@ -971,12 +988,12 @@ class complex {
 					break;
 				case 2: // quadratic
 					u.xiy(0).quadraticeq(p[2], p[1], p[0]);
-					this.w.push(u.z1); this.w.push(u.z2);
+					roots.push(u.z1); roots.push(u.z2);
 					p.length = 1; // done
 					break;
 				case 3: // cubic
 					u.xiy(0).cubiceq(p[3], p[2], p[1], p[0]);
-					this.w.push(u.z1); this.w.push(u.z2); this.w.push(u.z3);
+					roots.push(u.z1); roots.push(u.z2); roots.push(u.z3);
 					p.length = 1; // done
 					break;
 				default:
@@ -984,7 +1001,7 @@ class complex {
 					if (d > 0 && d == n - 2) {// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
 						v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n); // 1st vertex
 						for (i = 0; i < n; i++)// roots are vertices of regular central n-polygon
-							this.w.push(w.asg(v).cyclic(i, n).z);
+							roots.push(w.asg(v).cyclic(i, n).z);
 						p.length = 1; // done
 					} else { // Newton part
 						i = 32 + 96; // max 32 to 96 iterations
@@ -1010,7 +1027,7 @@ class complex {
 					}
 				}
 				if (p.length > 1){
-					this.w.push(w.z); // put root in list
+					roots.push(w.z); // put root in list
 					this.polydiv(p, [w.neg.z, 1]); // p /= (z - w) removes root w from polynom p
 				}
 			}
@@ -1030,32 +1047,22 @@ Object.defineProperty(CanvasRenderingContext2D.prototype, 'close', {
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'width', {
-	enumerable: false,
-	configurable: false,
 	get() { return this.canvas.width; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'height', {
-	enumerable: false,
-	configurable: false,
 	get() { return this.canvas.height; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'sizeX', {
-	enumerable: false,
-	configurable: false,
 	get() { return this.width; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'sizeY', {
-	enumerable: false,
-	configurable: false,
 	get() { return this.height; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'size', {
-	enumerable: false,
-	configurable: false,
 	get() { return {x: this.sizeX, y: this.sizeY}; }
 });
 
@@ -1067,16 +1074,7 @@ CanvasRenderingContext2D.prototype.clear = function(){
 }
 
 CanvasRenderingContext2D.prototype.strokefill = function () {
-	this.stroke(); this.fill();
-	return this;
-}
-
-CanvasRenderingContext2D.prototype.startPath = function(){
-	this.beginPath(); return this;
-}
-
-CanvasRenderingContext2D.prototype.endPath = function(){
-	this.closePath(); return this;
+	this.stroke(); this.fill(); return this;
 }
 
 CanvasRenderingContext2D.prototype.zmoveTo = function(z){
