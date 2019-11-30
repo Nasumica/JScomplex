@@ -4,6 +4,9 @@ class complex {
 	
 	JavaScript implementation by Србислав Д. Нешић, November 2019
 	srbislav.nesic@gmail.com
+	Nasumica Agencija
+	
+	https://github.com/Nasumica/JScomplex
 
 	Euler identity e ^ (i * π) + 1 = 0: new complex(Math.PI).muli.exp.add(1);
 */
