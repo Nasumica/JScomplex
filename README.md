@@ -9,7 +9,7 @@ JavaScript complex arithmetic class with complex canvas exstension..
 z⁴ - (7 + 6 i) z³ - (1 - 30 i) z² + (67 - 4 i) z - (50 + 65 i) = 10 + 15 i<br>
 enter code<br>
 `
-        var z = new complex(10, 15).polysolve(1, [-7, -6], [-1, 30], [67, -4], [-50, -65]);
+        var roots = []; new complex(10, 15).polysolve(roots, 1, [-7, -6], [-1, 30], [67, -4], [-50, -65]);
 `<br>
 and give roots: 4, 2 + i, i - 2, 3 + 4 i.
 
