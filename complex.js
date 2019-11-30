@@ -723,7 +723,9 @@ class complex {
 			var o = A.trap(B) + B.trap(C) + C.trap(A); // signed area
 			this.direction = Math.sign(o); // direction of vertices
 			var P = a + b + c,  s = P/2,  D = Math.abs(o); // Δ = D
-			this.alt = {a: 2*D/a, b: 2*D/b, c: 2*D/c}; // altitudes, heights
+			var ra = s - a, rb = s - b, rc = s - c;
+			this.vertex.A.r = ra; this.vertex.B.r = rb; this.vertex.C.r = rc;
+			this.altitude = {a: 2*D/a, b: 2*D/b, c: 2*D/c}; // altitudes, heights
 			this.perimeter = P; this.area = D; this.semi = s;
 			this.omega = Math.atan2(4*D, a*a + b*b + c*c); // Brocard angle
 			this.I = {r: D/s}; // X1 - incircle (weighted average (Aa + Bb + Cc)/(a + b + c))
@@ -765,7 +767,7 @@ class complex {
 				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
 				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
 			}
-			this.shield = {}; // shield circle // G----o----H
+			this.shield = {}; // shield circle G----o----H (GH is diameter)
 			this.shield.r = this.asg(this.G).halfway(this.H).obj(this.shield).zdist(this.G);
 			var Z = Math.sqrt((a*a*a*a + b*b*b*b + c*c*c*c) - (a*a*b*b + b*b*c*c + c*c*a*a)), sq = a*a + b*b + c*c;
 			this.Oe = {// Steiner circumellipse
@@ -776,10 +778,19 @@ class complex {
 			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
 			this.cis(this.Oe.c, this.Oe.o).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // foci
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
-			this.barycentricxiy(1/(b*b-c*c), 1/(c*c-a*a), 1/(a*a-b*b)).obj(this.S);
-			this.asg(this.O);
+			this.barycentricfun(a, b, c, function(a, b, c){return 1/(b*b-c*c);}).obj(this.S);
+			// excircles Ja, Jb, Jc
+			this.Ja = {r: D/ra}; this.trilinearxiy(-1,  1,  1).obj(this.Ja);
+			this.Jb = {r: D/rb}; this.trilinearxiy( 1, -1,  1).obj(this.Jb);
+			this.Jc = {r: D/rc}; this.trilinearxiy( 1,  1, -1).obj(this.Jc);
+			// Soddy circles
+			var rrr = ra*rb*rc, sss = ra*rb+rb*rc+rc*ra, ttt = 2*Math.sqrt(rrr*(ra+rb+rc));
+			this.SO = {r: Math.abs(rrr/(sss - ttt))}; // X175 
+			this.SI = {r: Math.abs(rrr/(sss + ttt))}; // X176
+			this.barycentricxiy(a - this.Ja.r, b - this.Jb.r, c - this.Jc.r).obj(this.SO);
+			this.barycentricxiy(a + this.Ja.r, b + this.Jb.r, c + this.Jc.r).obj(this.SI);
 		}
-		return this;
+		return this.asg(this.O);
 	}
 	triside(a, b, c, inclination = 0, conjugate = true){// triangle construction from sides
 		this.side = {a: a, b: b, c: c};
@@ -803,15 +814,15 @@ class complex {
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		//function o(u, v, w){return 1 / (1/u + 1/v + 1/w);}
 		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // more precise
-		this.alt = {a: a, b: b, c: c};
+		this.altitude = {a: a, b: b, c: c};
 		var I = o( a,  b,  c); // inradius I
 		var A = o(-a,  b,  c); // exradius A
 		var B = o( a, -b,  c); // exradius B
 		var C = o( a,  b, -c); // exradius C
 		this.success = (A > 0) && (B > 0) && (C > 0);
 		if (this.success){
-			var E = 2 * Math.sqrt(I * A * B * C); // double area
-			this.triside(E/a, E/b, E/c, inclination, conjugate); // construct from sides
+			var S = 2 * Math.sqrt(I * A * B * C); // double area
+			this.triside(S/a, S/b, S/c, inclination, conjugate); // construct from sides
 		}
 		return this;
 	}
@@ -853,8 +864,14 @@ class complex {
 		this.vrotate(this.vertex.B, this.vertex.A).zadd(this.I);
 		return this;
 	}
+	trilinearfun(a, b, c, f){
+		return this.trilinearxiy(f(a, b, c), f(b, c, a), f(c, a, b));
+	}
 	barycentricxiy(a, b, c){// G = {1 : 1 : 1}
 		return this.trilinearxiy(a/this.side.a, b/this.side.b, c/this.side.c);
+	}
+	barycentricfun(a, b, c, f){
+		return this.barycentricxiy(f(a, b, c), f(b, c, a), f(c, a, b));
 	}
 	tripolarxiy(a, b, c){// O = {R : R : R}
 		var A = new complex(this.vertex.A); A.r = a;
