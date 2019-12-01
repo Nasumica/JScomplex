@@ -14,7 +14,7 @@ enter code<br>
 and give roots: 4, 2 + i, i - 2, 3 + 4 i.
 
 * Point manipulation operators: translation, rotation, projection, reflection;
-isotonic, isogonal and harmonic conjugates;
+isotomic, isogonal and harmonic conjugates;
 directed distance;
 line-line, line-circle and circle-circle intersection; circle tangent; bisection.
 
