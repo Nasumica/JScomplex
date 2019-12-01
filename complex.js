@@ -542,8 +542,11 @@ class complex {
 	dist(x, y){// distance of this to point (x, y)
 		return new complex(x, y).zsub(this).abs;
 	}
-	zdist(z){
-		return this.dist(z.x, z.y);
+	zdist(z1, z2){// distance to point or line
+		if (arguments.length < 2 || new complex(z2).isSame(z1)) 
+			return this.dist(z1.x, z1.y); 
+		else
+			return this.zdist(new complex(this).ortho(z1, z2));
 	}
 	azimuth(x, y){// angle of this -- (0, 0) -- (x, y)
 		return new complex(x, y).zdiv(this).arg;
@@ -553,9 +556,6 @@ class complex {
 	}
 	linedist(z1, z2 = {x: 0, y: 0}){// directed distance of this to line z1--z2 
 		return new complex(z1).zdist(z2) * new complex(this).times(z1, z2).y;
-	}
-	abslinedist(z1, z2 = {x: 0, y: 0}){// absolut distance of this to line z1--z2 
-		return Math.abs(this.linedist(z1, z2));
 	}
 	toward(x, y, len = 1){
 		if (this.isEqual(x, y))
@@ -793,13 +793,13 @@ class complex {
 			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
 			this.cis(this.Oe.c, this.Oe.o).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // foci
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
-			this.barycentricfun(a, b, c, function(a, b, c){return 1/(b*b-c*c);}).obj(this.S);
+			this.barycentricfun(a, b, c, function(a, b, c){return 1/(b * b - c * c);}).obj(this.S);
 			// excircles Ja, Jb, Jc
 			this.Ja = {r: D/ra}; this.trilinearxiy(-1,  1,  1).obj(this.Ja);
 			this.Jb = {r: D/rb}; this.trilinearxiy( 1, -1,  1).obj(this.Jb);
 			this.Jc = {r: D/rc}; this.trilinearxiy( 1,  1, -1).obj(this.Jc);
 			// Soddy circles 
-			this.SO = {}; // X175 Soddy outer circle (isoperimetric point)
+			this.SO = {}; // X175 Soddy outer circle (isoperimetric point) exists if a + b + c > 4R + r
 			this.SO.r = this.barycentricxiy(a - this.Ja.r, b - this.Jb.r, c - this.Jc.r).obj(this.SO).zdist(A) + ra;
 			this.SI = {}; // X176 Soddy inner circle (equal detour point)
 			this.SI.r = this.barycentricxiy(a + this.Ja.r, b + this.Jb.r, c + this.Jc.r).obj(this.SI).zdist(A) - ra;
@@ -815,13 +815,12 @@ class complex {
 			var B = new complex(c, 0);
 			var C = new complex(b*b + c*c - a*a, 4*D).div(2*c);
 			var Z = new complex().cis(inclination);
-			if (conjugate) {C.conjg; Z.conjg;}
+			if (conjugate) {C.conjg; Z.conjg;} // above or below side c
 			var O = new complex().bisection(A, B, C); // circumcenter
-			// translate to (0, 0), rotate by inclination, translate to origin
-			A.zsub(O).zmul(Z).zadd(this);  
-			B.zsub(O).zmul(Z).zadd(this);  
-			C.zsub(O).zmul(Z).zadd(this);  
-			this.trivertex(A, B, C, false);
+			A.zsub(O).zmul(Z).zadd(this);   // translate triangle to (0, 0),
+			B.zsub(O).zmul(Z).zadd(this);   // rotate by inclination,
+			C.zsub(O).zmul(Z).zadd(this);   // translate to origin,
+			this.trivertex(A, B, C, false); // construct from vertices
 		}
 		return this;
 	}
@@ -840,14 +839,14 @@ class complex {
 		}
 		return this;
 	}
-	trilineinc(pointA, pointB, circle){// triangle cnstruction from line and incircle (or excircle)
+	trilineinc(pointA, pointB, circle){// triangle cnstruction from (tangent) line and incircle (or excircle C)
 		var z = new complex().circledif(pointA, pointB, circle); // line-circle distance vector (usually 0)
 		var A = new complex(pointA).zsub(z).tangent(circle); // translate line as circle tangent and
 		var B = new complex(pointB).zsub(z).tangent(circle); // find tangent points from vertices A and B
 		var U = new complex().iff(A.z1, A.z2, // select tangent points
-			new complex(A.z1).abslinedist(A, B) > new complex(A.z2).abslinedist(A, B));
+			new complex(A.z1).zdist(A, B) > new complex(A.z2).zdist(A, B));
 		var V = new complex().iff(B.z1, B.z2, // which is not lies on side c (A--B)
-			new complex(B.z1).abslinedist(A, B) > new complex(B.z2).abslinedist(A, B));
+			new complex(B.z1).zdist(A, B) > new complex(B.z2).zdist(A, B));
 		var C = new complex().intersection(A, U, B, V); // find vertex C
 		this.success = !C.isInf;
 		if (this.success) this.trivertex(A, B, C); // construct from vertices
@@ -905,10 +904,12 @@ class complex {
 		var B = new complex(this.vertex.B); B.r = b;
 		var C = new complex(this.vertex.C); C.r = c;
 		var z = new complex(C).circlecircle(A, B);
-		var u = C.r - new complex(z.z1).zdist(C);
-		var v = C.r - new complex(z.z2).zdist(C);
-		if (Math.abs(u) < Math.abs(v)) this.asg(z.z1); else this.asg(z.z2);
-		return this;
+		var u = Math.abs(C.r - new complex(z.z1).zdist(C));
+		var v = Math.abs(C.r - new complex(z.z2).zdist(C));
+		return this.iff(z.z1, z.z2, u < v);
+	}
+	tripolarfun(a, b, c, f){
+		return this.tripolarxiy(f(a, b, c), f(b, c, a), f(c, a, b));
 	}
 	get stringed(){
 		var z = new complex(this).round(100000);
