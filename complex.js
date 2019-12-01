@@ -652,7 +652,7 @@ class complex {
 		return this;
 	}
 	tangent(circle){// simpler usage
-		var z = new complex(this); return this.circletangent(z, circle).asg(z);
+		return this.circletangent(this.z, circle);
 	}
 	arithSpiral(a, b, t){
 		return this.cis(a + b * t, t);
