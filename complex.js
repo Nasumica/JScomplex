@@ -332,23 +332,24 @@ class complex {
 	get atan(){
 		return this.muli.atanh.divi;
 	}
-	horner(){// Horner's scheme
-		var z = new complex();
+	horner(){// Horner's scheme polynom evaluate
+		var z = {}; this.obj(z).xiy(0);
 		for (var i = 0; i < arguments.length; i++)
-			z.zmul(this).zadd(new complex(arguments[i]));
-		return this.asg(z);
+			this.zmul(z).zadd(new complex(arguments[i]));
+		return this;
 	}
 	spline(){// first arg for this = 0, last arg for this = 1, else somewhere between smoothly
-		var t = new complex(this), s = new complex(1).zsub(t); // t = this, s = 1 - t
-		var n = arguments.length - 1, m = 0, b = 1;
-		this.xiy(0);
-		while (n >= 0){// $b = {arguments.length - 1 \choose n}$
-			this.zadd(new complex(arguments[n]).mul(b).zmul(new complex(s).npow(m)).zmul(new complex(t).npow(n)));
-			m++; b *= n; b /= m; n--;
+		if (arguments.length > 0){
+			var t = new complex(this), s = new complex(1).zsub(t); // t = this, s = 1 - t
+			var n = arguments.length - 1, m = 0, b = 1;  this.xiy(0);
+			while (n >= 0){// $b = {arguments.length - 1 \choose n}$
+				this.zadd(new complex(arguments[n]).mul(b).zmul(new complex(s).npow(m)).zmul(new complex(t).npow(n)));
+				m++; b *= n; b /= m; n--;
+			}
 		}
 		return this;
 	}
-	get smoothstep(){
+	get smoothstep(){// smoothstep real part
 		var x = this.x;
 		if (x <=  0) this.x = 0; else
 		if (x >=  1) this.x = 1; else
@@ -413,8 +414,7 @@ class complex {
 			new complex(z2).zsub(z1).mul(2),           // B = 2 (z2 - z1)
 			new complex(z1)                            // C = z1
 		);
-		this.asg(this.z1); // usually 0 <= x <= 1 and y = 0
-		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
+		this.iff(this.z1, this.z2, Math.abs(this.z1.y) < Math.abs(this.z2.y));
 		return this;
 	}
 	quadinter(z1, z2, z3){// t = this, s = 1-t, result = z1*s*s + 2z2*s*t + z3*t*t
