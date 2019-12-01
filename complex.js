@@ -48,10 +48,12 @@ class complex {
 		if (arguments.length < 2) {theta = rho; rho = 1;} // if ρ is ommited then ρ = 1
 		return this.xiy(rho * Math.cos(theta), rho * Math.sin(theta));
 	}
-	asg(z){// copy z to this
-		this.xiy();
-		if (typeof z.x !== 'undefined') this.x = Number(z.x);
-		if (typeof z.y !== 'undefined') this.y = Number(z.y);
+	asg(z, condition = true){// copy z to this
+		if (condition){
+			this.xiy();
+			if (typeof z.x !== 'undefined') this.x = Number(z.x);
+			if (typeof z.y !== 'undefined') this.y = Number(z.y);
+		}
 		return this;
 	}
 	obj(z){// copy this to z
@@ -483,9 +485,9 @@ class complex {
 			new complex(z2).zsub(z1).mul(3),                   // C = 3 (z2 - z1)
 			new complex(z1)                                    // D = z1
 		);
-		this.asg(this.z1);
-		if (Math.abs(this.y) > Math.abs(this.z2.y)) this.asg(this.z2);
-		if (Math.abs(this.y) > Math.abs(this.z3.y)) this.asg(this.z3);
+		this.asg(this.z1)
+			.asg(this.z2, Math.abs(this.y) > Math.abs(this.z2.y))
+			.asg(this.z3, Math.abs(this.y) > Math.abs(this.z3.y));
 		return this;
 	}
 	bezierinter(z1, z2, z3, z4){// t = this, s = 1-t, result = z1*s*s*s + 3z2*s*s*t + 3z3*s*t*t + z4*t*t*t
