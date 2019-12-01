@@ -551,6 +551,9 @@ class complex {
 	linedist(z1, z2 = {x: 0, y: 0}){// directed distance of this to line z1--z2 
 		return new complex(z1).zdist(z2) * new complex(this).times(z1, z2).y;
 	}
+	abslinedist(z1, z2 = {x: 0, y: 0}){// absolut distance of this to line z1--z2 
+		return Math.abs(this.linedist(z1, z2));
+	}
 	toward(x, y, len = 1){
 		if (this.isEqual(x, y))
 			return this;
@@ -566,7 +569,13 @@ class complex {
 		else
 			return this.asg(new complex(circle).ztoward(this, circle.r));
 	}
-	isotonicconjg(A, B, C){
+	circlesub(circle){// distance vector from nearest point on circle
+		return this.zsub(new complex(this).oncircle(circle));
+	}
+	circledif(z1, z2, circle){// distance vector from line to circle
+		return this.asg(circle).ortho(z1, z2).circlesub(circle);
+	}
+	isotomicconjg(A, B, C){
 		return this.intersection(
 			A, new complex().intersection(A, this, B, C).crossover(B, C), 
 			B, new complex().intersection(B, this, C, A).crossover(C, A));
@@ -638,6 +647,9 @@ class complex {
 		}
 		this.asg(point); this.r = this.zdist(this.z1);
 		return this;
+	}
+	tangent(circle){// simpler usage
+		var z = new complex(this); return this.circletangent(z, circle).asg(z);
 	}
 	arithSpiral(a, b, t){
 		return this.cis(a + b * t, t);
@@ -746,8 +758,8 @@ class complex {
 			this.asg(this.G).isogonalconjg(A, B, this.I).obj(this.K); // allways with respect to I
 			this.Ge = {}; // X7 - Gergonne point (intersection of vertex--contact lines)
 			this.intersection(A, this.I.A, B, this.I.B).obj(this.Ge);
-			this.Na = {}; // X8 - Nagel point (isotonic conjugate of Ge, anticomplement of I)
-			//this.asg(this.Ge).isotonicconjg(A, B, C).obj(this.Na);
+			this.Na = {}; // X8 - Nagel point (isotomic conjugate of Ge, anticomplement of I)
+			//this.asg(this.Ge).isotomicconjg(A, B, C).obj(this.Na);
 			this.asg(this.I).anticomplement(this.G).obj(this.Na);
 			this.M = {}; // X9 - Mittentpunkt (complement of Ge) Ge----+----G----M
 			this.asg(this.Ge).complement(this.G).obj(this.M);
@@ -767,7 +779,7 @@ class complex {
 				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
 				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
 			}
-			this.shield = {}; // shield circle G----o----H (GH is diameter)
+			this.shield = {}; // shield circle G----o----H (GH = diameter)
 			this.shield.r = this.asg(this.G).halfway(this.H).obj(this.shield).zdist(this.G);
 			var Z = Math.sqrt((a*a*a*a + b*b*b*b + c*c*c*c) - (a*a*b*b + b*b*c*c + c*c*a*a)), sq = a*a + b*b + c*c;
 			this.Oe = {// Steiner circumellipse
@@ -783,12 +795,11 @@ class complex {
 			this.Ja = {r: D/ra}; this.trilinearxiy(-1,  1,  1).obj(this.Ja);
 			this.Jb = {r: D/rb}; this.trilinearxiy( 1, -1,  1).obj(this.Jb);
 			this.Jc = {r: D/rc}; this.trilinearxiy( 1,  1, -1).obj(this.Jc);
-			// Soddy circles
-			var rrr = ra*rb*rc, sss = ra*rb+rb*rc+rc*ra, ttt = 2*Math.sqrt(rrr*(ra+rb+rc));
-			this.SO = {r: Math.abs(rrr/(sss - ttt))}; // X175 
-			this.SI = {r: Math.abs(rrr/(sss + ttt))}; // X176
-			this.barycentricxiy(a - this.Ja.r, b - this.Jb.r, c - this.Jc.r).obj(this.SO);
-			this.barycentricxiy(a + this.Ja.r, b + this.Jb.r, c + this.Jc.r).obj(this.SI);
+			// Soddy circles 
+			this.SO = {}; // X175 Soddy outer circle
+			this.SO.r = this.barycentricxiy(a - this.Ja.r, b - this.Jb.r, c - this.Jc.r).obj(this.SO).zdist(A) + ra;
+			this.SI = {}; // X176 Soddy inner circle
+			this.SI.r = this.barycentricxiy(a + this.Ja.r, b + this.Jb.r, c + this.Jc.r).obj(this.SI).zdist(A) - ra;
 		}
 		return this.asg(this.O);
 	}
@@ -824,6 +835,19 @@ class complex {
 			var S = 2 * Math.sqrt(I * A * B * C); // double area
 			this.triside(S/a, S/b, S/c, inclination, conjugate); // construct from sides
 		}
+		return this;
+	}
+	trilineinc(pointA, pointB, circle){// triangle cnstruction from line and incircle
+		var d = new complex().circledif(pointA, pointB, circle);
+		var A = new complex(pointA).zsub(d).tangent(circle);
+		var B = new complex(pointB).zsub(d).tangent(circle); 
+		var U = new complex(A.z1).abslinedist(A, B) > new complex(A.z2).abslinedist(A, B)
+			? new complex(A.z1) : new complex(A.z2);
+		var V = new complex(B.z1).abslinedist(A, B) > new complex(B.z2).abslinedist(A, B)
+			? new complex(B.z1) : new complex(B.z2);
+		var C = new complex().intersection(A, U, B, V);
+		this.success = !C.isInf;
+		if (this.success) this.trivertex(A, B, C);
 		return this;
 	}
 	get trilinear(){// exact trilinear <=> directed distance from sides
