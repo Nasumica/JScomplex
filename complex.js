@@ -242,6 +242,9 @@ class complex {
 	zdcp(z){
 		return this.dcp(z.x, z.y);
 	}
+	iff(ztrue, zfalse, condition = true){
+		return this.asg(condition ? ztrue : zfalse);
+	}
 	get theo(){// spiral of Theodorus
 		if (this.isZero)
 			return this.xiy(1);
@@ -796,9 +799,9 @@ class complex {
 			this.Jb = {r: D/rb}; this.trilinearxiy( 1, -1,  1).obj(this.Jb);
 			this.Jc = {r: D/rc}; this.trilinearxiy( 1,  1, -1).obj(this.Jc);
 			// Soddy circles 
-			this.SO = {}; // X175 Soddy outer circle
+			this.SO = {}; // X175 Soddy outer circle (isoperimetric point)
 			this.SO.r = this.barycentricxiy(a - this.Ja.r, b - this.Jb.r, c - this.Jc.r).obj(this.SO).zdist(A) + ra;
-			this.SI = {}; // X176 Soddy inner circle
+			this.SI = {}; // X176 Soddy inner circle (equal detour point)
 			this.SI.r = this.barycentricxiy(a + this.Ja.r, b + this.Jb.r, c + this.Jc.r).obj(this.SI).zdist(A) - ra;
 		}
 		return this.asg(this.O);
@@ -837,17 +840,17 @@ class complex {
 		}
 		return this;
 	}
-	trilineinc(pointA, pointB, circle){// triangle cnstruction from line and incircle
-		var d = new complex().circledif(pointA, pointB, circle);
-		var A = new complex(pointA).zsub(d).tangent(circle);
-		var B = new complex(pointB).zsub(d).tangent(circle); 
-		var U = new complex(A.z1).abslinedist(A, B) > new complex(A.z2).abslinedist(A, B)
-			? new complex(A.z1) : new complex(A.z2);
-		var V = new complex(B.z1).abslinedist(A, B) > new complex(B.z2).abslinedist(A, B)
-			? new complex(B.z1) : new complex(B.z2);
-		var C = new complex().intersection(A, U, B, V);
+	trilineinc(pointA, pointB, circle){// triangle cnstruction from line and incircle (or excircle)
+		var z = new complex().circledif(pointA, pointB, circle); // line-circle distance vector (usually 0)
+		var A = new complex(pointA).zsub(z).tangent(circle); // translate line as circle tangent and
+		var B = new complex(pointB).zsub(z).tangent(circle); // find tangent points from vertices A and B
+		var U = new complex().iff(A.z1, A.z2, // select tangent points
+			new complex(A.z1).abslinedist(A, B) > new complex(A.z2).abslinedist(A, B));
+		var V = new complex().iff(B.z1, B.z2, // which is not lies on side c (A--B)
+			new complex(B.z1).abslinedist(A, B) > new complex(B.z2).abslinedist(A, B));
+		var C = new complex().intersection(A, U, B, V); // find vertex C
 		this.success = !C.isInf;
-		if (this.success) this.trivertex(A, B, C);
+		if (this.success) this.trivertex(A, B, C); // construct from vertices
 		return this;
 	}
 	get trilinear(){// exact trilinear <=> directed distance from sides
@@ -1275,11 +1278,13 @@ function(shape = 2, xpos, ypos, radius = 1, azimuth = 0, symmetry = 4, u = shape
 }
 
 CanvasRenderingContext2D.prototype.triangle = function(t) {
-	return this
-	.zmoveTo(t.vertex.A)
-	.zlineTo(t.vertex.B)
-	.zlineTo(t.vertex.C)
-	.close;
+	if (t.success){
+		return this
+		.zmoveTo(t.vertex.A)
+		.zlineTo(t.vertex.B)
+		.zlineTo(t.vertex.C)
+		.close;
+	} else return this;
 }
 
 CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
