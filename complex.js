@@ -192,7 +192,15 @@ class complex {
 		if (this.x == 0) return this.xiy(1 / this.y).divi; else
 			return this.conjg.lcs(this.sqrabs);
 	}
+	mod(x = 1, y = 0){
+		var z = new complex(this);
+		return this.div(x, y).floor().mul(x, y).zbus(z);
+	}
+	zmod(z){
+		return this.mod(z.x, z.y);
+	}
 	get sqr(){// this²
+		//return this.cis(this.sqrabs, this.arg);
 		return this.zmul(this);
 	}
 	get cub(){// this³
@@ -218,13 +226,14 @@ class complex {
 		var d = this.abs;
 		return d == 0 ? this : this.div(d);
 	}
-	inc(i = 1){
-		return this.izZero ? this.xiy(1) : this.zadd(new complex(this).unit.mul(i));
-		//return this.isZero ? this.xiy(1) : this.mul(1 + i/this.abs);
+	get theo(){// sqrt(ρ + 1) cis (θ + 90°), spiral of Theodorus
+		return this.isZero ? this.xiy(1) : this.zadd(new complex(this).unit.muli);
 	}
-	dec(d = 1){
-		return this.izZero ? this.xiy(-1) : this.zsub(new complex(this).unit.mul(d));
-		//return this.isZero ? this.xiy(-1) : this.mul(1 - d/this.abs);
+	inc(v = 1){// ρ = |ρ + v|
+		return this.isZero ? this.xiy(v) : this.zadd(new complex(this).unit.mul(v));
+	}
+	dec(v = 1){// ρ = |ρ - v|
+		return this.inc(-v);
 	}
 	round(r = 1){
 		return this.scl(r).xiy(Math.round(this.x), Math.round(this.y)).lcs(r); 
@@ -246,12 +255,6 @@ class complex {
 	}
 	iff(ztrue, zfalse, condition = true){
 		return this.asg(condition ? ztrue : zfalse);
-	}
-	get theo(){// spiral of Theodorus
-		if (this.isZero)
-			return this.xiy(1);
-		else
-			return this.zadd(new complex(this).unit.muli);
 	}
 	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
 		if (this.isEqual(0, Math.PI)) return this.xiy(-1); else // to Euler
@@ -353,14 +356,14 @@ class complex {
 	}
 	get smoothstep(){// smoothstep real part
 		var x = this.x;
-		if (x <=  0) this.x = 0; else
 		if (x >=  1) this.x = 1; else
+		if (x <=  0) this.x = 0; else
 		if (x > 0.5) this.bus(1).smoothstep.bus(1); else
 		if (x < 0.5) this.x = x * x * (3 - 2 * x); // Hermite cubic spline
 		return this;
 	}
 	rotate(angle){// rotate this about origin by given angle
-		var h = Math.PI/2;
+		var h = Math.PI/2; // few exact values
 		if (angle == 0) return this; else 
 		if (angle == h) return this.muli; else 
 		if (angle == -h || angle == 3 * h) return this.divi; else 
@@ -1024,8 +1027,8 @@ class complex {
 		}
 		var p = [], n, i; // polynom array, degree and index
 		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
-		// for (i = p.length - 1; i >=0; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // debug
-		if (p.length > 0) {i = 0; while (i < p.length && new complex(p[i]).isNum) i++;}
+		for (i = p.length - 1; i >=0; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // debug
+		i = 0; while (i < p.length && new complex(p[i]).isNum) i++; // check consistency
 
 		if (p.length > 1 && i == p.length) {// Solve: p[n]·zⁿ + p[n - 1]·zⁿ⁻¹ + ··· + p[2]·z² + p[1]·z + p[0] = 0
 			var u = new complex(),  v = new complex(),  w = new complex();
