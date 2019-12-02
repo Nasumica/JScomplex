@@ -74,14 +74,20 @@ class complex {
 	get arg(){// θ
 		return Math.atan2(this.y, this.x);
 	}
-	isEqual(x, y = 0){
+	isEq(x, y = 0){
 		return this.x == x && this.y == y;
 	}
-	isSame(z){
-		return this.isEqual(z.x, z.y);
+	is(z){
+		return this.isEq(z.x, z.y);
 	}
-	get isZero(){
-		return this.isEqual(0);
+	get is0(){
+		return this.isEq(0);
+	}
+	get is1(){
+		return this.isEq(1);
+	}
+	get isI(){
+		return this.isEq(0, 1);
 	}
 	get isNum(){
 		return Number.isFinite(this.x) && Number.isFinite(this.y);
@@ -91,6 +97,12 @@ class complex {
 	}
 	get isNaN(){
 		return Number.isNaN(this.x) || Number.isNaN(this.y);
+	}
+	get zero(){
+		return this.xiy(0);
+	}
+	get one(){
+		return this.xiy(1);
 	}
 	get i(){// sqrt(-1)
 		return this.xiy(0, 1);
@@ -207,7 +219,7 @@ class complex {
 		return this.zmul(new complex(this).sqr);
 	}
 	get sqrt(){
-		if (this.isZero) return this; else
+		if (this.is0) return this; else
 			if (this.y == 0){
 				if (this.x < 0)
 					return this.xiy(Math.sqrt(-this.x)).muli;
@@ -216,7 +228,7 @@ class complex {
 			} else return this.cis(Math.sqrt(this.abs), this.arg/2);
 	}
 	get cbrt(){
-		if (this.isZero) return this; else
+		if (this.is0) return this; else
 			if (this.y == 0)
 				return this.xiy(Math.sign(this.x) * Math.pow(Math.abs(this.x), 1/3));
 			else
@@ -227,10 +239,15 @@ class complex {
 		return d == 0 ? this : this.div(d);
 	}
 	get theo(){// sqrt(ρ + 1) cis (θ + 90°), spiral of Theodorus
-		return this.isZero ? this.xiy(1) : this.zadd(new complex(this).unit.muli);
+		// a = 2*sqrt(n) - 2.1577829966594462209291427868295777235
+		// f(n + 1) = (1 + i / sqrt(n + 1)) * f(n)
+		if (this.isI) this.xiy(0); else
+		if (this.is0) this.xiy(1); else
+			this.zadd(new complex(this).unit.muli);
+		return this;
 	}
 	inc(v = 1){// ρ = |ρ + v|
-		return this.isZero ? this.xiy(v) : this.zadd(new complex(this).unit.mul(v));
+		return this.is0 ? this.xiy(v) : this.zadd(new complex(this).unit.mul(v));
 	}
 	dec(v = 1){// ρ = |ρ - v|
 		return this.inc(-v);
@@ -257,16 +274,16 @@ class complex {
 		return this.asg(condition ? ztrue : zfalse);
 	}
 	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
-		if (this.isEqual(0, Math.PI)) return this.xiy(-1); else // to Euler
+		if (this.isEq(0, Math.PI)) return this.xiy(-1); else // to Euler
 		return this.cis(Math.exp(this.x), this.y);
 	}
 	get log(){// ln(ρ cis θ) = ln(ρ * e^(iθ)) = ln ρ + ln(e^(iθ)) = ln ρ + iθ
-		if (this.isEqual(-1)) return this.xiy(0, Math.PI); else // ditto
+		if (this.isEq(-1)) return this.xiy(0, Math.PI); else // ditto
 		return this.xiy(Math.log(this.abs), this.arg);
 	}
 	pow(x, y = 0){
-		if (x == 0 && y == 0) return this.xiy(1); else
-		if (this.isZero) return this; else
+		if (x == 0 && y == 0) return this.one; else
+		if (this.is0) return this; else
 		if (x == -1 && y == 0) return this.recip; else
 			return this.log.mul(x, y).exp;
 	}
@@ -276,7 +293,7 @@ class complex {
 	npow(n){// thisⁿ (integer n); De Moivre's formula: (cis θ)ⁿ = cis (θ·n)
 		var z = new complex(this);
 		var i = Math.floor(Math.abs(n));
-		this.xiy(1);
+		this.one;
 		while (i > 0){
 			if (i % 2 == 1) this.zmul(z);
 			z.sqr;  i >>>= 1;
@@ -285,7 +302,7 @@ class complex {
 		return this;
 	}
 	root(x, y = 0){
-		if (new complex(x, y).isInf) return this.xiy(1); else
+		if (new complex(x, y).isInf) return this.one; else
 		if (x == 1 && y == 0) return this; else
 		if (x == -1 && y == 0) return this.recip; else
 			return this.log.div(x, y).exp;
@@ -314,7 +331,7 @@ class complex {
 	}
 	get sinc(){// sin(z)/z
 		var z = new complex(this);
-		return this.isZero ? this.xiy(1) : this.sin.zdiv(z);
+		return this.is0 ? this.one : this.sin.zdiv(z);
 	}
 	get asinh(){// ln(z + sqrt(z² + 1))
 		var z = new complex(this);
@@ -338,7 +355,7 @@ class complex {
 		return this.muli.atanh.divi;
 	}
 	horner(){// Horner's scheme polynom evaluate
-		var z = {}; this.obj(z).xiy(0);
+		var z = {}; this.obj(z).zero;
 		for (var i = 0; i < arguments.length; i++)
 			this.zmul(z).zadd(new complex(arguments[i]));
 		return this;
@@ -346,7 +363,7 @@ class complex {
 	spline(){// first arg for this = 0, last arg for this = 1, else somewhere between smoothly
 		if (arguments.length > 0){
 			var t = new complex(this), s = new complex(1).zsub(t); // t = this, s = 1 - t
-			var n = arguments.length - 1, m = 0, b = 1;  this.xiy(0);
+			var n = arguments.length - 1, m = 0, b = 1;  this.zero;
 			while (n >= 0){// $b = {arguments.length - 1 \choose n}$
 				this.zadd(new complex(arguments[n]).mul(b).zmul(new complex(s).npow(m)).zmul(new complex(t).npow(n)));
 				m++; b *= n; b /= m; n--;
@@ -398,12 +415,12 @@ class complex {
 		var a = new complex(A); // a = A
 		var b = new complex(B); // b = B
 		var c = new complex(C).zsub(this); // c = C - this
-		if (a.isZero)// B z + C = 0
+		if (a.is0)// B z + C = 0
 			c.zdiv(b).neg.obj(this.z1).obj(this.z2); // z1 = z2 = -C/B
-		else if (b.isZero)// A z² + C = 0
+		else if (b.is0)// A z² + C = 0
 			c.zdiv(a).neg.sqrt.obj(this.z1).neg.obj(this.z2); // -z2 = z1 = sqrt(-C/A)
-		else if (c.isZero)// (A z + B) z = 0
-			b.zdiv(a).neg.obj(this.z1).xiy(0).obj(this.z2); // z1 = -B/A, z2 = 0
+		else if (c.is0)// (A z + B) z = 0
+			b.zdiv(a).neg.obj(this.z1).zero.obj(this.z2); // z1 = -B/A, z2 = 0
 		else {// A z² + B z + C = 0
 			var d = new complex(b.neg).sqr.zsub(c.mul(2).zmul(a.mul(2))).sqrt;
 			// b = -B; a = 2 A; c = 4 A C; d = sqrt(B² - 4 A C); 
@@ -448,24 +465,24 @@ class complex {
 	*/
 		this.z1 = {}; this.z2 = {}; this.z3 = {}; // result
 		var a = new complex(A); // a = A
-		if (a.isZero){// B z² + C z + D = 0
+		if (a.is0){// B z² + C z + D = this
 			this.quadraticeq(B, C, D);
 			this.z3 = {x: this.z2.x, y: this.z2.y};
 		} else {
 			var d = new complex(D).zsub(this); // d = D - this
-			if (d.isZero){// (A z² + B z + C) z = 0
-				this.quadraticeq(A, B, C);
-				d.obj(this.z3); // z3 = 0
+			if (d.is0){// (A z² + B z + C) z = 0
+				d.asg(this); // to restore this
+				this.zero.obj(this.z3).quadraticeq(A, B, C).asg(d); // z3 = 0, rest is quadratic
 			} else {
 				const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°; r³ = 1
 				var b = new complex(B); // b = B
 				var c = new complex(C); // c = C
-				if (b.isZero && c.isZero){// A z³ + D = 0
+				if (b.is0 && c.is0){// A z³ + D = 0
 					d.zdiv(a).neg.cbrt
 						.obj(this.z1).zmul(r) // z1 = cbrt(-D/A)
 						.obj(this.z2).zmul(r) // z2 = z1 rotated 120°
 						.obj(this.z3);        // z3 = z2 rotated 120°
-				} else {// A z³ + B z² + C z + D = 0
+				} else {// A z³ + B z² + C z + d = 0
 					a.mul(-3); c.zmul(a);               // a = -3 A; c = -3 A C
 					var e = new complex(b).sqr;         // e = B²
 					var D0 = new complex(e).zadd(c);    // D0 = B² - 3 A C
@@ -548,7 +565,7 @@ class complex {
 		return new complex(x, y).zsub(this).abs;
 	}
 	zdist(z1, z2){// distance to point or line
-		if (arguments.length < 2 || new complex(z2).isSame(z1)) 
+		if (arguments.length < 2 || new complex(z2).is(z1)) 
 			return this.dist(z1.x, z1.y); 
 		else
 			return this.zdist(new complex(this).ortho(z1, z2));
@@ -563,7 +580,7 @@ class complex {
 		return new complex(z1).zdist(z2) * new complex(this).times(z1, z2).y;
 	}
 	toward(x, y, len = 1){
-		if (this.isEqual(x, y))
+		if (this.isEq(x, y))
 			return this;
 		else
 			return this.zadd(new complex(x, y).zsub(this).unit.mul(len));
@@ -572,7 +589,7 @@ class complex {
 		return this.toward(z.x, z.y, len);
 	}
 	oncircle(circle){// nearest point on circle
-		if (this.isSame(circle))
+		if (this.is(circle))
 			return this;
 		else
 			return this.asg(new complex(circle).ztoward(this, circle.r));
@@ -749,13 +766,13 @@ class complex {
 			this.perimeter = P; this.area = D; this.semi = s;
 			this.omega = Math.atan2(4*D, a*a + b*b + c*c); // Brocard angle
 			this.I = {r: D/s}; // X1 - incircle (weighted average (Aa + Bb + Cc)/(a + b + c))
-			this.xiy(0).zadd(new complex(A).mul(a)).zadd(new complex(B).mul(b)).zadd(new complex(C).mul(c)).div(P).obj(this.I);
+			this.zero.zadd(new complex(A).mul(a)).zadd(new complex(B).mul(b)).zadd(new complex(C).mul(c)).div(P).obj(this.I);
 			this.I.A = {}; this.asg(this.I).ortho(B, C).obj(this.I.A); // incircle
 			this.I.B = {}; this.asg(this.I).ortho(C, A).obj(this.I.B); // contact
 			this.I.C = {}; this.asg(this.I).ortho(A, B).obj(this.I.C); // points
 			var p = a*b + b*c + c*a; this.I.a = this.I.r * Math.sqrt(p*p - a*b*c*s - p*s*s)/(p - s*s); // Adams radius
 			this.G = {}; // X2 - centroid 
-			this.xiy(0).zadd(A).zadd(B).zadd(C).div(3).obj(this.G);
+			this.zero.zadd(A).zadd(B).zadd(C).div(3).obj(this.G);
 			this.H = {}; // X4 - orthocenter O----G----+----H
 			this.asg(this.O).anticomplement(this.G).obj(this.H); // allways with respect to G
 			this.angle = {A: Math.asin(a/2/this.O.r), B: Math.asin(b/2/this.O.r)};
@@ -920,14 +937,14 @@ class complex {
 		var z = new complex(this).round(100000);
 		var x = z.x + '';
 		var y = Math.abs(z.y); y = (y == 1 ? '' : y + ' ') + 'і';
-		if (z.isZero) return '0'; else
+		if (z.is0) return '0'; else
 		if (z.y == 0) return x; else
 		if (z.x == 0) return (z.y < 0 ? '-' : '') + y; else
 			return z.x + (z.y < 0 ?' - ':' + ') + y;
 	}
 	polyvalue(p){
 		var z = new complex(this); 
-		this.xiy(0);
+		this.zero;
 		for (var i = p.length - 1; i >= 0; i--)
 			this.zmul(z).zadd(new complex(p[i]));
 		return this;
@@ -953,7 +970,7 @@ class complex {
 		}
 	}
 	polytrim(p){
-		while (p.length > 0 && new complex(p[p.length - 1]).isZero) p.length--; // leading zeroes trim
+		while (p.length > 0 && new complex(p[p.length - 1]).is0) p.length--; // leading zeroes trim
 		return p;
 	}
 	polyarg(p, ...arg){
@@ -1035,23 +1052,23 @@ class complex {
 			var f = new complex(),  g = new complex(),  q = [],  d;
 			while (p.length > 1){
 				n = p.length - 1; 
-				if (new complex(p[0]).isZero) w.xiy(0); else
+				if (new complex(p[0]).is0) w.zero; else
 				switch (n) {
 				case 1: // linear
 					w.asg(new complex(p[0])).zdiv(new complex(p[1])).neg;
 					break;
 				case 2: // quadratic
-					u.xiy(0).quadraticeq(p[2], p[1], p[0]);
+					u.zero.quadraticeq(p[2], p[1], p[0]);
 					roots.push(u.z1); roots.push(u.z2);
 					p.length = 1; // done
 					break;
 				case 3: // cubic
-					u.xiy(0).cubiceq(p[3], p[2], p[1], p[0]);
+					u.zero.cubiceq(p[3], p[2], p[1], p[0]);
 					roots.push(u.z1); roots.push(u.z2); roots.push(u.z3);
 					p.length = 1; // done
 					break;
 				default:
-					d = 0; for (i = 1; i < n - 1; i++) if (new complex(p[i]).isZero) d++; // can be better
+					d = 0; for (i = 1; i < n - 1; i++) if (new complex(p[i]).is0) d++; // can be better
 					if (d > 0 && d == n - 2) {// p[n] zⁿ + p[0] = 0; z = n-th root of -p[0] / p[n]
 						v.asg(new complex(p[0])).zdiv(new complex(p[n])).neg.root(n); // 1st vertex
 						for (i = 0; i < n; i++)// roots are vertices of regular central n-polygon
@@ -1066,10 +1083,10 @@ class complex {
 							i -= 4;
 							u.asg(v);  v.asg(w);   // previous 2 iterations
 							f.asg(w).polyvalue(p); // evaluate p(w)
-							if (f.isZero) break;   // good luck - exact zero
+							if (f.is0) break;   // good luck - exact zero
 							if (eps(f))   break;   // good enough
 							g.asg(w).polyvalue(q); // evaluate p'(w)
-							if (g.isZero) {        // bad  luck - critical point
+							if (g.is0) {        // bad  luck - critical point
 								w.asg(1, 1).polardev;
 								i += 3; // back 3/4 step
 							} else {
