@@ -50,17 +50,41 @@ class complex {
 	}
 	asg(z, condition = true){// copy z to this
 		if (condition){
-			this.xiy();
+			this.zero;
 			if (typeof z.x !== 'undefined') this.x = Number(z.x);
 			if (typeof z.y !== 'undefined') this.y = Number(z.y);
 		}
 		return this;
+	}
+	iff(yes, no, condition = true){
+		return this.asg(condition ? yes : no);
 	}
 	obj(z){// copy this to z
 		z.x = this.x; z.y = this.y; return this;
 	}
 	swap(z){// swap values with z
 		var t = {x: z.x, y: z.y}; return this.obj(z).asg(t);
+	}
+	get sto(){// storage status
+		return typeof this.mem !== 'undefined';
+	}
+	get put(){// put into storage
+		this.mem = {}; return this.obj(this.mem);
+	}
+	get get(){// get from storage
+		if (this.sto) this.asg(this.mem);
+		return this;
+	}
+	get del(){// delete storage
+		if (this.sto) delete(this.mem);
+		return this;
+	}
+	get pop(){// get and delete
+		return this.get.del;
+	}
+	get exc(){// exchange with storage
+		if (this.sto) this.swap(this.mem);
+		return this;
 	}
 	get sqrabs(){// |z|² = z * z' = ρ²
 		return this.x * this.x + this.y * this.y;
@@ -134,7 +158,7 @@ class complex {
 	get divi(){// z / i = z rotate -90° = - i * z
 		return this.xiy(this.y, -this.x);
 	}
-	get exc(){// reflection to line x = y
+	get inv(){// reflection to line x = y
 		return this.xiy(this.y, this.x);
 	}
 	rect(z){// rectangle area
@@ -269,9 +293,6 @@ class complex {
 	}
 	zdcp(z){
 		return this.dcp(z.x, z.y);
-	}
-	iff(ztrue, zfalse, condition = true){
-		return this.asg(condition ? ztrue : zfalse);
 	}
 	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
 		if (this.isEq(0, Math.PI)) return this.xiy(-1); else // to Euler
@@ -471,8 +492,7 @@ class complex {
 		} else {
 			var d = new complex(D).zsub(this); // d = D - this
 			if (d.is0){// (A z² + B z + C) z = 0
-				d.asg(this); // to restore this
-				this.zero.obj(this.z3).quadraticeq(A, B, C).asg(d); // z3 = 0, rest is quadratic
+				this.put.zero.obj(this.z3).quadraticeq(A, B, C).pop; // z3 = 0, rest is quadratic, preserve this
 			} else {
 				const r = new complex(-1, Math.sqrt(3)).div(2); // cis 120°; r³ = 1
 				var b = new complex(B); // b = B
@@ -628,14 +648,14 @@ class complex {
 		var b = d * circle.r * circle.r - a * a;
 		this.z1 = {x: 1/0, y: 1/0}; 
 		this.z2 = {x: 1/0, y: 1/0};
-		this.success = b >= 0;
+		this.put.success = b >= 0;
 		if (this.success){
 			u.asg(z).mul(a).divi;
 			v.asg(z).mul((z.y < 0 ? -1 : 1) * Math.sqrt(b));
-			new complex(u).zadd(v).div(d).zadd(circle).obj(this.z1);
-			new complex(u).zsub(v).div(d).zadd(circle).obj(this.z2);
+			this.asg(u).zadd(v).div(d).zadd(circle).obj(this.z1);
+			this.asg(u).zsub(v).div(d).zadd(circle).obj(this.z2);
 		}
-		return this;
+		return this.pop;
 	}
 	circlecircle(circle1, circle2){// circle - circle intersection
 		var z = new complex(circle2).zsub(circle1);
@@ -647,8 +667,8 @@ class complex {
 		this.success = q >= 0;
 		if (this.success){
 			this.xiy(p, Math.sqrt(q)).div(2 * c);
-			new complex(this).zmul(z).zadd(circle1).obj(this.z1);
-			new complex(this).conjg.zmul(z).zadd(circle1).obj(this.z2);
+			this.put.zmul(z).zadd(circle1).obj(this.z1);
+			this.pop.conjg.zmul(z).zadd(circle1).obj(this.z2);
 		}
 		return this;
 	}
@@ -666,8 +686,8 @@ class complex {
 			if (this.success){
 				var b = Math.sqrt(d - a * a);
 				this.xiy(a, b).mul(a).div(c);
-				new complex(this).zmul(z).zadd(circle).obj(this.z1);
-				new complex(this).conjg.zmul(z).zadd(circle).obj(this.z2);
+				this.put.zmul(z).zadd(circle).obj(this.z1);
+				this.pop.conjg.zmul(z).zadd(circle).obj(this.z2);
 			}
 		}
 		this.asg(point); this.r = this.zdist(this.z1);
