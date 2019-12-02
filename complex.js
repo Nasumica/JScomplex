@@ -65,27 +65,6 @@ class complex {
 	swap(z){// swap values with z
 		var t = {x: z.x, y: z.y}; return this.obj(z).asg(t);
 	}
-	get sto(){// storage status
-		return typeof this.mem !== 'undefined';
-	}
-	get put(){// put into storage
-		this.mem = {}; return this.obj(this.mem);
-	}
-	get get(){// get from storage
-		if (this.sto) this.asg(this.mem);
-		return this;
-	}
-	get del(){// delete storage
-		if (this.sto) delete(this.mem);
-		return this;
-	}
-	get pop(){// get and delete
-		return this.get.del;
-	}
-	get exc(){// exchange with storage
-		if (this.sto) this.swap(this.mem);
-		return this;
-	}
 	get sqrabs(){// |z|² = z * z' = ρ²
 		return this.x * this.x + this.y * this.y;
 	}
@@ -1127,6 +1106,44 @@ class complex {
 			}
 		}
 
+		return this;
+	}
+	get sto(){// storage status
+		return typeof this.mem !== 'undefined';
+	}
+	get del(){// delete storage
+		if (this.sto) delete(this.mem);
+		return this;
+	}
+	get clr(){// clear last from storage
+		if (this.sto) {
+			this.mem.pop();
+			if (this.mem.length == 0) this.del;
+		}
+		return this;
+	}
+	get put(){// put into storage
+		if (!this.sto) this.mem = [];
+		this.mem.push(this.z);
+		return this;
+	}
+	get pop(){// get and clear
+		return this.get.clr;
+	}
+	get set(){// set storage
+		if (this.sto) this.obj(this.mem[this.mem.length - 1]);
+		return this;
+	}
+	get get(){// get from storage
+		if (this.sto) this.asg(this.mem[this.mem.length - 1]);
+		return this;
+	}
+	get exc(){// exchange with storage
+		if (this.sto) this.swap(this.mem[this.mem.length - 1]);
+		return this;
+	}
+	get rot(){// rotate storage
+		if (this.sto) this.mem.push(this.mem.shift());
 		return this;
 	}
 }
