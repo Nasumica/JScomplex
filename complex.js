@@ -303,9 +303,11 @@ class complex {
 		return this.xiy(Math.log(this.abs), this.arg);
 	}
 	pow(x, y = 0){
-		if (x == 0 && y == 0) return this.one; else
-		if (this.is0) return this; else
-		if (x == -1 && y == 0) return this.recip; else
+		if (this.is1) return this; else
+		if (y == 0 && x ==  0) return this.one; else
+		if (y == 0 && x ==  1) return this; else
+		if (y == 0 && x == -1) return this.recip; else
+		if (y == 0 && x > 0 && this.is0) return this; else
 			return this.log.mul(x, y).exp;
 	}
 	zpow(z){
@@ -323,9 +325,10 @@ class complex {
 		return this;
 	}
 	root(x, y = 0){
-		if (new complex(x, y).isInf) return this.one; else
-		if (x == 1 && y == 0) return this; else
-		if (x == -1 && y == 0) return this.recip; else
+		if (this.is1) return this; else
+		if (y == 0 && x ==  1) return this; else
+		if (y == 0 && x == -1) return this.recip; else
+		if (y == 0 && x > 0 && this.is0) return this; else
 			return this.log.div(x, y).exp;
 	}
 	zroot(z){
