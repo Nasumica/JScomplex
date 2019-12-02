@@ -646,13 +646,13 @@ class complex {
 		var p = d + u - v, q = 4 * d * u - p * p;
 		this.z1 = {x: 1/0, y: 1/0}; 
 		this.z2 = {x: 1/0, y: 1/0};
-		this.success = q >= 0;
+		this.put.success = q >= 0;
 		if (this.success){
 			this.xiy(p, Math.sqrt(q)).div(2 * c);
 			this.put.zmul(z).zadd(circle1).obj(this.z1);
 			this.pop.conjg.zmul(z).zadd(circle1).obj(this.z2);
 		}
-		return this;
+		return this.pop;
 	}
 	circletangent(point, circle){// tangent from point to circle
 		if (true){
@@ -839,7 +839,7 @@ class complex {
 			var B = new complex(c, 0);
 			var C = new complex(b*b + c*c - a*a, 4*D).div(2*c);
 			var Z = new complex().cis(inclination);
-			if (conjugate) {C.conjg; Z.conjg;} // above or below side c
+			if (conjugate) {C.conjg; Z.conjg;} // vertex C is above or below side c
 			var O = new complex().bisection(A, B, C); // circumcenter
 			A.zsub(O).zmul(Z).zadd(this);   // translate triangle to (0, 0),
 			B.zsub(O).zmul(Z).zadd(this);   // rotate by inclination,
@@ -1039,7 +1039,7 @@ class complex {
 		roots:
 			0, -1, i, -i
 	*/
-		roots.length = 0; // reset roots array
+		roots.length = 0; this.del; // reset roots array and storage
 		function eps(s, t = {x: 0, y: 0}, e = 1e-17){// precision - Kahan summation
 			var a = new complex(s).abs, b = new complex(t).abs, c = a - b, d = (c - a) + b;
 			return (Math.abs(c) <= e) && (Math.abs(d) <= e);
@@ -1085,10 +1085,10 @@ class complex {
 							i -= 4;
 							u.asg(v);  v.asg(w);   // previous 2 iterations
 							f.asg(w).polyvalue(p); // evaluate p(w)
-							if (f.is0) break;   // good luck - exact zero
-							if (eps(f))   break;   // good enough
+							if (f.is0)  break;     // good luck - exact zero
+							if (eps(f)) break;     // good enough
 							g.asg(w).polyvalue(q); // evaluate p'(w)
-							if (g.is0) {        // bad  luck - critical point
+							if (g.is0) {           // bad  luck - critical point
 								w.asg(1, 1).polardev;
 								i += 3; // back 3/4 step
 							} else {
@@ -1109,21 +1109,21 @@ class complex {
 		return this;
 	}
 	get sto(){// storage status
-		return typeof this.mem !== 'undefined';
+		return typeof this.mem === 'undefined' ? 0 : this.mem.length;
 	}
 	get del(){// delete storage
-		if (this.sto) delete(this.mem);
+		if (this.sto > 0) delete(this.mem);
 		return this;
 	}
 	get clr(){// clear last from storage
-		if (this.sto) {
+		if (this.sto > 0) {
 			this.mem.pop();
 			if (this.mem.length == 0) this.del;
 		}
 		return this;
 	}
 	get put(){// put into storage
-		if (!this.sto) this.mem = [];
+		if (this.sto == 0) this.mem = [];
 		this.mem.push(this.z);
 		return this;
 	}
@@ -1131,20 +1131,23 @@ class complex {
 		return this.get.clr;
 	}
 	get set(){// set storage
-		if (this.sto) this.obj(this.mem[this.mem.length - 1]);
+		if (this.sto > 0) this.obj(this.mem[this.mem.length - 1]);
 		return this;
 	}
 	get get(){// get from storage
-		if (this.sto) this.asg(this.mem[this.mem.length - 1]);
+		if (this.sto > 0) this.asg(this.mem[this.mem.length - 1]);
 		return this;
 	}
 	get exc(){// exchange with storage
-		if (this.sto) this.swap(this.mem[this.mem.length - 1]);
+		if (this.sto > 0) this.swap(this.mem[this.mem.length - 1]);
 		return this;
 	}
 	get rot(){// rotate storage
-		if (this.sto) this.mem.push(this.mem.shift());
+		if (this.sto > 0) this.mem.push(this.mem.shift());
 		return this;
+	}
+	get rol(){// rotate and get
+		return this.rot.get;
 	}
 }
 
