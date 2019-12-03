@@ -215,7 +215,6 @@ class complex {
 		return this.mod(z.x, z.y);
 	}
 	get sqr(){// this²
-		//return this.cis(this.sqrabs, this.arg);
 		return this.zmul(this);
 	}
 	get cub(){// this³
@@ -857,7 +856,7 @@ class complex {
 		}
 		return this;
 	}
-	trieql(a, inclination = 0, conjugate = true){// equilateral triangle
+	trieqlat(a, inclination = 0, conjugate = true){// equilateral triangle
 		return this.triside(a, a, a, inclination, conjugate);
 	}
 	trignomon(base, side, inclination = 0, conjugate = true){// gnomon (isosceles)
