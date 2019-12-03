@@ -857,6 +857,50 @@ class complex {
 		}
 		return this;
 	}
+	trieql(a, inclination = 0, conjugate = true){// equilateral triangle
+		return this.triside(a, a, a, inclination, conjugate);
+	}
+	trignomon(base, side, inclination = 0, conjugate = true){// gnomon (isosceles)
+		return this.triside(side, side, base, inclination, conjugate);
+	}
+	triright(a, b, inclination = 0, conjugate = true){// right triangle
+		return this.triside(a, b, Math.sqrt(a*a + b*b), inclination, conjugate);
+	}
+	trirightgnomon(a, inclination = 0, conjugate = true){// 45-45-90 triangle
+		//return this.triside(a * Math.sqrt(2), a, inclination, conjugate);
+		return this.triright(a, a, inclination, conjugate);
+	}
+	trimonodrafter(a, inclination = 0, conjugate = true){// 30-60-90 triangle
+		return this.triside(a, a * Math.sqrt(3), a * 2, inclination, conjugate);
+	}
+	trigolden(base, inclination = 0, conjugate = true){// golden triangle
+		const f = 1.6180339887498948482045868343656; // φ
+		return this.trignomon(base, base * f, inclination, conjugate)
+	}
+	trigoldengnomon(base, inclination = 0, conjugate = true){// golden gnomon
+		const f = 1.6180339887498948482045868343656; // φ
+		return this.trignomon(base, base / f, inclination, conjugate)
+	}
+	triegypt(base, inclination = 0, conjugate = true){// golden triangle
+		return this.triside(base * 3/5, base * 4/5, base, inclination, conjugate)
+	}
+	triheron(base, inclination = 0, conjugate = true){// Ἥρων ὁ Ἀλεξανδρεύς
+		return this.triside(base * 15/14, base * 13/14, base, inclination, conjugate)
+	}
+	trisrba(base, inclination = 0, conjugate = true){// Србин омиљени троугао
+		return this.triside(base * 5/8, base * 7/8, base, inclination, conjugate)
+	}
+	trikepler(a, inclination = 0, conjugate = true){// Kepler right triangle
+		const f = 1.6180339887498948482045868343656; // φ
+		return this.triside(a, a * Math.sqrt(f), a * f, inclination, conjugate)
+	}
+	trikimberling(base, inclination = 0, conjugate = true){// Kimberling golden triangle
+		const k = 1.3797865516812012355584834707971; // angles = {φ : φ : 1}, k = 1/(2cos(πφ/(2φ+1))
+		return this.trignomon(base, base * k, inclination, conjugate)
+	}
+	trisilver(a, inclination = 0, conjugate = true){// very acute right triangle
+		return this.triright(a, 1, inclination, conjugate)
+	}
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		// harmonic addition: a ● b = 1/(1/a + 1/b) = (a * b)/(a + b)
 		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // u ● v ● w
