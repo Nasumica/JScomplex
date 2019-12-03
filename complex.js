@@ -848,8 +848,8 @@ class complex {
 		return this;
 	}
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
-		//function o(u, v, w){return 1 / (1/u + 1/v + 1/w);}
-		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // more precise
+		// harmonic addition: a ● b = 1/(1/a + 1/b) = (a * b)/(a + b)
+		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // u ● v ● w
 		this.altitude = {a: a, b: b, c: c};
 		var I = o( a,  b,  c); // inradius I
 		var A = o(-a,  b,  c); // exradius A
