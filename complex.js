@@ -799,18 +799,10 @@ class complex {
 			this.asg(this.F).harmonicconjg(this.I, this.N).obj(this.X12);
 			this.L = {}; // X20 - de Longchamps point (Soddy line I--L)
 			this.asg(this.H).opposite(this.O).obj(this.L);
-			this.Euler = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Euler line (contains G, H, O, N, ...)
-			this.Nagel = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Nagel line (contains G, I, Na, Sp, ...)
-			if (a != b || b != c){ // no lines for equilateral triangle
-				this.asg(this.G).oncircle(this.O).obj(this.Euler.z1).opposite(this.O).obj(this.Euler.z2);
-				this.linecircle(this.I, this.G, this.O);
-				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
-				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
-			}
 			this.shield = {}; // shield circle G----o----H (GH = diameter)
 			this.shield.r = this.asg(this.G).halfway(this.H).obj(this.shield).zdist(this.G);
 			this.asg(this.K).oncircle(this.shield).zsub(this.G); // ellipse axis inclination vector
-			var Z = Math.sqrt((aa*aa + bb*bb + cc*cc) - (aa*bb + bb*cc + cc*aa));
+			var Z = Math.sqrt((aa*aa + bb*bb + cc*cc) - (aa*bb + bb*cc + cc*aa));// discriminant
 			this.Oe = {// Steiner circumellipse
 				x: this.G.x, y: this.G.y,
 				a: Math.sqrt(q + Z*2)/3, b: Math.sqrt(q - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
@@ -819,7 +811,7 @@ class complex {
 			this.unit.mul(this.Oe.c).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // foci
 			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (q - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
-			this.barycentricfun(a, b, c, function(a, b, c){return 1/(b * b - c * c);}).obj(this.S);
+			this.barycentricfun(a, b, c, function(a, b, c){return 1/(b*b - c*c);}).obj(this.S);
 			// excircles Ja, Jb, Jc
 			this.Ja = {r: D/ra}; this.trilinearxiy(-1,  1,  1).obj(this.Ja);
 			this.Jb = {r: D/rb}; this.trilinearxiy( 1, -1,  1).obj(this.Jb);
@@ -829,6 +821,21 @@ class complex {
 			this.SO.r = this.barycentricxiy(a - this.Ja.r, b - this.Jb.r, c - this.Jc.r).obj(this.SO).zdist(A) + ra;
 			this.SI = {}; // X176 Soddy inner circle (equal detour point)
 			this.SI.r = this.barycentricxiy(a + this.Ja.r, b + this.Jb.r, c + this.Jc.r).obj(this.SI).zdist(A) - ra;
+			this.Euler = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Euler line (contains G, H, O, N, L, ...)
+			this.Nagel = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Nagel line (contains G, I, Na, Sp, ...)
+			this.Soddy = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Soddy line (contains I, Ge, L, SO, SI, ...)
+			if (a != b || b != c){ // no lines for equilateral triangle
+				//this.asg(this.G).oncircle(this.O).obj(this.Euler.z1).opposite(this.O).obj(this.Euler.z2);
+				this.linecircle(this.G, this.O, this.SO);
+				this.asg(this.z1).obj(this.Euler.z1); delete(this.z1);
+				this.asg(this.z2).obj(this.Euler.z2); delete(this.z2);
+				this.linecircle(this.I, this.G, this.SO);
+				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
+				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
+				this.linecircle(this.I, this.L, this.SO);
+				this.asg(this.z1).obj(this.Soddy.z1); delete(this.z1);
+				this.asg(this.z2).obj(this.Soddy.z2); delete(this.z2);
+			}
 		}
 		return this.asg(this.O);
 	}
