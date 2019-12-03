@@ -740,11 +740,12 @@ class complex {
 		}
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
-	mandelbrot(m = 255){// Mandelbrot set (for testing only)
-		// returns 0 to 255; 0 <=> this is (probably) in set
+	mandelbrot(m = 256){// Mandelbrot set (for testing only)
+		// returns 0 to 256; 0: (probably) in set; 256: out of bounds
 		var n = m; 
 		var b = this.sqrabs; b *= this.put.add(1).sqrabs; this.pop;
 		if (b < 4) {// Cassini oval
+			n--;
 			var z = new complex(this);
 			while (z.sqr.zadd(this).isNum &&  n > 0) n--;
 		}
