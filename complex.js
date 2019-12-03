@@ -222,7 +222,7 @@ class complex {
 		return this.zmul(new complex(this).sqr);
 	}
 	get sqrt(){
-		if (this.is0) return this; else
+		if (this.is0 || this.is1) return this; else
 			if (this.y == 0){
 				if (this.x < 0)
 					return this.xiy(Math.sqrt(-this.x)).muli;
@@ -231,17 +231,16 @@ class complex {
 			} else return this.cis(Math.sqrt(this.abs), this.arg/2);
 	}
 	get cbrt(){
-		if (this.is0) return this; else
+		if (this.is0 || this.is1) return this; else
 			if (this.y == 0)
 				return this.xiy(Math.sign(this.x) * Math.pow(Math.abs(this.x), 1/3));
 			else
 				return this.root(3);
 	}
 	get unit(){// unit vector
-		var d = this.abs;
-		return d == 0 ? this : this.div(d);
+		var d = this.abs; return d == 0 ? this : this.div(d);
 	}
-	get theo(){// sqrt(ρ + 1) cis (θ + 90°), spiral of Theodorus
+	get theo(){// spiral of Theodorus
 		// a = 2*sqrt(n) - 2.1577829966594462209291427868295777235
 		// f(n + 1) = (1 + i / sqrt(n + 1)) * f(n)
 		if (this.isI) this.xiy(0); else
@@ -366,8 +365,8 @@ class complex {
 	spline(){// first arg for this = 0, last arg for this = 1, else somewhere between smoothly
 		if (arguments.length > 0){
 			var t = new complex(this), s = new complex(1).zsub(t); // t = this, s = 1 - t
-			var n = arguments.length - 1, m = 0, b = 1;  this.zero;
-			while (n >= 0){// $b = {arguments.length - 1 \choose n}$
+			var n = arguments.hi, m = 0, b = 1;  this.zero;
+			while (n >= 0){// $b = {arguments.hi \choose n}$
 				this.zadd(new complex(arguments[n]).mul(b).zmul(new complex(s).npow(m)).zmul(new complex(t).npow(n)));
 				m++; b *= n; b /= m; n--;
 			}
@@ -947,7 +946,7 @@ class complex {
 	polyvalue(p){
 		var z = new complex(this); 
 		this.zero;
-		for (var i = p.length - 1; i >= 0; i--)
+		for (var i = p.hi; i >= 0; i--)
 			this.zmul(z).zadd(new complex(p[i]));
 		return this;
 	}
@@ -957,7 +956,7 @@ class complex {
 			q.push(new complex(p[i]).mul(i).z);
 	}
 	polydiv(p, q){
-		var m = p.length - 1, n = q.length - 1, l = m - n;
+		var m = p.hi, n = q.hi, l = p.length - q.length;
 		if (l < 0) p = [0]; else {
 			var r = new Array(l + 1);
 			for (var k = l; k >= 0; k--){
@@ -972,20 +971,20 @@ class complex {
 		}
 	}
 	polytrim(p){
-		while (p.length > 0 && new complex(p[p.length - 1]).is0) p.length--; // leading zeroes trim
+		while (p.length > 0 && new complex(p[p.hi]).is0) p.length--; // leading zeroes trim
 		return p;
 	}
 	polyarg(p, ...arg){
 		var n, i, a;
 		p.length = 0; 
 		if (arg.length == 1 && Array.isArray(arg[0])) {// only one array parameter
-			a = arg[0]; n = a.length - 1;
+			a = arg[0]; n = a.hi;
 			for (i = 0; i <= n; i++){ // incremental copy array as complex polynom
 				p.push(new complex(a[i]).z);
 				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
 			}
 		} else {// zero or more than one parameters or first parameter is not array
-			a = arg; n = a.length - 1;
+			a = arg; n = a.hi;
 			for (i = n; i >= 0; i--){ //decremental collect parameters
 				p.push(new complex(a[i]).z);
 				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
@@ -1039,21 +1038,22 @@ class complex {
 		roots:
 			0, -1, i, -i
 	*/
-		roots.length = 0; this.del; // reset roots array and storage
+		roots.length = 0; // reset roots array
 		function eps(s, t = {x: 0, y: 0}, e = 1e-17){// precision - Kahan summation
 			var a = new complex(s).abs, b = new complex(t).abs, c = a - b, d = (c - a) + b;
 			return (Math.abs(c) <= e) && (Math.abs(d) <= e);
 		}
 		var p = [], n, i; // polynom array, degree and index
 		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
-		// for (i = p.length - 1; i >=0; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // debug
+		//for (i = p.hi; i >= p.lo; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // (debug)
+		this.del; for (i = p.lo; i <= p.hi; i++) this.put.asg(p[i]).exc; // put polynom into storage (debug)
 		i = 0; while (i < p.length && new complex(p[i]).isNum) i++; // check consistency
-
+		
 		if (p.length > 1 && i == p.length) {// Solve: p[n]·zⁿ + p[n - 1]·zⁿ⁻¹ + ··· + p[2]·z² + p[1]·z + p[0] = 0
 			var u = new complex(),  v = new complex(),  w = new complex();
 			var f = new complex(),  g = new complex(),  q = [],  d;
 			while (p.length > 1){
-				n = p.length - 1; 
+				n = p.hi; 
 				if (new complex(p[0]).is0) w.zero; else
 				switch (n) {
 				case 1: // linear
@@ -1131,15 +1131,15 @@ class complex {
 		return this.get.clr;
 	}
 	get set(){// set storage
-		if (this.sto > 0) this.obj(this.mem[this.mem.length - 1]);
+		if (this.sto > 0) this.obj(this.mem[this.mem.hi]);
 		return this;
 	}
 	get get(){// get from storage
-		if (this.sto > 0) this.asg(this.mem[this.mem.length - 1]);
+		if (this.sto > 0) this.asg(this.mem[this.mem.hi]);
 		return this;
 	}
 	get exc(){// exchange with storage
-		if (this.sto > 0) this.swap(this.mem[this.mem.length - 1]);
+		if (this.sto > 0) this.swap(this.mem[this.mem.hi]);
 		return this;
 	}
 	get rot(){// rotate storage
@@ -1152,6 +1152,17 @@ class complex {
 }
 
 
+Object.defineProperty(Array.prototype, 'lo', {
+	enumerable: false, configurable: false,
+	get() { return 0; }
+});
+
+Object.defineProperty(Array.prototype, 'hi', {
+	enumerable: false, configurable: false,
+	get() { return this.length - 1; }
+});
+
+
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'begin', {
 	get() { this.beginPath(); return this; }
 });
@@ -1161,22 +1172,27 @@ Object.defineProperty(CanvasRenderingContext2D.prototype, 'close', {
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'width', {
+	enumerable: false, configurable: false,
 	get() { return this.canvas.width; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'height', {
+	enumerable: false, configurable: false,
 	get() { return this.canvas.height; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'sizeX', {
+	enumerable: false, configurable: false,
 	get() { return this.width; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'sizeY', {
+	enumerable: false, configurable: false,
 	get() { return this.height; }
 });
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'size', {
+	enumerable: false, configurable: false,
 	get() { return {x: this.sizeX, y: this.sizeY}; }
 });
 
