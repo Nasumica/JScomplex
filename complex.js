@@ -760,24 +760,26 @@ class complex {
 		if (this.success){
 			var o = A.trap(B) + B.trap(C) + C.trap(A); // signed area
 			this.direction = Math.sign(o); // direction of vertices
-			var P = a + b + c,  s = P/2,  D = Math.abs(o); // Δ = D
-			var ra = s - a, rb = s - b, rc = s - c;
+			var P = a + b + c,  s = P/2,  D = Math.abs(o),  S = 2*D;     // D = Δ
+			var abc = a*b*c, aa = a*a, bb = b*b, cc = c*c, ss = s*s;     // common
+			var q = aa + bb + cc, p = a*b + b*c + c*a, qq = q*q, pp=p*p; // variables
+			var ra = s - a, rb = s - b, rc = s - c; // vertex touch circle radius
 			this.vertex.A.r = ra; this.vertex.B.r = rb; this.vertex.C.r = rc;
-			this.altitude = {a: 2*D/a, b: 2*D/b, c: 2*D/c}; // altitudes, heights
+			this.altitude = {a: S/a, b: S/b, c: S/c}; // altitudes, heights
+			this.angle = {A: Math.asin(a/2/this.O.r), B: Math.asin(b/2/this.O.r)}; // angles
+			this.angle.C = Math.PI - (this.angle.A + this.angle.B);
 			this.perimeter = P; this.area = D; this.semi = s;
-			this.omega = Math.atan2(4*D, a*a + b*b + c*c); // Brocard angle
+			this.omega = Math.atan2(4*D, q); // Brocard angle
 			this.I = {r: D/s}; // X1 - incircle (weighted average (Aa + Bb + Cc)/(a + b + c))
 			this.zero.zadd(new complex(A).mul(a)).zadd(new complex(B).mul(b)).zadd(new complex(C).mul(c)).div(P).obj(this.I);
 			this.I.A = {}; this.asg(this.I).ortho(B, C).obj(this.I.A); // incircle
 			this.I.B = {}; this.asg(this.I).ortho(C, A).obj(this.I.B); // contact
 			this.I.C = {}; this.asg(this.I).ortho(A, B).obj(this.I.C); // points
-			var p = a*b + b*c + c*a; this.I.a = this.I.r * Math.sqrt(p*p - a*b*c*s - p*s*s)/(p - s*s); // Adams radius
+			this.I.a = this.I.r * Math.sqrt(pp - abc*s - p*ss)/(p - ss); // Adams radius
 			this.G = {}; // X2 - centroid 
 			this.zero.zadd(A).zadd(B).zadd(C).div(3).obj(this.G);
 			this.H = {}; // X4 - orthocenter O----G----+----H
 			this.asg(this.O).anticomplement(this.G).obj(this.H); // allways with respect to G
-			this.angle = {A: Math.asin(a/2/this.O.r), B: Math.asin(b/2/this.O.r)};
-			this.angle.C = Math.PI - (this.angle.A + this.angle.B);
 			this.N = {}; // X5 - nine-point circle O-------N-------H
 			this.asg(this.O).halfway(this.H).obj(this.N); this.N.r = this.O.r/2;
 			this.K = {}; // X6 - symmedian point (isogonal conjugate of G, Lemoine)
@@ -807,14 +809,15 @@ class complex {
 			}
 			this.shield = {}; // shield circle G----o----H (GH = diameter)
 			this.shield.r = this.asg(this.G).halfway(this.H).obj(this.shield).zdist(this.G);
-			var Z = Math.sqrt((a*a*a*a + b*b*b*b + c*c*c*c) - (a*a*b*b + b*b*c*c + c*c*a*a)), sq = a*a + b*b + c*c;
+			this.asg(this.K).oncircle(this.shield).zsub(this.G); // ellipse axis inclination vector
+			var Z = Math.sqrt((aa*aa + bb*bb + cc*cc) - (aa*bb + bb*cc + cc*aa));
 			this.Oe = {// Steiner circumellipse
 				x: this.G.x, y: this.G.y,
-				a: Math.sqrt(sq + Z*2)/3, b: Math.sqrt(sq - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
-				o: new complex(this.K).oncircle(this.shield).zsub(this.G).arg, F1: {}, F2: {}
+				a: Math.sqrt(q + Z*2)/3, b: Math.sqrt(q - Z*2)/3, c: Math.sqrt(Z) * 2/3, 
+				o: this.arg, F1: {}, F2: {}
 			}; 
-			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (sq - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
-			this.cis(this.Oe.c, this.Oe.o).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // foci
+			this.unit.mul(this.Oe.c).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // foci
+			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (q - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
 			this.barycentricfun(a, b, c, function(a, b, c){return 1/(b * b - c * c);}).obj(this.S);
 			// excircles Ja, Jb, Jc
