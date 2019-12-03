@@ -867,7 +867,6 @@ class complex {
 		return this.triside(a, b, Math.sqrt(a*a + b*b), inclination, conjugate);
 	}
 	trirightgnomon(a, inclination = 0, conjugate = true){// 45-45-90 triangle
-		//return this.triside(a * Math.sqrt(2), a, inclination, conjugate);
 		return this.triright(a, a, inclination, conjugate);
 	}
 	trimonodrafter(a, inclination = 0, conjugate = true){// 30-60-90 triangle
