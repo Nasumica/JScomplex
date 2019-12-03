@@ -740,6 +740,16 @@ class complex {
 		}
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
+	mandelbrot(m = 255){// Mandelbrot set (for testing only)
+		// returns 0 to 255; 0 <=> this is (probably) in set
+		var n = m; 
+		var b = this.sqrabs; b *= this.put.add(1).sqrabs; this.pop;
+		if (b < 4) {// Cassini oval
+			var z = new complex(this);
+			while (z.sqr.zadd(this).isNum &&  n > 0) n--;
+		}
+		return n;
+	}
 	trivertex(vertexA, vertexB, vertexC, changed = true){// triangle ABC centers
 		var A = new complex(vertexA), B = new complex(vertexB), C = new complex(vertexC);
 		this.vertex = {A: {x: A.x, y: A.y}, B: {x: B.x, y: B.y}, C: {x: C.x, y: C.y}};
