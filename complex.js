@@ -44,10 +44,6 @@ class complex {
 	xiy(x = 0, y = 0){// x + i y
 		this.x = Number(x); this.y = Number(y); return this;
 	}
-	cis(rho, theta){// ρ cis θ = ρ (cos θ + i sin θ) = ρ e^(iθ)
-		if (arguments.length < 2) {theta = rho; rho = 1;} // if ρ is ommited then ρ = 1
-		return this.xiy(rho * cos(theta), rho * sin(theta));
-	}
 	asg(z, condition = true){// copy z to this
 		if (condition){
 			this.zero;
@@ -55,6 +51,10 @@ class complex {
 			if (typeof z.y !== 'undefined') this.y = Number(z.y);
 		}
 		return this;
+	}
+	cis(rho, theta){// ρ cis θ = ρ (cos θ + i sin θ) = ρ e^(iθ)
+		if (arguments.length < 2) {theta = rho; rho = 1;} // if ρ is ommited then ρ = 1
+		return this.asg(cis(theta, rho));
 	}
 	iff(yes, no, condition = true){
 		return this.asg(condition ? yes : no);
@@ -390,7 +390,7 @@ class complex {
 		if (angle == h) return this.muli; else 
 		if (angle == -h || angle == 3 * h) return this.divi; else 
 		if (abs(angle) == pi) return this.neg; else
-			return this.mul(cos(angle), sin(angle));
+			return this.zmul(cis(angle));
 	}
 	zrotate(z){// rotate this about origin by angle of vector (0, 0)--z
 		var h = z.x * z.x + z.y * z.y;
@@ -908,8 +908,8 @@ class complex {
 		return this.triright(a, 1, inclination, conjugate)
 	}
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
-		// harmonic addition: a ● b = 1/(1/a + 1/b) = (a * b)/(a + b)
-		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // u ● v ● w
+		// harmonic addition: a ÷ b = 1/(1/a + 1/b) = (a * b)/(a + b)
+		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // u ÷ v ÷ w
 		this.altitude = {a: a, b: b, c: c};
 		var I = o( a,  b,  c); // inradius I
 		var A = o(-a,  b,  c); // exradius A
@@ -969,7 +969,8 @@ class complex {
 	trilinearxiy(a, b, c){// I = {1 : 1 : 1}
 		var k = 2 * this.area / (a * this.side.a + b * this.side.b + c * this.side.c);
 		a = a * k - this.I.r; b = b * k - this.I.r; c = c * k - this.I.r;
-		this.xiy((a + c * cos(this.angle.B)) / sin(this.angle.B), -c * this.direction);
+		var d = cis(this.angle.B);
+		this.xiy((a + c * d.x) / d.y, -c * this.direction);
 		this.vrotate(this.vertex.B, this.vertex.A).zadd(this.I);
 		return this;
 	}
@@ -1212,13 +1213,14 @@ class complex {
 }
 
 // Не могу више да куцам Math.
-var abs = Math.abs; sqrt = Math.sqrt, sqr = function(x){return x * x;};
-var exp = Math.exp, log = Math.log; pow = Math.pow;
-var sin = Math.sin, cos = Math.cos, tan = Math.tan;
-var asin = Math.asin, acos = Math.acos, atan = function(y, x = 1){return Math.atan2(y, x);}
-var pi = Math.PI;          // π = 3.1415926535897932384626433832795
-var phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
-var random = function(x = 1){return x * Math.random();}
+abs = Math.abs; sqrt = Math.sqrt, sqr = function(x){return x * x;};
+exp = Math.exp, log = Math.log; pow = Math.pow;
+sin = Math.sin, cos = Math.cos, tan = Math.tan;
+asin = Math.asin, acos = Math.acos, atan = function(y, x = 1){return Math.atan2(y, x);}
+cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
+pi = Math.PI;          // π = 3.1415926535897932384626433832795
+phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
+random = function(x = 1){return x * Math.random();}
 
 
 Object.defineProperty(Array.prototype, 'lo', {
