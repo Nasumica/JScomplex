@@ -740,10 +740,10 @@ class complex {
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
 	mandelbrot(m = 256){// Mandelbrot set (for testing only)
-		// returns 0 to 256; 0: (probably) in set; 256: out of bounds
-		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for (x²+y²)((x+1)²+y²)
+		// returns 0 to 256; 0: (probably) in set; 256: out of bounds |z|² < 4
+		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for |z|²·|z+1|² < 4
 		// ellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
-		var n = m, z = new complex(this); // |z| < 2
+		var n = m, z = new complex(this); // |z| < 2 => |z|² < 4
 		while (z.sqrabs < 4 && z.sqr.zadd(this).isNum &&  n > 0) n--;
 		return n;
 	}
