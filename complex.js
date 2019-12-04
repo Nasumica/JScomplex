@@ -1212,7 +1212,7 @@ class complex {
 	}
 }
 
-// Не могу више да куцам Math.
+// Не могу више да куцам Math. Ја сам паскал програмер.
 min = Math.min, max = Math.max;
 abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
 sqrt = Math.sqrt, sqr = function(x){return x * x;};
@@ -1443,7 +1443,7 @@ CanvasRenderingContext2D.prototype.triangle = function(t) {
 	} else return this;
 }
 
-CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r = 0) {
+CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r = 0) {
 	// https://stackoverflow.com/questions/1255512/
 	// https://stackoverflow.com/users/167531/grumdrig
 	if (w < 2 * r) r = w / 2;
@@ -1459,4 +1459,48 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r = 0) {
 CanvasRenderingContext2D.prototype.zroundrect = function (z1, z2, r = 0) {
 	var z = new complex(z2).zsub(z1);
 	return this.roundRect(z1.x, z1.y, z.x, z.y, r);
+}
+
+CanvasRenderingContext2D.prototype.rgba = function(r, g, b, a = 1){
+	return 'rgba('+r+', '+g+', '+b+', '+a+') ';
+}
+
+CanvasRenderingContext2D.prototype.shadowOffsetZ = function(z){
+	this.shadowOffsetX = z.x;
+	this.shadowOffsetY = z.y;
+	return this;
+}
+
+CanvasRenderingContext2D.prototype.zfillText = function(text, z, width = -1){
+	if (width < 0)
+		this.fillText(text, z.x, z.y);
+	else
+		this.fillText(text, z.x, z.y, w);
+	return this;
+}
+
+CanvasRenderingContext2D.prototype.zstrokeText = function(text, z, width = -1){
+	if (width < 0)
+		this.strokeText(text, z.x, z.y);
+	else
+		this.strokeText(text, z.x, z.y, w);
+	return this;
+}
+
+// Проба
+CanvasRenderingContext2D.prototype.TextL = function(z, text){
+	var m = this.measureText(text);
+	this.zfillText(text, z);
+	this.last = {l: {x: z.x, y: z.y}, r: {x: z.x + m.width, y: z.y}, w: m.width};
+	return this;
+}
+
+CanvasRenderingContext2D.prototype.TextR = function(z, text){
+	var m = this.measureText(text);
+	return this.TextL(new complex(z).sub(m.width), text);
+}
+
+CanvasRenderingContext2D.prototype.TextC = function(z, text){
+	var m = this.measureText(text);
+	return this.TextL(new complex(z).sub(m.width/2), text);
 }
