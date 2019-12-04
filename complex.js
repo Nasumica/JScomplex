@@ -755,8 +755,8 @@ class complex {
 		var A = new complex(vertexA), B = new complex(vertexB), C = new complex(vertexC);
 		this.vertex = {A: {x: A.x, y: A.y}, B: {x: B.x, y: B.y}, C: {x: C.x, y: C.y}};
 		this.box = {
-			min: {x: Math.min(A.x, B.x, C.x), y: Math.min(A.y, B.y, C.y)}, 
-			max: {x: Math.max(A.x, B.x, C.x), y: Math.max(A.y, B.y, C.y)}
+			min: {x: min(A.x, B.x, C.x), y: min(A.y, B.y, C.y)}, 
+			max: {x: max(A.x, B.x, C.x), y: max(A.y, B.y, C.y)}
 		}; 
 		this.box.size = {x: this.box.max.x - this.box.min.x, y: this.box.max.y - this.box.min.y};
 		this.O = {}; // X3 - circumcircle
@@ -1213,10 +1213,13 @@ class complex {
 }
 
 // Не могу више да куцам Math.
-abs = Math.abs; sqrt = Math.sqrt, sqr = function(x){return x * x;};
+min = Math.min, max = Math.max;
+abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
+sqrt = Math.sqrt, sqr = function(x){return x * x;};
 exp = Math.exp, log = Math.log; pow = Math.pow;
 sin = Math.sin, cos = Math.cos, tan = Math.tan;
-asin = Math.asin, acos = Math.acos, atan = function(y, x = 1){return Math.atan2(y, x);}
+asin = Math.asin, acos = Math.acos;
+atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);}
 cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
 pi = Math.PI;          // π = 3.1415926535897932384626433832795
 phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
@@ -1440,7 +1443,7 @@ CanvasRenderingContext2D.prototype.triangle = function(t) {
 	} else return this;
 }
 
-CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
+CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r = 0) {
 	// https://stackoverflow.com/questions/1255512/
 	// https://stackoverflow.com/users/167531/grumdrig
 	if (w < 2 * r) r = w / 2;
@@ -1453,7 +1456,7 @@ CanvasRenderingContext2D.prototype.oval = function (x, y, w, h, r = 0) {
 	return this.close;
 }
 
-CanvasRenderingContext2D.prototype.zoval = function (z1, z2, r = 0) {
+CanvasRenderingContext2D.prototype.zroundrect = function (z1, z2, r = 0) {
 	var z = new complex(z2).zsub(z1);
-	return this.oval(z1.x, z1.y, z.x, z.y, r);
+	return this.roundRect(z1.x, z1.y, z.x, z.y, r);
 }
