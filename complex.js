@@ -741,14 +741,10 @@ class complex {
 	}
 	mandelbrot(m = 256){// Mandelbrot set (for testing only)
 		// returns 0 to 256; 0: (probably) in set; 256: out of bounds
-		var n = m, z = new complex(this).add(1), b = this.sqrabs * z.sqrabs;
-		// -2 < x < 1, |y| < 1.2496210676876531737592088948857
+		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for (x²+y²)((x+1)²+y²)
 		// ellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
-		if (b < 4) {
-			n--;  z.asg(this);  var w = {};
-			while (z.obj(w).sqr.zadd(this).isNum &&  n > 0)
-				if (z.isEps(w)) n = 0; else n--;
-		}
+		var n = m, z = new complex(this); // |z| < 2
+		while (z.sqrabs < 4 && z.sqr.zadd(this).isNum &&  n > 0) n--;
 		return n;
 	}
 	trivertex(vertexA, vertexB, vertexC, changed = true){// triangle ABC centers
@@ -835,14 +831,14 @@ class complex {
 			this.Nagel = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Nagel line (contains G, I, Na, Sp, ...)
 			this.Soddy = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Soddy line (contains I, Ge, L, SO, SI, ...)
 			if (a != b || b != c){ // no lines for equilateral triangle
-				//this.asg(this.G).oncircle(this.O).obj(this.Euler.z1).opposite(this.O).obj(this.Euler.z2);
-				this.linecircle(this.G, this.O, this.SO);
+				var O = this.SO; // circle chords
+				this.linecircle(this.G, this.O, O);
 				this.asg(this.z1).obj(this.Euler.z1); delete(this.z1);
 				this.asg(this.z2).obj(this.Euler.z2); delete(this.z2);
-				this.linecircle(this.I, this.G, this.SO);
+				this.linecircle(this.I, this.G, O);
 				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
 				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
-				this.linecircle(this.I, this.L, this.SO);
+				this.linecircle(this.I, this.L, O);
 				this.asg(this.z1).obj(this.Soddy.z1); delete(this.z1);
 				this.asg(this.z2).obj(this.Soddy.z2); delete(this.z2);
 			}
