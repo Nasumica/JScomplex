@@ -742,9 +742,9 @@ class complex {
 	mandelbrot(m = 256){// Mandelbrot set (for testing only)
 		// returns 0 to 256; 0: (probably) in set; 256: out of bounds |z|² < 4
 		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for |z|²·|z+1|² < 4
-		// ellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
+		// eellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
 		var n = m, z = new complex(this); // |z| < 2 => |z|² < 4
-		while (z.sqrabs < 4 && n-- > 0) if (z.sqr.zadd(this).is0) n = 0;
+		while (z.sqrabs <= 4 && n > 0) if (z.nop(n--).sqr.zadd(this).is0) n = 0;
 		return n;
 	}
 	trivertex(vertexA, vertexB, vertexC, changed = true){// triangle ABC centers
