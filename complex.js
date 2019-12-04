@@ -101,6 +101,10 @@ class complex {
 	get isNaN(){
 		return Number.isNaN(this.x) || Number.isNaN(this.y);
 	}
+	isEps(z = {x: 0, y: 0}, eps = 1e-15){// with respect to epsilon
+		var x = abs(this.x - z.x), y = abs(this.y - z.y);
+		return x < eps && y < eps; // must improve
+	}
 	get zero(){
 		return this.xiy(0);
 	}
@@ -673,6 +677,16 @@ class complex {
 		this.asg(point); this.r = this.zdist(this.z1);
 		return this;
 	}
+	similitude(circle1, circle2){// common tangents intersections
+		this.z1 = {x: 1/0, y: 1/0}; 
+		this.z2 = {x: 1/0, y: 1/0};
+		var u = new complex(circle1).mul(circle2.r);
+		var v = new complex(circle2).mul(circle1.r);
+		var w = new complex();
+		w.asg(v).zadd(u).div(circle1.r + circle2.r).obj(this.z1); // internal
+		w.asg(v).zsub(u).div(circle1.r - circle2.r).obj(this.z2); // external
+		return this;
+	}
 	tangent(circle){// simpler usage
 		return this.circletangent(this.z, circle);
 	}
@@ -702,32 +716,17 @@ class complex {
 		return this.scl(random(), random());
 	}
 	get polardev(){
-		return this.zscl(
-			new complex().cis(
-				sqrt(random()), 
-				random(2 * pi)
-			)
-		);
+		return this.zscl(new complex().cis(sqrt(random()), random(2 * pi)));
 	}
 	get rectdev(){
-		return this.scl(
-			random(2) - 1, 
-			random(2) - 1
-		);
+		return this.scl(random(2) - 1, random(2) - 1);
 	}
 	get expdev(){
-		function laplace(){
-			return -log(1 - random()) * (random() < 0.5 ? -1 : 1);
-		}
+		function laplace(){return -log(1 - random()) * (random() < 0.5 ? -1 : 1);}
 		return this.scl(laplace(), laplace());
 	}
 	get normaldev(){
-		return this.zscl(
-			new complex().cis(
-				sqrt(-2 * log(1 - random())), 
-				random(2 * pi)
-			)
-		);
+		return this.zscl(new complex().cis(sqrt(-2 * log(1 - random())), random(2 * pi)));
 	}
 	get poissondev(){
 		function poisson(lambda){
@@ -743,12 +742,12 @@ class complex {
 	mandelbrot(m = 256){// Mandelbrot set (for testing only)
 		// returns 0 to 256; 0: (probably) in set; 256: out of bounds
 		var n = m, z = new complex(this).add(1), b = this.sqrabs * z.sqrabs;
-		// -2 < x < 1, |y| < sqrt((sqrt(17) - 1)/2) = 1.2496210676876531737592088948857
-		// ellipse {x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0}
+		// -2 < x < 1, |y| < 1.2496210676876531737592088948857
+		// ellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
 		if (b < 4) {
-			n--;  z.asg(this); var w = {};
-			while (z.obj(w).sqr.zadd(this).isNum &&  n > 0) 
-				if (z.is(w)) n = 0; else n--;
+			n--;  z.asg(this);  var w = {};
+			while (z.obj(w).sqr.zadd(this).isNum &&  n > 0)
+				if (z.isEps(w)) n = 0; else n--;
 		}
 		return n;
 	}
@@ -1220,7 +1219,6 @@ var asin = Math.asin, acos = Math.acos, atan = function(y, x = 1){return Math.at
 var pi = Math.PI;          // π = 3.1415926535897932384626433832795
 var phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
 var random = function(x = 1){return x * Math.random();}
-var odd = function(n){return n & 1 != 0;}
 
 
 Object.defineProperty(Array.prototype, 'lo', {
