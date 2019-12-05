@@ -68,13 +68,10 @@ class complex {
 	get sqrabs(){// |z|² = z * z' = ρ²
 		return this.x * this.x + this.y * this.y;
 	}
-	get abs(){// ρ (I don't like hypot)
-		if (this.x == 0 || this.y == 0)
-			return abs(this.x + this.y);
-		else
-			return sqrt(this.sqrabs);
+	get abs(){// magnitude ρ
+		return this.x == 0 || this.y == 0 ? abs(this.x + this.y) : sqrt(this.sqrabs);
 	}
-	get arg(){// θ
+	get arg(){// angle θ
 		return atan(this.y, this.x);
 	}
 	isEq(x, y = 0){
@@ -102,8 +99,7 @@ class complex {
 		return Number.isNaN(this.x) || Number.isNaN(this.y);
 	}
 	isEps(z = {x: 0, y: 0}, eps = 1e-15){// with respect to epsilon
-		var x = abs(this.x - z.x), y = abs(this.y - z.y);
-		return x + y < eps; // must improve
+		return abs(this.x - z.x) + abs(this.y - z.y) < eps; // must improve
 	}
 	get zero(){
 		return this.xiy(0);
@@ -534,11 +530,17 @@ class complex {
 	anticomplement(z){
 		return this.go(z, 3);
 	}
-	crossover(z1, z2 = {x: 0, y: 0}){
+	crossover(z1, z2){
 		return this.opposite(new complex(z1).halfway(z2));
 	}
-	perp(z1, z2 = {x: 0, y: 0}){// this--result is perpendicular to z1--z2
+	parallel(z1, z2){// this--result is parallel to z1--z2
+		return this.zadd(new complex(z2).zsub(z1));
+	}
+	perp(z1, z2){// this--result is perpendicular to z1--z2
 		return this.zadd(new complex(z2).zsub(z1).muli);
+	}
+	angled(z1, z2, angle){// this--result is slanted by angle to line z1--z2
+		return this.asg(new complex(this).ortho(z1, z2).zabout(this, angle));
 	}
 	intersection(z1, z2, z3, z4){// intersection point of lines z1--z2 and z3--z4
 		function cross(p, q){return p.x * q.y - p.y * q.x;}
@@ -623,7 +625,22 @@ class complex {
 		// result -> u/v
 		return this.asg(u).zdiv(v);
 	}
-	linecircle(point1, point2, circle){// line - circle intersection
+	radical(c1, c2){// radical point
+		this.asg(c1); var d = this.zdist(c2);
+		if (d != 0) this.ztoward(c2, ((sqr(c1.r) - sqr(c2.r))/d + d)/2);
+		return this;
+	}
+	similitude(circle1, circle2){// common tangents intersections
+		this.z1 = {x: 1/0, y: 1/0}; 
+		this.z2 = {x: 1/0, y: 1/0};
+		var u = new complex(circle1).mul(circle2.r);
+		var v = new complex(circle2).mul(circle1.r);
+		var w = new complex();
+		w.asg(v).zadd(u).div(circle1.r + circle2.r).obj(this.z1); // internal
+		w.asg(v).zsub(u).div(circle1.r - circle2.r).obj(this.z2); // external
+		return this;
+	}
+	linecircle(point1, point2, circle){// chord, line - circle intersection
 		function cross(p, q){return p.x * q.y - p.y * q.x;};
 		var u = new complex(point1).zsub(circle);
 		var v = new complex(point2).zsub(circle);
@@ -642,19 +659,24 @@ class complex {
 		return this.pop;
 	}
 	circlecircle(circle1, circle2){// circle - circle intersection
-		var z = new complex(circle2).zsub(circle1);
-		var d = z.sqrabs, c = sqrt(d);  z.div(c);
-		var u = circle1.r, v = circle2.r; u *= u; v *= v;
-		var p = d + u - v, q = 4 * d * u - p * p;
-		this.z1 = {x: 1/0, y: 1/0}; 
-		this.z2 = {x: 1/0, y: 1/0};
-		this.put.success = q >= 0;
-		if (this.success){
-			this.xiy(p, sqrt(q)).div(2 * c);
-			this.put.zmul(z).zadd(circle1).obj(this.z1);
-			this.pop.conjg.zmul(z).zadd(circle1).obj(this.z2);
+		if (true){
+			this.radical(circle1, circle2);
+			return this.linecircle(this, new complex(this).perp(circle1, circle2), circle1);
+		} else {
+			var z = new complex(circle2).zsub(circle1);
+			var d = z.sqrabs, c = sqrt(d);  z.div(c);
+			var u = circle1.r, v = circle2.r; u *= u; v *= v;
+			var p = d + u - v, q = 4 * d * u - p * p;
+			this.z1 = {x: 1/0, y: 1/0}; 
+			this.z2 = {x: 1/0, y: 1/0};
+			this.put.success = q >= 0;
+			if (this.success){
+				this.xiy(p, sqrt(q)).div(2 * c);
+				this.put.zmul(z).zadd(circle1).obj(this.z1);
+				this.pop.conjg.zmul(z).zadd(circle1).obj(this.z2);
+			}
+			return this.pop;
 		}
-		return this.pop;
 	}
 	circletangent(point, circle){// tangent from point to circle
 		if (true){
@@ -675,16 +697,6 @@ class complex {
 			}
 		}
 		this.asg(point); this.r = this.zdist(this.z1);
-		return this;
-	}
-	similitude(circle1, circle2){// common tangents intersections
-		this.z1 = {x: 1/0, y: 1/0}; 
-		this.z2 = {x: 1/0, y: 1/0};
-		var u = new complex(circle1).mul(circle2.r);
-		var v = new complex(circle2).mul(circle1.r);
-		var w = new complex();
-		w.asg(v).zadd(u).div(circle1.r + circle2.r).obj(this.z1); // internal
-		w.asg(v).zsub(u).div(circle1.r - circle2.r).obj(this.z2); // external
 		return this;
 	}
 	tangent(circle){// simpler usage
@@ -712,23 +724,23 @@ class complex {
 	supercircle(shape = 2, angle, radius = 1, symmetry = 4, u = shape, v = u){
 		return this.superellipse(shape, angle, radius, radius, symmetry, u, v);
 	}
-	get cartdev(){
+	get cartdev(){// bi-variate uniform distributed complex random
 		return this.scl(random(), random());
 	}
-	get polardev(){
+	get polardev(){// unit circle complex random
 		return this.zscl(new complex().cis(sqrt(random()), random(2 * pi)));
 	}
-	get rectdev(){
+	get rectdev(){// unit square complex random
 		return this.scl(random(2) - 1, random(2) - 1);
 	}
-	get expdev(){
+	get expdev(){// bi-variate double sided exponentianl (Laplace) distributed complex random
 		function laplace(){return -log(1 - random()) * (random() < 0.5 ? -1 : 1);}
 		return this.scl(laplace(), laplace());
 	}
-	get normaldev(){
+	get normaldev(){// bi-variate normal distributied complex random (darts in target)
 		return this.zscl(new complex().cis(sqrt(-2 * log(1 - random())), random(2 * pi)));
 	}
-	get poissondev(){
+	get poissondev(){// bi-variate Poisson distributed complex random (result of match)
 		function poisson(lambda){
 			if (lambda == 0) return 0; else {
 				var l = exp(-abs(lambda)), r = -1, p = 1;
@@ -740,10 +752,10 @@ class complex {
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
 	mandelbrot(m = 256){// Mandelbrot set (for testing only)
-		// returns 0 to 256; 0: (probably) in set; 256: out of bounds |z|² < 4
-		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for |z|²·|z+1|² < 4
+		// returns 0 to 256; 0: (probably) in set; 256: out of bounds |z|² ≤ 4
+		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for |z|²·|z+1|² ≤ 4
 		// eellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
-		var n = m, z = new complex(this); // |z| < 2 => |z|² < 4
+		var n = m, z = new complex(this); // |z| ≤ 2 => |z|² ≤ 4
 		while (n > 0 && z.sqrabs <= 4) if (z.nop(n--).sqr.zadd(this).is0) n = 0;
 		return n;
 	}
@@ -1166,10 +1178,10 @@ class complex {
 		return this;
 	}
 	get sto(){// storage status
-		return typeof this.mem === 'undefined' ? 0 : this.mem.length;
+		return typeof this.mem === 'undefined' ? -1 : this.mem.length;
 	}
 	get del(){// delete storage
-		if (this.sto > 0) delete(this.mem);
+		if (this.sto >= 0) delete(this.mem);
 		return this;
 	}
 	get clr(){// clear last from storage
@@ -1180,7 +1192,7 @@ class complex {
 		return this;
 	}
 	get put(){// put into storage
-		if (this.sto == 0) this.mem = [];
+		if (this.sto < 0) this.mem = [];
 		this.mem.push(this.z);
 		return this;
 	}
@@ -1283,6 +1295,10 @@ CanvasRenderingContext2D.prototype.zmoveTo = function(z){
 
 CanvasRenderingContext2D.prototype.zlineTo = function(z){
 	this.lineTo(z.x, z.y); return this;
+}
+
+CanvasRenderingContext2D.prototype.zline = function(z1, z2){
+	this.zmoveTo(z1).zlineTo(z2); return this;
 }
 
 CanvasRenderingContext2D.prototype.zrect = function(z1, z2){
