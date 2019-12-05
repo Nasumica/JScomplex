@@ -649,17 +649,16 @@ class complex {
 		return this.asg(new complex().similitude(circle1, circle2).z2);
 	}
 	linecircle(point1, point2, circle){// chord, line - circle intersection
-		this.z1 = {x: 1/0, y: 1/0}; 
-		this.z2 = {x: 1/0, y: 1/0};
-		if (true){// by construction
+		this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
+		if (true){// by construction (Q-----------○------Z---P) ΔZ₁ZP ~ ΔQZZ₁ ~ ΔQZ₁P
 			var d = new complex(point1).zsub(point2).unit; // distance unit vector
 			var z = new complex(circle).ortho(point1, point2); // project center to line
 			this.success = z.zdist(circle) <= circle.r; // must be in circle
 			if (this.success){// else line don't cross circle
-				var o = new complex(z).oncircle(circle); // opposite points on circle
-				var p = new complex(o).opposite(circle); // on perpendicular line
-				d.mul(sqrt(o.zdist(z) * p.zdist(z)));    // |oz| : |d| = |d| : |zp|
-				new complex(z).zadd(d).obj(this.z1).opposite(z).obj(this.z2);
+				var p = new complex(z).oncircle(circle); // opposite points on circle
+				var q = new complex(p).opposite(circle); // on perpendicular line
+				d.mul(sqrt(p.zdist(z) * z.zdist(q)));    // |PZ| : |ZZ₁| = |ZZ₁| : |ZQ|
+				d.zadd(z).obj(this.z1).opposite(z).obj(this.z2);
 			}
 		} else {// by algebra
 			function cross(p, q){return p.x * q.y - p.y * q.x;};
@@ -680,12 +679,11 @@ class complex {
 		return this;
 	}
 	circlecircle(circle1, circle2){// common chord, circle - circle intersection
-		if (true){// by construction
+		if (true){// by construction (----------○₁----(---R--)------○₂-------------)
 			var r = new complex().radical(circle1, circle2); // points of concurrence lies on radical axis
 			this.linecircle(r.z, r.perp(circle1, circle2), circle1);
 		} else {// by algebra
-			this.z1 = {x: 1/0, y: 1/0}; 
-			this.z2 = {x: 1/0, y: 1/0};
+			this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
 			var z = new complex(circle2).zsub(circle1);
 			var d = z.sqrabs, c = sqrt(d);  z.div(c);
 			var u = circle1.r, v = circle2.r; u *= u; v *= v;
@@ -700,12 +698,11 @@ class complex {
 		return this;
 	}
 	circletangent(point, circle){// tangent from point to circle
-		if (true){// by construction (--------(C--------)---Z------------P)
+		if (true){// by construction (--------(○--------)---Z------------P)
 			var z = new complex(point).halfway(circle); z.r = z.zdist(point);
 			this.circlecircle(z, circle); // find points of concurrence
 		} else {// by algebra
-			this.z1 = {x: 1/0, y: 1/0}; 
-			this.z2 = {x: 1/0, y: 1/0};
+			this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
 			var z = new complex(point).zsub(circle);
 			var d = z.sqrabs, c = sqrt(d);  z.div(c);
 			var a = circle.r;
@@ -746,7 +743,7 @@ class complex {
 	supercircle(shape = 2, angle, radius = 1, symmetry = 4, u = shape, v = u){
 		return this.superellipse(shape, angle, radius, radius, symmetry, u, v);
 	}
-	get cartdev(){// bi-variate uniform distributed complex random
+	get cartdev(){// uniform distributed complex random
 		return this.scl(random(), random());
 	}
 	get polardev(){// unit circle complex random
@@ -755,14 +752,14 @@ class complex {
 	get rectdev(){// unit square complex random
 		return this.scl(random(2) - 1, random(2) - 1);
 	}
-	get expdev(){// bi-variate double sided exponentianl (Laplace) distributed complex random
+	get expdev(){// bi-variate double sided exponentianl (Laplace) distributed random
 		function laplace(){return -log(1 - random()) * (random() < 0.5 ? -1 : 1);}
 		return this.scl(laplace(), laplace());
 	}
-	get normaldev(){// bi-variate normal distributied complex random (darts in target)
+	get normaldev(){// bi-variate normal distributied random (darts in target)
 		return this.zscl(new complex().cis(sqrt(-2 * log(1 - random())), random(2 * pi)));
 	}
-	get poissondev(){// bi-variate Poisson distributed complex random (result of match)
+	get poissondev(){// bi-variate Poisson distributed random (result of match)
 		function poisson(lambda){
 			if (lambda == 0) return 0; else {
 				var l = exp(-abs(lambda)), r = -1, p = 1;
@@ -1243,17 +1240,17 @@ class complex {
 }
 
 // Не могу више да куцам Math. Ја сам паскал програмер.
-min = Math.min, max = Math.max;
-abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
-sqrt = Math.sqrt, sqr = function(x){return x * x;};
-exp = Math.exp, log = Math.log; pow = Math.pow;
-sin = Math.sin, cos = Math.cos, tan = Math.tan;
-asin = Math.asin, acos = Math.acos;
-atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);}
-cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
-pi = Math.PI;          // π = 3.1415926535897932384626433832795
-phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
-random = function(x = 1){return x * Math.random();}
+const min = Math.min, max = Math.max;
+const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
+const sqrt = Math.sqrt, sqr = function(x){return x * x;};
+const exp = Math.exp, log = Math.log, pow = Math.pow;
+const sin = Math.sin, cos = Math.cos, tan = Math.tan;
+const asin = Math.asin, acos = Math.acos;
+const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);}
+const cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
+const pi = Math.PI;          // π = 3.1415926535897932384626433832795
+const phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
+const random = function(x = 1){return x * Math.random();}
 
 
 Object.defineProperty(Array.prototype, 'lo', {
