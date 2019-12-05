@@ -746,20 +746,20 @@ class complex {
 		return this.zscl(new complex().cis(sqrt(random()), random(tau)));
 	}
 	get rectdev(){// unit square complex random
-		return this.scl(random(2) - 1, random(2) - 1);
+		return this.scl(random(-1, 1), random(-1, 1));
 	}
 	get expdev(){// bi-variate double sided exponentianl (Laplace) distributed random
 		function laplace(){return -log(1 - random()) * (random() < 0.5 ? -1 : 1);}
 		return this.scl(laplace(), laplace());
 	}
 	get normaldev(){// bi-variate normal distributied random (darts in target)
-		return this.zscl(new complex().cis(sqrt(-2 * log(1 - random())), random(tau)));
+		return this.zscl(cis(random(tau), sqrt(-2 * log(1 - random()))));
 	}
 	get poissondev(){// bi-variate Poisson distributed random (result of match)
 		function poisson(lambda){
 			if (lambda == 0) return 0; else {
 				var l = exp(-abs(lambda)), r = -1, p = 1;
-				do { r++; p = random(p); } while (p > l);
+				do { r++; p *= random(); } while (p > l);
 				if (lambda < 0) r = -r;
 				return r;
 			};
@@ -1130,7 +1130,7 @@ class complex {
 		}
 		var p = [], n, i; // polynom array, degree and index
 		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
-		//for (i = p.hi; i >= p.lo; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // (debug)
+		// for (i = p.hi; i >= p.lo; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // (debug)
 		this.del; for (i = p.lo; i <= p.hi; i++) this.put.asg(p[i]).exc; // put polynom into storage (debug)
 		i = 0; while (i < p.length && new complex(p[i]).isNum) i++; // check consistency
 		
@@ -1236,6 +1236,9 @@ class complex {
 	}
 }
 
+Object.defineProperty(Array.prototype, 'lo', {enumerable: false, configurable: false, get() { return 0; }});
+Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: false, get() { return this.length - 1; }});
+
 // Не могу више да куцам Math; ја сам паскал програмер.
 const min = Math.min, max = Math.max;
 const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
@@ -1247,18 +1250,13 @@ const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x
 const cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
 const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const phi = (sqrt(5) + 1)/2;      // φ = 1.6180339887498948482045868343656
-const random = function(x = 1){return x * Math.random();}
-
-
-Object.defineProperty(Array.prototype, 'lo', {
-	enumerable: false, configurable: false,
-	get() { return 0; }
-});
-
-Object.defineProperty(Array.prototype, 'hi', {
-	enumerable: false, configurable: false,
-	get() { return this.length - 1; }
-});
+const random = function(a, b){// uniform deviate in given range
+	switch (arguments.length) {
+		case  0: return Math.random();               // [0, 1)
+		case  1: return Math.random() * a;           // [0, a)
+		default: return Math.random() * (b - a) + a; // [a, b)
+	}
+}
 
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'begin', {
