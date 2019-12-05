@@ -775,11 +775,11 @@ class complex {
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
 	mandelbrot(m = 1000){// Mandelbrot set (for testing only)
-		// returns 0 to 1000; 0: (probably) in set; 1001: out of bounds |z|² ≤ 4
+		// returns 0 to 1000; 0: (probably) in set; 1001: out of bounds
 		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for |z|²·|z+1|² ≤ 4
 		// eellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
-		var n = m + 1, z = new complex(this); // |z| ≤ 2 => |z|² ≤ 4
-		while (n > 0 && z.sqrabs <= 4) if (z.nop(n--).sqr.zadd(this).is0) n = 0;
+		var n = m + 1, z = new complex(this); // |z| ≤ 2 => |z|² ≤ 4 (avoid sqrt)
+		while (n > 0 && z.sqrabs <= 4) if (z.sqr.zadd(this).nop(n--).is0) n = 0;
 		return n;
 	}
 	trivertex(vertexA, vertexB, vertexC, changed = true){// triangle ABC centers
