@@ -8,7 +8,7 @@ class complex {
 	
 	https://github.com/Nasumica/JScomplex
 
-	Euler identity e ^ (i * π) + 1 = 0: new complex(Math.PI).muli.exp.add(1);
+	Euler identity e ^ (i * π) + 1 = 0: new complex(pi).muli.exp.add(1);
 */
 	constructor(u, v){
 	/*
@@ -28,7 +28,7 @@ class complex {
 		this.x = 0; this.y = 0;
 		if (arguments.length > 1) this.xiy(u, v); else
 		if (arguments.length > 0) 
-		if (typeof u === 'object') {
+		if (u instanceof Object) {
 			if (Array.isArray(u)){
 				if (u.length > 1) this.xiy(u[0], u[1]); else
 				if (u.length > 0) this.xiy(u[0]);
@@ -402,7 +402,7 @@ class complex {
 		return this.about(z.x, z.y, angle);
 	}
 	cyclic(m, n = 1){// rotate by m/n part of full circle
-		return this.rotate(2 * pi * m/n);
+		return this.rotate(tau * m/n);
 	}
 	times(z1, z2 = {x: 0, y: 0}){// this = z1 + times * (z2 - z1)
 		return this.zsub(z1).zdiv(new complex(z2).zsub(z1)); 
@@ -539,7 +539,7 @@ class complex {
 	perp(z1, z2){// this--result is perpendicular to z1--z2
 		return this.zadd(new complex(z2).zsub(z1).muli);
 	}
-	angled(z1, z2, angle){// this--result is slanted by angle to line z1--z2
+	angled(z1, z2, angle = 0){// direction to line by given angle
 		return this.asg(new complex(this).ortho(z1, z2).zabout(this, angle));
 	}
 	intersection(z1, z2, z3, z4){// line (z1--z2) - line (z3--z4) intersection point
@@ -566,10 +566,10 @@ class complex {
 	reflect(z1, z2 = {x: 0, y: 0}){// reflection of this to line z1--z2
 		return this.times(z1, z2).conjg.inter(z1, z2);
 	}
-	dist(x, y){// distance of this to point (x, y)
+	dist(x, y){// absolute distance of this to point (x, y)
 		return new complex(x, y).zsub(this).abs;
 	}
-	zdist(z1, z2){// distance to point or line
+	zdist(z1, z2){// absolute distance to point or line
 		if (arguments.length < 2 || new complex(z2).is(z1)) 
 			return this.dist(z1.x, z1.y); 
 		else
@@ -585,25 +585,21 @@ class complex {
 		return new complex(z1).zdist(z2) * new complex(this).times(z1, z2).y;
 	}
 	toward(x, y, len = 1){
-		if (this.isEq(x, y))
-			return this;
-		else
-			return this.zadd(new complex(x, y).zsub(this).unit.mul(len));
+		if (!this.isEq(x, y)) this.zadd(new complex(x, y).zsub(this).unit.mul(len));
+		return this;
 	}
 	ztoward(z, len = 1){// go toward z by given length
 		return this.toward(z.x, z.y, len);
 	}
 	oncircle(circle){// nearest point on circle
-		if (this.is(circle))
-			return this;
-		else
-			return this.asg(new complex(circle).ztoward(this, circle.r));
+		if (!this.is(circle)) this.asg(new complex(circle).ztoward(this, circle.r));
+		return this;
 	}
-	circlesub(circle){// distance vector from nearest point on circle
+	circledist(circle){// distance vector from nearest point on circle
 		return this.zsub(new complex(this).oncircle(circle));
 	}
 	circledif(z1, z2, circle){// distance vector from line to circle
-		return this.asg(circle).ortho(z1, z2).circlesub(circle);
+		return this.asg(circle).ortho(z1, z2).circledist(circle);
 	}
 	isotomicconjg(A, B, C){
 		return this.intersection(
@@ -651,9 +647,9 @@ class complex {
 	linecircle(point1, point2, circle){// chord, line - circle intersection
 		this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
 		if (true){// by construction (Q-----------○------Z---P) ΔZ₁ZP ~ ΔQZZ₁ ~ ΔQZ₁P
-			var d = new complex(point1).zsub(point2).unit; // distance unit vector
+			var d = new complex(point1).zsub(point2).unit; // line unit vector
 			var z = new complex(circle).ortho(point1, point2); // project center to line
-			this.success = z.zdist(circle) <= circle.r; // must be in circle
+			this.success = z.zdist(circle) <= circle.r;        // must be in circle
 			if (this.success){// else line don't cross circle
 				var p = new complex(z).oncircle(circle); // opposite points on circle
 				var q = new complex(p).opposite(circle); // on perpendicular line
@@ -686,7 +682,7 @@ class complex {
 			this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
 			var z = new complex(circle2).zsub(circle1);
 			var d = z.sqrabs, c = sqrt(d);  z.div(c);
-			var u = circle1.r, v = circle2.r; u *= u; v *= v;
+			var u = sqr(circle1.r), v = sqr(circle2.r); 
 			var p = d + u - v, q = 4 * d * u - p * p;
 			this.success = q >= 0;
 			if (this.success){
@@ -747,7 +743,7 @@ class complex {
 		return this.scl(random(), random());
 	}
 	get polardev(){// unit circle complex random
-		return this.zscl(new complex().cis(sqrt(random()), random(2 * pi)));
+		return this.zscl(new complex().cis(sqrt(random()), random(tau)));
 	}
 	get rectdev(){// unit square complex random
 		return this.scl(random(2) - 1, random(2) - 1);
@@ -757,7 +753,7 @@ class complex {
 		return this.scl(laplace(), laplace());
 	}
 	get normaldev(){// bi-variate normal distributied random (darts in target)
-		return this.zscl(new complex().cis(sqrt(-2 * log(1 - random())), random(2 * pi)));
+		return this.zscl(new complex().cis(sqrt(-2 * log(1 - random())), random(tau)));
 	}
 	get poissondev(){// bi-variate Poisson distributed random (result of match)
 		function poisson(lambda){
@@ -858,20 +854,21 @@ class complex {
 			this.SO.r = this.barycentricxiy(a - this.Ja.r, b - this.Jb.r, c - this.Jc.r).obj(this.SO).zdist(A) + ra;
 			this.SI = {}; // X176 Soddy inner circle (equal detour point)
 			this.SI.r = this.barycentricxiy(a + this.Ja.r, b + this.Jb.r, c + this.Jc.r).obj(this.SI).zdist(A) - ra;
-			this.Euler = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Euler line (contains G, H, O, N, L, ...)
+			this.Euler = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Euler line (contains O, G, H, N, L, ...)
 			this.Nagel = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Nagel line (contains G, I, Na, Sp, ...)
-			this.Soddy = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Soddy line (contains I, Ge, L, SO, SI, ...)
+			this.Soddy = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Soddy line (contains I, L, Ge, SO, SI, ...)
 			if (a != b || b != c){ // no lines for equilateral triangle
-				var O = this.SO; // circle chords
-				this.linecircle(this.G, this.O, O);
-				this.asg(this.z1).obj(this.Euler.z1); delete(this.z1);
-				this.asg(this.z2).obj(this.Euler.z2); delete(this.z2);
-				this.linecircle(this.I, this.G, O);
-				this.asg(this.z1).obj(this.Nagel.z1); delete(this.z1);
-				this.asg(this.z2).obj(this.Nagel.z2); delete(this.z2);
-				this.linecircle(this.I, this.L, O);
-				this.asg(this.z1).obj(this.Soddy.z1); delete(this.z1);
-				this.asg(this.z2).obj(this.Soddy.z2); delete(this.z2);
+				var O = this.SO; // lines as circle chords
+				this.linecircle(this.O, this.G, O)
+					.asg(this.z1).obj(this.Euler.z1)
+					.asg(this.z2).obj(this.Euler.z2);
+				this.linecircle(this.G, this.I, O)
+					.asg(this.z1).obj(this.Nagel.z1)
+					.asg(this.z2).obj(this.Nagel.z2);
+				this.linecircle(this.I, this.L, O)
+					.asg(this.z1).obj(this.Soddy.z1)
+					.asg(this.z2).obj(this.Soddy.z2);
+				delete(this.z1); delete(this.z2);
 			}
 		}
 		return this.asg(this.O);
@@ -958,7 +955,7 @@ class complex {
 		var V = new complex().iff(B.z1, B.z2, // which is not lies on side c (A--B)
 			new complex(B.z1).zdist(A, B) > new complex(B.z2).zdist(A, B));
 		var C = new complex().intersection(A, U, B, V); // find vertex C
-		this.success = !C.isInf;
+		this.success = !(A.is(B) || C.isInf); // fail if A = B or |AB| = diameter
 		if (this.success) this.trivertex(A, B, C); // construct from vertices
 		return this;
 	}
@@ -1022,7 +1019,7 @@ class complex {
 	tripolarfun(a, b, c, f){
 		return this.tripolarxiy(f(a, b, c), f(b, c, a), f(c, a, b));
 	}
-	get stringed(){
+	get stringed(){// for debug
 		var z = new complex(this).round(100000);
 		var x = z.x + '';
 		var y = abs(z.y); y = (y == 1 ? '' : y + ' ') + 'і';
@@ -1206,7 +1203,7 @@ class complex {
 	get clr(){// clear last from storage
 		if (this.sto > 0) {
 			this.mem.pop();
-			if (this.mem.length == 0) this.del;
+			if (this.sto == 0) this.del;
 		}
 		return this;
 	}
@@ -1239,7 +1236,7 @@ class complex {
 	}
 }
 
-// Не могу више да куцам Math. Ја сам паскал програмер.
+// Не могу више да куцам Math; ја сам паскал програмер.
 const min = Math.min, max = Math.max;
 const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
 const sqrt = Math.sqrt, sqr = function(x){return x * x;};
@@ -1248,8 +1245,8 @@ const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
 const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);}
 const cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
-const pi = Math.PI;          // π = 3.1415926535897932384626433832795
-const phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
+const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
+const phi = (sqrt(5) + 1)/2;      // φ = 1.6180339887498948482045868343656
 const random = function(x = 1){return x * Math.random();}
 
 
@@ -1358,7 +1355,7 @@ CanvasRenderingContext2D.prototype.carc = function(z, s, e, c = false){
 }
 
 CanvasRenderingContext2D.prototype.zarcTo = function(z1, z2, r){
-	this.arcTo(z1.x, z1.y, z2.x, z2.y, Math.abs(r)); return this;
+	this.arcTo(z1.x, z1.y, z2.x, z2.y, abs(r)); return this;
 }
 
 CanvasRenderingContext2D.prototype.isZPointInPath = function(z){// must be improved
@@ -1374,7 +1371,7 @@ CanvasRenderingContext2D.prototype.zscale = function(z){
 }
 
 CanvasRenderingContext2D.prototype.zrotate = function(z){
-	this.rotate(Math.atan2(z.y, z.x)); return this;
+	this.rotate(atan(z)); return this;
 }
 
 CanvasRenderingContext2D.prototype.ztranslate = function(z){
@@ -1387,7 +1384,7 @@ CanvasRenderingContext2D.prototype.zsetTransform = function(scale, skew, move){
 
 
 CanvasRenderingContext2D.prototype.circle = function (x, y, r) {
-	this.arc(x, y, Math.abs(r), 0, 2 * Math.PI); return this;
+	this.arc(x, y, abs(r), 0, tau); return this;
 }
 
 CanvasRenderingContext2D.prototype.zcircle = function (z, r) {
@@ -1399,30 +1396,30 @@ CanvasRenderingContext2D.prototype.ccircle = function (c) {
 }
 
 CanvasRenderingContext2D.prototype.zellipse = 
-function(z, a, b, rot = 0, s = 0, e = 2*Math.PI, c = false){
-	this.ellipse(z.x, z.y, Math.abs(a), Math.abs(b), rot, s, e, c); return this;
+function(z, a, b, rot = 0, s = 0, e = tau, c = false){
+	this.ellipse(z.x, z.y, abs(a), abs(b), rot, s, e, c); return this;
 }
 
 CanvasRenderingContext2D.prototype.eellipse = 
-function(z, s = 0, e = 2*Math.PI, c = false){
+function(z, s = 0, e = tau, c = false){
 	return this.zellipse(z, z.a, z.b, z.o, s, e, c);
 }
 
 CanvasRenderingContext2D.prototype.fellipse = 
-function(F1x, F1y, F2x, F2y, b, s = 0, e = 2*Math.PI, c = false){
-	var dx = F1x - F2x, dy = F1y - F2y, x = F1x - dx/2, y = F1y - dy/2; o = Math.atan2(dy, dx);
-	var d = dx*dx + dy*dy, a = Math.sqrt(b*b + d); b = Math.abs(b);
+function(F1x, F1y, F2x, F2y, b, s = 0, e = tau, c = false){
+	var dx = F1x - F2x, dy = F1y - F2y, x = F1x - dx/2, y = F1y - dy/2; o = atan(dy, dx);
+	var d = dx*dx + dy*dy, a = sqrt(b*b + d); b = abs(b);
 	this.ellipse(x, y, a, b, o, s, e, c); return this;
 }
 
 
 CanvasRenderingContext2D.prototype.superellipse = 
 function(shape = 2, xpos, ypos, xradius = 1, yradius = xradius, azimuth = 0, symmetry = 4, u = shape, v = u){
-	var steps = symmetry * Math.max(9, xradius + yradius);
+	var steps = symmetry * max(9, xradius + yradius);
 	if (steps > 0){
 		var z = new complex(), theta;
 		for (var i = 0; i < steps; i++){
-			theta = 2 * i * Math.PI/steps;
+			theta = i * tau / steps;
 			z.superellipse(shape, theta, xradius, yradius, symmetry, u, v).rotate(azimuth).add(xpos, ypos);
 			if (i == 0)
 				this.zmoveTo(z);
@@ -1461,7 +1458,7 @@ function(shape = 2, z, azimuth = 0){
 
 CanvasRenderingContext2D.prototype.supertable = 
 function(shape = 2, xpos, ypos, radius = 1, azimuth = 0, symmetry = 4, u = shape, v = u){
-	return this.superellipse(shape, xpos, ypos, radius, radius * (Math.sqrt(5) - 1)/2, azimuth, symmetry, u, v);
+	return this.superellipse(shape, xpos, ypos, radius, radius / phi, azimuth, symmetry, u, v);
 }
 
 CanvasRenderingContext2D.prototype.triangle = function(t) {
