@@ -542,16 +542,16 @@ class complex {
 	angled(z1, z2, angle){// this--result is slanted by angle to line z1--z2
 		return this.asg(new complex(this).ortho(z1, z2).zabout(this, angle));
 	}
-	intersection(z1, z2, z3, z4){// line z1--z2 - line z3--z4 intersection point
-		function cross(p, q){return p.x * q.y - p.y * q.x;}
-		var u = new complex(z2).zsub(z1);
-		var v = new complex(z4).zsub(z3);
-		var d = cross(u, v);
+	intersection(z1, z2, z3, z4){// line (z1--z2) - line (z3--z4) intersection point
+		function cross(p, q){return p.x * q.y - p.y * q.x;} // p × q
+		var u = new complex(z2).zsub(z1); // line1 distance vector
+		var v = new complex(z4).zsub(z3); // line2 distance vector
+		var d = cross(u, v); // vectors cross product u × v
 		if (d == 0){// parallel
 			this.inf;
 		} else {
-			var a = cross(u, z1), b = cross(v, z3); 
-			this.asg(v.mul(a)).zsub(u.mul(b)).div(d);
+			var a = cross(u, z1), b = cross(v, z3);   // (u × z1) * v - (v × z3) * u
+			this.asg(v.mul(a)).zsub(u.mul(b)).div(d); //           u × v
 		}
 		return this;
 	}
