@@ -542,24 +542,23 @@ class complex {
 	angled(z1, z2, angle){// this--result is slanted by angle to line z1--z2
 		return this.asg(new complex(this).ortho(z1, z2).zabout(this, angle));
 	}
-	intersection(z1, z2, z3, z4){// intersection point of lines z1--z2 and z3--z4
+	intersection(z1, z2, z3, z4){// line z1--z2 - line z3--z4 intersection point
 		function cross(p, q){return p.x * q.y - p.y * q.x;}
 		var u = new complex(z2).zsub(z1);
 		var v = new complex(z4).zsub(z3);
 		var d = cross(u, v);
 		if (d == 0){// parallel
-			return this.inf;
+			this.inf;
 		} else {
-			var a = cross(u, z1);
-			var b = cross(v, z3);
-			u.mul(b); v.mul(a);
-			return this.asg(v).zsub(u).div(d);
+			var a = cross(u, z1), b = cross(v, z3); 
+			this.asg(v.mul(a)).zsub(u.mul(b)).div(d);
 		}
+		return this;
 	}
 	bisection(z1, z2, z3, z4 = z1){// intersection of bisectors
 		var u = new complex(z1).halfway(z2);
 		var v = new complex(z3).halfway(z4);
-		return this.intersection(u, new complex(u).perp(z1, z2), v, new complex(v).perp(z3, z4));
+		return this.intersection(u.z, u.perp(z1, z2), v.z, v.perp(z3, z4));
 	}
 	ortho(z1, z2 = {x: 0, y: 0}){// orthogonal projection of this to line z1--z2
 		return this.times(z1, z2).real.inter(z1, z2); // 3 : 0 (Jesé 29', Raphaël Varane 56', James Rodríguez 88')
