@@ -718,7 +718,7 @@ class complex {
 					.pop.conjg.zmul(z).zadd(circle).obj(this.z2);
 			}
 		}
-		//this.asg(point); this.r = this.zdist(this.z1);
+		// this.asg(point); this.r = this.zdist(this.z1);
 		return this;
 	}
 	tangent(circle){// simpler usage
@@ -739,9 +739,10 @@ class complex {
 		return this.zadd(new complex().cis(size * pow(n, rate/2), angle + n * f));
 	}
 	superellipse(shape = 2, angle, xradius = 1, yradius = xradius, symmetry = 4, u = shape, v = u){
-		this.cis(angle * symmetry/4).pos.lcs(xradius, yradius);
-		this.xiy(pow(this.x, u), pow(this.y, v));
-		return this.cis(pow(this.x + this.y, -1/shape), angle);
+		return this
+			.cis(angle * symmetry/4).pos.lcs(xradius, yradius)
+			.xiy(pow(this.x, u), pow(this.y, v))
+			.cis(pow(this.x + this.y, -1/shape), angle);
 	}
 	supercircle(shape = 2, angle, radius = 1, symmetry = 4, u = shape, v = u){
 		return this.superellipse(shape, angle, radius, radius, symmetry, u, v);
