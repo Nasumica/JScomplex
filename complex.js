@@ -682,8 +682,8 @@ class complex {
 	}
 	circlecircle(circle1, circle2){// common chord, circle - circle intersection
 		if (true){// by construction
-			this.radical(circle1, circle2); // points of concurrence lies on radical axis
-			return this.linecircle(this.z, this.perp(circle1, circle2), circle1);
+			var r = new complex().radical(circle1, circle2); // points of concurrence lies on radical axis
+			this.linecircle(r.z, r.perp(circle1, circle2), circle1);
 		} else {// by algebra
 			this.z1 = {x: 1/0, y: 1/0}; 
 			this.z2 = {x: 1/0, y: 1/0};
@@ -691,14 +691,14 @@ class complex {
 			var d = z.sqrabs, c = sqrt(d);  z.div(c);
 			var u = circle1.r, v = circle2.r; u *= u; v *= v;
 			var p = d + u - v, q = 4 * d * u - p * p;
-			this.put.success = q >= 0;
+			this.success = q >= 0;
 			if (this.success){
-				this.xiy(p, sqrt(q)).div(2 * c);
-				this.put.zmul(z).zadd(circle1).obj(this.z1);
-				this.pop.conjg.zmul(z).zadd(circle1).obj(this.z2);
+				new complex(p, sqrt(q)).div(2 * c)
+					.put.zmul(z).zadd(circle1).obj(this.z1)
+					.pop.conjg.zmul(z).zadd(circle1).obj(this.z2);
 			}
-			return this.pop;
 		}
+		return this;
 	}
 	circletangent(point, circle){// tangent from point to circle
 		if (true){// by construction (--------(C--------)---Z------------P)
@@ -713,12 +713,12 @@ class complex {
 			this.success = c >= a;
 			if (this.success){
 				var b = sqrt(d - a * a);
-				this.xiy(a, b).mul(a).div(c);
-				this.put.zmul(z).zadd(circle).obj(this.z1);
-				this.pop.conjg.zmul(z).zadd(circle).obj(this.z2);
+				new complex(a, b).mul(a).div(c)
+					.put.zmul(z).zadd(circle).obj(this.z1)
+					.pop.conjg.zmul(z).zadd(circle).obj(this.z2);
 			}
 		}
-		this.asg(point); this.r = this.zdist(this.z1);
+		//this.asg(point); this.r = this.zdist(this.z1);
 		return this;
 	}
 	tangent(circle){// simpler usage
