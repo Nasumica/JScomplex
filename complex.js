@@ -625,9 +625,12 @@ class complex {
 		// result -> u/v
 		return this.asg(u).zdiv(v);
 	}
-	radical(c1, c2){// radical point
-		this.asg(c1); var d = this.zdist(c2);
-		if (d != 0) this.ztoward(c2, ((sqr(c1.r) - sqr(c2.r))/d + d)/2);
+	radical(circle1, circle2){// radical point
+		this.asg(circle1); var d = this.zdist(circle2);
+		if (d != 0) {
+			d = ((sqr(circle1.r) - sqr(circle2.r))/d + d)/2;
+			this.ztoward(circle2, d);
+		}
 		return this;
 	}
 	similitude(circle1, circle2){// common tangents intersections
@@ -635,40 +638,59 @@ class complex {
 		this.z2 = {x: 1/0, y: 1/0};
 		var u = new complex(circle1).mul(circle2.r);
 		var v = new complex(circle2).mul(circle1.r);
-		var w = new complex();
-		w.asg(v).zadd(u).div(circle1.r + circle2.r).obj(this.z1); // internal
-		w.asg(v).zsub(u).div(circle1.r - circle2.r).obj(this.z2); // external
+		new complex()
+			.asg(v).zadd(u).div(circle1.r + circle2.r).obj(this.z1)  // internal
+			.asg(v).zsub(u).div(circle1.r - circle2.r).obj(this.z2); // external
 		return this;
 	}
+	siminter(circle1, circle2){// internal similitude point
+		return this.asg(new complex().similitude(circle1, circle2).z1);
+	}
+	simouter(circle1, circle2){// external similitude point
+		return this.asg(new complex().similitude(circle1, circle2).z2);
+	}
 	linecircle(point1, point2, circle){// chord, line - circle intersection
-		function cross(p, q){return p.x * q.y - p.y * q.x;};
-		var u = new complex(point1).zsub(circle);
-		var v = new complex(point2).zsub(circle);
-		var z = new complex(v).zsub(u);
-		var d = z.sqrabs, a = cross(u, v);
-		var b = d * circle.r * circle.r - a * a;
 		this.z1 = {x: 1/0, y: 1/0}; 
 		this.z2 = {x: 1/0, y: 1/0};
-		this.put.success = b >= 0;
-		if (this.success){
-			u.asg(z).mul(a).divi;
-			v.asg(z).mul((z.y < 0 ? -1 : 1) * sqrt(b));
-			this.asg(u).zadd(v).div(d).zadd(circle).obj(this.z1);
-			this.asg(u).zsub(v).div(d).zadd(circle).obj(this.z2);
+		if (true){// by construction
+			var d = new complex(point1).zsub(point2).unit; // distance unit vector
+			var z = new complex(circle).ortho(point1, point2); // project center to line
+			this.success = z.zdist(circle) <= circle.r; // must be in circle
+			if (this.success){// else line don't cross circle
+				var o = new complex(z).oncircle(circle); // opposite points on circle
+				var p = new complex(o).opposite(circle); // on perpendicular line
+				d.mul(sqrt(o.zdist(z) * p.zdist(z)));    // |oz| : |d| = |d| : |zp|
+				new complex(z).zadd(d).obj(this.z1).opposite(z).obj(this.z2);
+			}
+		} else {// by algebra
+			function cross(p, q){return p.x * q.y - p.y * q.x;};
+			var u = new complex(point1).zsub(circle);
+			var v = new complex(point2).zsub(circle);
+			var z = new complex(v).zsub(u);
+			var d = z.sqrabs, a = cross(u, v);
+			var b = d * sqr(circle.r) - sqr(a);
+			this.success = b >= 0;
+			if (this.success){
+				u.asg(z).mul(a).divi;
+				v.asg(z).mul((z.y < 0 ? -1 : 1) * sqrt(b));
+				new complex()
+					.asg(u).zadd(v).div(d).zadd(circle).obj(this.z1)
+					.asg(u).zsub(v).div(d).zadd(circle).obj(this.z2);
+			}
 		}
-		return this.pop;
+		return this;
 	}
-	circlecircle(circle1, circle2){// circle - circle intersection
-		if (true){
-			this.radical(circle1, circle2);
-			return this.linecircle(this, new complex(this).perp(circle1, circle2), circle1);
-		} else {
+	circlecircle(circle1, circle2){// common chord, circle - circle intersection
+		if (true){// by construction
+			this.radical(circle1, circle2); // points of concurrence lies on radical axis
+			return this.linecircle(this.z, this.perp(circle1, circle2), circle1);
+		} else {// by algebra
+			this.z1 = {x: 1/0, y: 1/0}; 
+			this.z2 = {x: 1/0, y: 1/0};
 			var z = new complex(circle2).zsub(circle1);
 			var d = z.sqrabs, c = sqrt(d);  z.div(c);
 			var u = circle1.r, v = circle2.r; u *= u; v *= v;
 			var p = d + u - v, q = 4 * d * u - p * p;
-			this.z1 = {x: 1/0, y: 1/0}; 
-			this.z2 = {x: 1/0, y: 1/0};
 			this.put.success = q >= 0;
 			if (this.success){
 				this.xiy(p, sqrt(q)).div(2 * c);
@@ -679,15 +701,15 @@ class complex {
 		}
 	}
 	circletangent(point, circle){// tangent from point to circle
-		if (true){
+		if (true){// by construction (--------(C--------)---Z------------P)
 			var z = new complex(point).halfway(circle); z.r = z.zdist(point);
-			this.circlecircle(z, circle);
-		} else {
+			this.circlecircle(z, circle); // find points of concurrence
+		} else {// by algebra
+			this.z1 = {x: 1/0, y: 1/0}; 
+			this.z2 = {x: 1/0, y: 1/0};
 			var z = new complex(point).zsub(circle);
 			var d = z.sqrabs, c = sqrt(d);  z.div(c);
 			var a = circle.r;
-			this.z1 = {x: 1/0, y: 1/0}; 
-			this.z2 = {x: 1/0, y: 1/0};
 			this.success = c >= a;
 			if (this.success){
 				var b = sqrt(d - a * a);
@@ -751,11 +773,11 @@ class complex {
 		}
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
-	mandelbrot(m = 256){// Mandelbrot set (for testing only)
-		// returns 0 to 256; 0: (probably) in set; 256: out of bounds |z|² ≤ 4
+	mandelbrot(m = 1000){// Mandelbrot set (for testing only)
+		// returns 0 to 1000; 0: (probably) in set; 1001: out of bounds |z|² ≤ 4
 		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for |z|²·|z+1|² ≤ 4
 		// eellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
-		var n = m, z = new complex(this); // |z| ≤ 2 => |z|² ≤ 4
+		var n = m + 1, z = new complex(this); // |z| ≤ 2 => |z|² ≤ 4
 		while (n > 0 && z.sqrabs <= 4) if (z.nop(n--).sqr.zadd(this).is0) n = 0;
 		return n;
 	}
@@ -1298,7 +1320,7 @@ CanvasRenderingContext2D.prototype.zlineTo = function(z){
 }
 
 CanvasRenderingContext2D.prototype.zline = function(z1, z2){
-	this.zmoveTo(z1).zlineTo(z2); return this;
+	this.begin.zmoveTo(z1).zlineTo(z2).stroke(); return this;
 }
 
 CanvasRenderingContext2D.prototype.zrect = function(z1, z2){
