@@ -665,11 +665,11 @@ class complex {
 	*/
 		// ∟PZ₁Q = ∟Z₁ZP = ∟Z₁ZQ = 90°; ΔZ₁ZP ~ ΔQZZ₁ ~ ΔQZ₁P; |ZP| : |ZZ₁| = |ZZ₁| : |ZQ|
 		this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
-		var u = new complex(point1).zsub(point2).unit;      // line unit vector = |
-		var z = new complex(circle).ortho(point1, point2);  // project center to line
-		var d = z.zdist(circle);                            // |ZO| = d, |ZP| = r - d, |ZQ| = r + d
-		if (d <= circle.r){                                 // Z must be in circle else not intersect
-			u.mul(sqrt((circle.r - d) * (circle.r + d)))    // |ZZ₁|² = |ZP| * |ZQ|
+		var u = new complex(point1).zsub(point2).unit;     // line unit vector = |
+		var z = new complex(circle).ortho(point1, point2); // project center to line
+		var d = z.zdist(circle);                           // |ZO| = d, |ZP| = r - d, |ZQ| = r + d
+		if (d <= circle.r){                                // Z must be in circle else not intersect
+			u.mul(sqrt((circle.r - d) * (circle.r + d)))   // |ZZ₁|² = |ZP| * |ZQ|
 				.zadd(z).obj(this.z1).opposite(z).obj(this.z2);
 		}
 		return this;
@@ -722,7 +722,7 @@ class complex {
 		return this.scl(random(), random());
 	}
 	get polardev(){// unit circle complex random
-		return this.zscl(new complex().cis(sqrt(random()), random(tau)));
+		return this.zscl(cis(random(tau), sqrt(random())));
 	}
 	get rectdev(){// unit square complex random
 		return this.scl(random(-1, 1), random(-1, 1));
@@ -908,7 +908,7 @@ class complex {
 		return this.trignomon(base, base * k, inclination, conjugate)
 	}
 	trisilver(a, inclination = 0, conjugate = true){// very acute right triangle
-		return this.triright(a, 1, inclination, conjugate)
+		return this.triright(1, a, inclination, conjugate)
 	}
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		// harmonic addition: a ÷ b = 1/(1/a + 1/b) = (a * b)/(a + b)
@@ -998,14 +998,23 @@ class complex {
 	tripolarfun(a, b, c, f){
 		return this.tripolarxiy(f(a, b, c), f(b, c, a), f(c, a, b));
 	}
-	get stringed(){// for debug
-		var z = new complex(this).round(100000);
-		var x = z.x + '';
-		var y = abs(z.y); y = (y == 1 ? '' : y + ' ') + 'і';
-		if (z.is0) return '0'; else
-		if (z.y == 0) return x; else
-		if (z.x == 0) return (z.y < 0 ? '-' : '') + y; else
-			return z.x + (z.y < 0 ?' - ':' + ') + y;
+	toString(p = 0){// for debug
+		var z = new complex(this); if (p != 0) z.round(abs(p));
+		var n = false; if (p < 0) n = z.x < 0; if (n) z.neg;
+		var x = z.x.toString(), y = abs(z.y).toString(), s = '';
+		y = (abs(z.y) == 1 ? '' : y + ' ') + 'і';
+		if (z.is0) s = '0'; else
+		if (z.isInf) s = '∞'; else
+		if (z.y == 0) s = x; else
+		if (z.x == 0) 
+			s = (z.y < 0 ? '-' : '') + y;
+		else
+			s = z.x + (z.y < 0 ?' - ':' + ') + y;
+		if (n){
+			if (z.x != 0 && z.y != 0) s = '('+s+')';
+			s = '-'+s;
+		}
+		return s;
 	}
 	polyvalue(p){
 		var z = new complex(this); 
@@ -1109,7 +1118,7 @@ class complex {
 		}
 		var p = [], n, i; // polynom array, degree and index
 		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
-		// for (i = p.hi; i >= p.lo; i--) console.log('p[',i,'] =',new complex(p[i]).stringed); // (debug)
+		// for (i = p.hi; i >= p.lo; i--) console.log('p[',i,'] =',new complex(p[i]).toString(100000)); // (debug)
 		this.del; for (i = p.lo; i <= p.hi; i++) this.put.asg(p[i]).exc; // put polynom into storage (debug)
 		i = 0; while (i < p.length && new complex(p[i]).isNum) i++; // check consistency
 		
@@ -1220,13 +1229,14 @@ Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: f
 
 // Не могу више да куцам Math; ја сам паскал програмер.
 const min = Math.min, max = Math.max;
-const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
 const sqrt = Math.sqrt, sqr = function(x){return x * x;};
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
-const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);}
-const cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
+const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);} // shortcut
+const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)}; // shortcut
+const xiy = function(x, y = 0){return {x: Number(x), y: Number(y)};} // shortcut
+const cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};} // shortcut
 // https://www.youtube.com/watch?v=ZPv1UV0rD8U
 const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const phi = (sqrt(5) + 1)/2;      // φ = 1.6180339887498948482045868343656
@@ -1398,7 +1408,8 @@ function(shape = 2, xpos, ypos, xradius = 1, yradius = xradius, azimuth = 0, sym
 		var z = new complex(), theta;
 		for (var i = 0; i < steps; i++){
 			theta = i * tau / steps;
-			z.superellipse(shape, theta, xradius, yradius, symmetry, u, v).rotate(azimuth).add(xpos, ypos);
+			z.superellipse(shape, theta, xradius, yradius, symmetry, u, v)
+				.rotate(azimuth).add(xpos, ypos);
 			if (i == 0)
 				this.zmoveTo(z);
 			else
@@ -1437,6 +1448,11 @@ function(shape = 2, z, azimuth = 0){
 CanvasRenderingContext2D.prototype.supertable = 
 function(shape = 2, xpos, ypos, radius = 1, azimuth = 0, symmetry = 4, u = shape, v = u){
 	return this.superellipse(shape, xpos, ypos, radius, radius / phi, azimuth, symmetry, u, v);
+}
+
+CanvasRenderingContext2D.prototype.zsupertable = 
+function(shape = 2, z, radius = 1, azimuth = 0, symmetry = 4, u = shape, v = u){
+	return this.supertable(shape, z.x, z.y, radius, azimuth, symmetry, u, v);
 }
 
 CanvasRenderingContext2D.prototype.triangle = function(t) {
