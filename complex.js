@@ -560,11 +560,19 @@ class complex {
 		var v = new complex(z3).halfway(z4);
 		return this.intersection(u.z, u.perp(z1, z2), v.z, v.perp(z3, z4));
 	}
-	ortho(z1, z2 = {x: 0, y: 0}){// orthogonal projection of this to line z1--z2
-		return this.times(z1, z2).real.inter(z1, z2); // 3 : 0 (Jesé 29', Raphaël Varane 56', James Rodríguez 88')
+	ortho(z1, z2){// orthogonal projection of this to line z1--z2
+		if (z1.x == z2.x && z1.y == z2.y)
+			this.asg(z1);
+		else
+			this.times(z1, z2).real.inter(z1, z2); // 3 : 0 (Jesé 29', Raphaël Varane 56', James Rodríguez 88')
+		return this;
 	}
-	reflect(z1, z2 = {x: 0, y: 0}){// reflection of this to line z1--z2
-		return this.times(z1, z2).conjg.inter(z1, z2);
+	reflect(z1, z2){// reflection of this to line z1--z2
+		if (z1.x == z2.x && z1.y == z2.y)
+			this.opposite(z1);
+		else
+			this.times(z1, z2).conjg.inter(z1, z2);
+		return this;
 	}
 	dist(x, y){// absolute distance of this to point (x, y)
 		return new complex(x, y).zsub(this).abs;
@@ -621,16 +629,15 @@ class complex {
 		return this.asg(u).zdiv(v);
 	}
 	radical(circle1, circle2){// radical point
-		this.asg(circle1); var d = this.zdist(circle2);
+		this.asg(circle1); var d = this.zdist(circle2); // centers distance
 		if (d != 0) {
-			d = ((sqr(circle1.r) - sqr(circle2.r))/d + d)/2;
-			this.ztoward(circle2, d);
+			d = ((sqr(circle1.r) - sqr(circle2.r))/d + d)/2; // distance from C1 center
+			this.ztoward(circle2, d); // run
 		}
 		return this;
 	}
 	similitude(circle1, circle2){// common tangents intersections
-		this.z1 = {x: 1/0, y: 1/0}; 
-		this.z2 = {x: 1/0, y: 1/0};
+		this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0}; // homothetic centers
 		var u = new complex(circle1).mul(circle2.r);
 		var v = new complex(circle2).mul(circle1.r);
 		new complex()
@@ -645,73 +652,45 @@ class complex {
 		return this.asg(new complex().similitude(circle1, circle2).z2);
 	}
 	linecircle(point1, point2, circle){// chord, line - circle intersection
+	/*
+		                      Z₁
+		                      |
+		                      |
+		                      |
+		(Q------------○-------Z---P)
+		                      |
+		                      |
+		                      |
+		                      Z₂
+	*/
+		// ∟PZ₁Q = ∟Z₁ZP = ∟Z₁ZQ = 90°; ΔZ₁ZP ~ ΔQZZ₁ ~ ΔQZ₁P; |ZP| : |ZZ₁| = |ZZ₁| : |ZQ|
 		this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
-		if (true){// by construction (Q-----------○------Z---P) ΔZ₁ZP ~ ΔQZZ₁ ~ ΔQZ₁P
-			var d = new complex(point1).zsub(point2).unit; // line unit vector
-			var z = new complex(circle).ortho(point1, point2); // project center to line
-			this.success = z.zdist(circle) <= circle.r;        // must be in circle
-			if (this.success){// else line don't cross circle
-				var p = new complex(z).oncircle(circle); // opposite points on circle
-				var q = new complex(p).opposite(circle); // on perpendicular line
-				d.mul(sqrt(p.zdist(z) * z.zdist(q)));    // |PZ| : |ZZ₁| = |ZZ₁| : |ZQ|
-				d.zadd(z).obj(this.z1).opposite(z).obj(this.z2);
-			}
-		} else {// by algebra
-			function cross(p, q){return p.x * q.y - p.y * q.x;};
-			var u = new complex(point1).zsub(circle);
-			var v = new complex(point2).zsub(circle);
-			var z = new complex(v).zsub(u);
-			var d = z.sqrabs, a = cross(u, v);
-			var b = d * sqr(circle.r) - sqr(a);
-			this.success = b >= 0;
-			if (this.success){
-				u.asg(z).mul(a).divi;
-				v.asg(z).mul((z.y < 0 ? -1 : 1) * sqrt(b));
-				new complex()
-					.asg(u).zadd(v).div(d).zadd(circle).obj(this.z1)
-					.asg(u).zsub(v).div(d).zadd(circle).obj(this.z2);
-			}
+		var u = new complex(point1).zsub(point2).unit;      // line unit vector = |
+		var z = new complex(circle).ortho(point1, point2);  // project center to line
+		var d = z.zdist(circle);                            // |ZO| = d, |ZP| = r - d, |ZQ| = r + d
+		if (d <= circle.r){                                 // Z must be in circle else not intersect
+			u.mul(sqrt((circle.r - d) * (circle.r + d)))    // |ZZ₁|² = |ZP| * |ZQ|
+				.zadd(z).obj(this.z1).opposite(z).obj(this.z2);
 		}
 		return this;
 	}
 	circlecircle(circle1, circle2){// common chord, circle - circle intersection
-		if (true){// by construction (----------○₁----(---R--)------○₂-------------)
-			var r = new complex().radical(circle1, circle2); // points of concurrence lies on radical axis
-			this.linecircle(r.z, r.perp(circle1, circle2), circle1);
-		} else {// by algebra
-			this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
-			var z = new complex(circle2).zsub(circle1);
-			var d = z.sqrabs, c = sqrt(d);  z.div(c);
-			var u = sqr(circle1.r), v = sqr(circle2.r); 
-			var p = d + u - v, q = 4 * d * u - p * p;
-			this.success = q >= 0;
-			if (this.success){
-				new complex(p, sqrt(q)).div(2 * c)
-					.put.zmul(z).zadd(circle1).obj(this.z1)
-					.pop.conjg.zmul(z).zadd(circle1).obj(this.z2);
-			}
-		}
-		return this;
+	/*
+		                     |
+		(----------○₁----(---R--)------○₂-------------)
+		                     |
+	*/
+		// points of concurrence lies on radical axis
+		var r = new complex().radical(circle1, circle2); 
+		return this.linecircle(r.z, r.perp(circle1, circle2), circle1);
 	}
 	circletangent(point, circle){// tangent from point to circle
-		if (true){// by construction (--------(○--------)---Z------------P)
-			var z = new complex(point).halfway(circle); z.r = z.zdist(point);
-			this.circlecircle(z, circle); // find points of concurrence
-		} else {// by algebra
-			this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
-			var z = new complex(point).zsub(circle);
-			var d = z.sqrabs, c = sqrt(d);  z.div(c);
-			var a = circle.r;
-			this.success = c >= a;
-			if (this.success){
-				var b = sqrt(d - a * a);
-				new complex(a, b).mul(a).div(c)
-					.put.zmul(z).zadd(circle).obj(this.z1)
-					.pop.conjg.zmul(z).zadd(circle).obj(this.z2);
-			}
-		}
-		// this.asg(point); this.r = this.zdist(this.z1);
-		return this;
+	/*
+		(--------(○--------)---C------------P)
+	*/
+		// C is circle with diameter OP; ∟OZ₁P = ∟OZ₂P = 90°
+		var c = new complex(point).halfway(circle); c.r = c.zdist(point);
+		return this.circlecircle(c, circle);
 	}
 	tangent(circle){// simpler usage
 		return this.circletangent(this.z, circle);
@@ -1248,13 +1227,14 @@ const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
 const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);}
 const cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};}
+// https://www.youtube.com/watch?v=ZPv1UV0rD8U
 const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const phi = (sqrt(5) + 1)/2;      // φ = 1.6180339887498948482045868343656
 const random = function(a, b){// uniform deviate in given range
 	switch (arguments.length) {
-		case  0: return Math.random();               // [0, 1)
-		case  1: return Math.random() * a;           // [0, a)
-		default: return Math.random() * (b - a) + a; // [a, b)
+		case  0: return Math.random();     // [0, 1)
+		case  1: return random() * a;      // [0, a) = a * [0, 1)
+		default: return random(b - a) + a; // [a, b) = a + [0, b - a)
 	}
 }
 
