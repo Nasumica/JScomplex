@@ -54,7 +54,13 @@ class complex {
 	}
 	cis(rho, theta){// ρ cis θ = ρ (cos θ + i sin θ) = ρ e^(iθ)
 		if (arguments.length < 2) {theta = rho; rho = 1;} // if ρ is ommited then ρ = 1
-		return this.asg(cis(theta, rho));
+		var r = pi/2; // few exact values of right angle
+		if (theta == 0  || theta == tau)    this.xiy(+rho, 0); else
+		if (theta == r  || theta == -3 * r) this.xiy(0, +rho); else 
+		if (theta == -r || theta == 3 * r)  this.xiy(0, -rho); else 
+		if (theta == pi || theta == -pi)    this.xiy(-rho, 0); else
+			this.xiy(rho * cos(theta), rho * sin(theta));
+		return this;
 	}
 	iff(yes, no, condition = true){
 		return this.asg(condition ? yes : no);
@@ -215,7 +221,8 @@ class complex {
 		return this.mod(z.x, z.y);
 	}
 	get sqr(){// this²
-		return this.zmul(this);
+		return this.xiy(this.x * this.x - this.y * this.y, this.x * this.y * 2); // one + less
+		//return this.zmul(this);
 	}
 	get cub(){// this³
 		return this.zmul(new complex(this).sqr);
@@ -381,12 +388,7 @@ class complex {
 		return this;
 	}
 	rotate(angle){// rotate this about origin by given angle
-		var h = pi/2; // few exact values
-		if (angle == 0) return this; else 
-		if (angle == h) return this.muli; else 
-		if (angle == -h || angle == 3 * h) return this.divi; else 
-		if (abs(angle) == pi) return this.neg; else
-			return this.zmul(cis(angle));
+		return this.zmul(new complex().cis(angle));
 	}
 	zrotate(z){// rotate this about origin by angle of vector (0, 0)--z
 		var h = z.x * z.x + z.y * z.y;
@@ -544,13 +546,14 @@ class complex {
 	}
 	intersection(z1, z2, z3, z4){// line (z1--z2) - line (z3--z4) intersection point
 		function cross(p, q){return p.x * q.y - p.y * q.x;} // p × q
-		var u = new complex(z2).zsub(z1); // line1 distance vector
-		var v = new complex(z4).zsub(z3); // line2 distance vector
-		var d = cross(u, v); // vectors cross product u × v
+		var u = new complex(z2).zsub(z1); // line1 distance vector z2 - z1
+		var v = new complex(z4).zsub(z3); // line2 distance vector z4 - z3
+		var d = cross(u, v); // vectors cross product d = u × v
 		if (d == 0){// parallel
 			this.inf;
 		} else {
 			var a = cross(u, z1), b = cross(v, z3);   // (u × z1) * v - (v × z3) * u
+			                                          // ---------------------------
 			this.asg(v.mul(a)).zsub(u.mul(b)).div(d); //           u × v
 		}
 		return this;
@@ -668,10 +671,9 @@ class complex {
 		var u = new complex(point1).zsub(point2).unit;     // line unit vector = |
 		var z = new complex(circle).ortho(point1, point2); // project center to line
 		var d = z.zdist(circle);                           // |ZO| = d, |ZP| = r - d, |ZQ| = r + d
-		if (d <= circle.r){                                // Z must be in circle else not intersect
+		if (d <= circle.r)                                 // Z must be in circle else not intersect
 			u.mul(sqrt((circle.r - d) * (circle.r + d)))   // |ZZ₁|² = |ZP| * |ZQ|
 				.zadd(z).obj(this.z1).opposite(z).obj(this.z2);
-		}
 		return this;
 	}
 	circlecircle(circle1, circle2){// common chord, circle - circle intersection
@@ -745,13 +747,11 @@ class complex {
 		}
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
-	mandelbrot(m = 1000){// Mandelbrot set (for testing only)
-		// 0: in set; 1: probably in set; 2 to 1000: not in set; 1001: out of bounds
-		// -2 < x < 1, |y| < 1.2496210676876531737592088948857 for |z|²·|z+1|² ≤ 4
-		// eellipse({x: -1/2, y: 0, a: 1.5, b: sqrt((sqrt(17) - 1)/2), o: 0})
-		var n = m + 1, z = new complex(this), w = {}; // |z| ≤ 2 => |z|² ≤ 4 (avoid sqrt)
-		while (n > 1 && z.obj(w).sqrabs <= 4) if (z.sqr.zadd(this).nop(n--).is(w)) n = 0;
-		return n;
+	mandelbrot(m = 1000){// Mandelbrot set (m = max number of iterations)
+		var z = new complex(this), w = {}; // |z| ≤ 2 => |z|² ≤ 4 (avoid sqrt)
+		while (m > 1 && z.obj(w).sqrabs <= 4) if (z.sqr.zadd(this).nop(m--).is(w)) m = 0;
+		// 0: in set; 1: probably in set; 2 to 999: not in set; 1000: out of bounds
+		return m;
 	}
 	trivertex(vertexA, vertexB, vertexC, changed = true){// triangle ABC centers
 		var A = new complex(vertexA), B = new complex(vertexB), C = new complex(vertexC);
@@ -1228,18 +1228,22 @@ Object.defineProperty(Array.prototype, 'lo', {enumerable: false, configurable: f
 Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: false, get() { return this.length - 1; }});
 
 // Не могу више да куцам Math; ја сам паскал програмер.
+// https://www.youtube.com/watch?v=ZPv1UV0rD8U
+const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const min = Math.min, max = Math.max;
-const sqrt = Math.sqrt, sqr = function(x){return x * x;};
+const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
 const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);} // shortcut
+const sqr = function(z){return z instanceof Object ? {x: z.x * z.x - z.y * z.y, y: z.x * z.y * 2} : z * z;}
 const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)}; // shortcut
 const xiy = function(x, y = 0){return {x: Number(x), y: Number(y)};} // shortcut
-const cis = function(a, x = 1, y = x){return {x: x * cos(a), y: y * sin(a)};} // shortcut
-// https://www.youtube.com/watch?v=ZPv1UV0rD8U
-const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
-const phi = (sqrt(5) + 1)/2;      // φ = 1.6180339887498948482045868343656
+const cis = function(t, a = 1, b = a){// polar ellipse
+	if (a instanceof Object) return cis(t, a.x, a.y); else
+	var c = cos(t), s = sin(t), r = a == b ? a : a * b / Math.hypot(a * s, b * c);
+	return {x: r * c, y: r * s, r: r};
+}
 const random = function(a, b){// uniform deviate in given range
 	switch (arguments.length) {
 		case  0: return Math.random();     // [0, 1)
@@ -1247,7 +1251,6 @@ const random = function(a, b){// uniform deviate in given range
 		default: return random(b - a) + a; // [a, b) = a + [0, b - a)
 	}
 }
-
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'begin', {
 	get() { this.beginPath(); return this; }
