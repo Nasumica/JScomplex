@@ -291,6 +291,8 @@ class complex {
 		if (y == 0 && x ==  0) return this.one; else
 		if (y == 0 && x ==  1) return this; else
 		if (y == 0 && x == -1) return this.recip; else
+		if (y == 0 && x ==  2) return this.sqr; else
+		if (y == 0 && x ==  3) return this.cub; else
 		if (y == 0 && x > 0 && this.is0) return this; else
 			return this.log.mul(x, y).exp;
 	}
@@ -747,9 +749,9 @@ class complex {
 		}
 		return this.xiy(poisson(this.x), poisson(this.y));
 	}
-	mandelbrot(m = 1000){// Mandelbrot set (m = max number of iterations)
+	mandelbrot(m = 1000, r = 2){// Mandelbrot set (m = max number of iterations)
 		var z = new complex(this), w = {}; // |z| ≤ 2 => |z|² ≤ 4 (avoid sqrt)
-		while (m > 1 && z.obj(w).sqrabs <= 4) if (z.sqr.zadd(this).nop(m--).is(w)) m = 0;
+		while (m > 1 && z.obj(w).sqrabs <= 4) if (z.pow(r).zadd(this).nop(m--).is(w)) m = 0;
 		// 0: in set; 1: probably in set; 2 to 999: not in set; 1000: out of bounds
 		return m;
 	}
@@ -1235,15 +1237,9 @@ const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.61803398874989484820458
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
-const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);} // shortcut
+const atan = function(s, c = 1){return s instanceof Object ? Math.atan2(s.y, s.x) : Math.atan2(s, c);}
 const sqr = function(z){return z instanceof Object ? {x: z.x * z.x - z.y * z.y, y: z.x * z.y * 2} : z * z;}
-const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)}; // shortcut
-const xiy = function(x, y = 0){return {x: Number(x), y: Number(y)};} // shortcut
-const cis = function(t, a = 1, b = a){// polar ellipse
-	if (a instanceof Object) return cis(t, a.x, a.y); else
-	var c = cos(t), s = sin(t), r = a == b ? a : a * b / Math.hypot(a * s, b * c);
-	return {x: r * c, y: r * s, r: r};
-}
+const abs = function(z){return z instanceof Object ? Math.hypot(z.x, z.y) : Math.abs(z)};
 const random = function(a, b){// uniform deviate in given range
 	switch (arguments.length) {
 		case  0: return Math.random();     // [0, 1)
@@ -1251,6 +1247,14 @@ const random = function(a, b){// uniform deviate in given range
 		default: return random(b - a) + a; // [a, b) = a + [0, b - a)
 	}
 }
+
+const xiy = function(x, y = 0){return {x: Number(x), y: Number(y)};} // shortcut
+const cis = function(t, a = 1, b = a){// polar ellipse
+	if (a instanceof Object) return cis(t, a.x, a.y); else
+	var c = cos(t), s = sin(t), r = a == b ? a : a * b / Math.hypot(a * s, b * c);
+	return {x: r * c, y: r * s, r: r};
+}
+
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'begin', {
 	get() { this.beginPath(); return this; }
