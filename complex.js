@@ -521,17 +521,21 @@ class complex {
 	go(z, t = 1){// simplified usage of inter
 		return this.asg(new complex(t).inter(this, z));
 	}
-	halfway(z){
+	halfway(z){// ○-----X-----Z
 		//return this.go(z, 1/2);
 		return this.zadd(z).div(2);
 	}
-	opposite(z){
+	get metalic(){// metalic mean = this + 1/(this + 1/(this + 1/(this + ...)))
+		// metalic(0) = 1; metalic(1) = φ; metalic(i) = cis 30°; metalic(-z) = z/metalic(z);
+		return this.halfway(new complex(this).sqr.add(4).sqrt);
+	}
+	opposite(z){// ○-----Z-----X
 		return this.go(z, 2);
 	}
-	complement(z){
+	complement(z){// ○-----.-----Z-----X
 		return this.go(z, 3/2);
 	}
-	anticomplement(z){
+	anticomplement(z){// ○-----Z-----.-----X
 		return this.go(z, 3);
 	}
 	crossover(z1, z2){
@@ -887,19 +891,25 @@ class complex {
 	trimonodrafter(a, inclination = 0, conjugate = true){// 30-60-90 triangle
 		return this.triside(a, a * sqrt(3), a * 2, inclination, conjugate);
 	}
+	trimetalic(m, base, inclination = 0, conjugate = true){// metalic triangle
+		return this.trignomon(base, base * metalicmean(m), inclination, conjugate)
+	}
 	trigolden(base, inclination = 0, conjugate = true){// golden triangle
-		return this.trignomon(base, base * phi, inclination, conjugate)
+		return this.trimetalic(1, base, inclination, conjugate)
 	}
 	trigoldengnomon(base, inclination = 0, conjugate = true){// golden gnomon
-		return this.trignomon(base, base / phi, inclination, conjugate)
+		return this.trimetalic(-1, base, inclination, conjugate)
 	}
-	triegypt(base, inclination = 0, conjugate = true){// golden triangle
+	trisilver(base, inclination = 0, conjugate = true){// silver triangle
+		return this.trimetalic(2, base, inclination, conjugate)
+	}
+	triegypt(base, inclination = 0, conjugate = true){// 3-4-5 triangle
 		return this.triside(base * 3/5, base * 4/5, base, inclination, conjugate)
 	}
 	triheron(base, inclination = 0, conjugate = true){// Ἥρων ὁ Ἀλεξανδρεύς
 		return this.triside(base * 15/14, base * 13/14, base, inclination, conjugate)
 	}
-	trisrba(base, inclination = 0, conjugate = true){// Србин омиљени троугао
+	trisrba(base, inclination = 0, conjugate = true){// мој омиљени троугао
 		return this.triside(base * 5/8, base * 7/8, base, inclination, conjugate)
 	}
 	trikepler(a, inclination = 0, conjugate = true){// Kepler right triangle
@@ -908,9 +918,6 @@ class complex {
 	trikimberling(base, inclination = 0, conjugate = true){// Kimberling golden triangle
 		const k = 1.3797865516812012355584834707971; // angles = {φ : φ : 1}, k = 1/(2cos(πφ/(2φ+1))
 		return this.trignomon(base, base * k, inclination, conjugate)
-	}
-	trisilver(a, inclination = 0, conjugate = true){// very acute right triangle
-		return this.triright(1, a, inclination, conjugate)
 	}
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		// harmonic addition: a ÷ b = 1/(1/a + 1/b) = (a * b)/(a + b)
@@ -1229,11 +1236,13 @@ class complex {
 Object.defineProperty(Array.prototype, 'lo', {enumerable: false, configurable: false, get() { return 0; }});
 Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: false, get() { return this.length - 1; }});
 
+
 // Не могу више да куцам Math; ја сам паскал програмер.
 // https://www.youtube.com/watch?v=ZPv1UV0rD8U
 const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const min = Math.min, max = Math.max;
 const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
+const metalicmean = function(n){return (n + Math.hypot(n, 2))/2;} // n+1/(n+1/(n+1/...))
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
@@ -1252,7 +1261,25 @@ const xiy = function(x, y = 0){return {x: Number(x), y: Number(y)};} // shortcut
 const cis = function(t, a = 1, b = a){// polar ellipse
 	if (a instanceof Object) return cis(t, a.x, a.y); else
 	var c = cos(t), s = sin(t), r = a == b ? a : a * b / Math.hypot(a * s, b * c);
-	return {x: r * c, y: r * s, r: r};
+	return {x: r * c, y: r * s};
+}
+const sind = function(x){return sin(pi * x/180);}
+const cosd = function(x){return cos(pi * x/180);}
+const atand = function(s, c = 1){return atan(s, c) * 180/pi;}
+const hsi2rgb = function(h, s, i){
+	function div(x, y){return Math.floor(x/y);}
+	function mod(x, y){return x - y * div(x, y);}
+	function cen(x){if (x <= 0) x = 0; else if (x >= 1) x = 1; return x;} // censor x to [0, 1]
+	var r, g, b, a, x, y, z;
+	h = mod(h, 360); i = cen(i) * 85; s = cen(s) * i; // 255/3 = 85
+	a = mod(h, 120); h = div(h, 120);
+	x = i - s; y = i + s * cosd(a)/cosd(a - 60); z = 3 * i - (x + y);
+	switch (h){
+		case 0: b = x; g = y; r = z; break;
+		case 1: b = y; g = z; r = x; break;
+		case 2: b = z; g = x; r = y; break;
+	}
+	return {r: Math.round(r), g: Math.round(g), b: Math.round(b)};
 }
 
 
@@ -1492,6 +1519,10 @@ CanvasRenderingContext2D.prototype.zroundrect = function (z1, z2, r = 0) {
 
 CanvasRenderingContext2D.prototype.rgba = function(r, g, b, a = 1){
 	return 'rgba('+r+', '+g+', '+b+', '+a+') ';
+}
+
+CanvasRenderingContext2D.prototype.hsia = function(h, s, i, a = 1){
+	var c = hsi2rgb(h, s, i); return this.rgba(c.r, c.g, c.b, a);
 }
 
 CanvasRenderingContext2D.prototype.shadowOffsetZ = function(z){
