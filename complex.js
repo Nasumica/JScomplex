@@ -1264,6 +1264,7 @@ const cis = function(t, a = 1, b = a){// polar ellipse
 const sind = function(x){return sin(pi * x/180);}
 const cosd = function(x){return cos(pi * x/180);}
 const atand = function(s, c = 1){return atan(s, c) * 180/pi;}
+const metalicmean = function(x){return (x + Math.hypot(x, 2))/2;} // x = y - 1/y
 const hsi2rgb = function(h, s, i){
 	function div(x, y){return Math.floor(x/y);}
 	function mod(x, y){return x - y * div(x, y);}
