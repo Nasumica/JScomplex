@@ -525,10 +525,6 @@ class complex {
 		//return this.go(z, 1/2);
 		return this.zadd(z).div(2);
 	}
-	get metalic(){// metalic mean = this + 1/(this + 1/(this + 1/(this + ...)))
-		// metalic(0) = 1; metalic(1) = φ; metalic(i) = cis 30°; metalic(-z) = z/metalic(z);
-		return this.halfway(new complex(this).sqr.add(4).sqrt);
-	}
 	opposite(z){// ○-----Z-----X
 		return this.go(z, 2);
 	}
@@ -537,6 +533,9 @@ class complex {
 	}
 	anticomplement(z){// ○-----Z-----.-----X
 		return this.go(z, 3);
+	}
+	get metalic(){// metalic mean = this + 1/(this + 1/(this + 1/(this + ...)))
+		return this.halfway(new complex(this).sqr.add(4).sqrt); // x = y - 1/y
 	}
 	crossover(z1, z2){
 		return this.opposite(new complex(z1).halfway(z2));
@@ -1242,7 +1241,6 @@ Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: f
 const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const min = Math.min, max = Math.max;
 const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
-const metalicmean = function(n){return (n + Math.hypot(n, 2))/2;} // n+1/(n+1/(n+1/...))
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
