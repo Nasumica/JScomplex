@@ -71,11 +71,14 @@ class complex {
 	swap(z){// swap values with z
 		var t = {x: z.x, y: z.y}; return this.obj(z).asg(t);
 	}
+	get cab(){// taxicab distance
+		return abs(this.x) + abs(this.y);
+	}
 	get sqrabs(){// |z|² = z * z' = ρ²
 		return this.x * this.x + this.y * this.y;
 	}
 	get abs(){// magnitude ρ
-		return this.x == 0 || this.y == 0 ? abs(this.x + this.y) : sqrt(this.sqrabs);
+		return this.x == 0 || this.y == 0 ? this.cab : sqrt(this.sqrabs);
 	}
 	get arg(){// angle θ
 		return atan(this.y, this.x);
@@ -221,7 +224,7 @@ class complex {
 		return this.mod(z.x, z.y);
 	}
 	get sqr(){// this²
-		return this.xiy(this.x * this.x - this.y * this.y, this.x * this.y * 2); // one + less
+		return this.xiy((this.x + this.y) * (this.x - this.y), this.x * this.y * 2); // one + less
 		//return this.zmul(this);
 	}
 	get cub(){// this³
@@ -243,8 +246,11 @@ class complex {
 			else
 				return this.root(3);
 	}
-	get unit(){// unit vector
+	get unit(){// unit vector, sign
 		var d = this.abs; return d == 0 ? this : this.div(d);
+	}
+	get hstep(){// Heaviside step
+		return this.unit.add(1).div(2);
 	}
 	get theo(){// spiral of Theodorus
 		// a = 2*sqrt(n) - 2.1577829966594462209291427868295777235
@@ -300,8 +306,7 @@ class complex {
 		return this.pow(z.x, z.y);
 	}
 	npow(n){// thisⁿ (integer n); De Moivre's formula: (cis θ)ⁿ = cis (θ·n)
-		var z = new complex(this);
-		var i = Math.floor(abs(n));
+		var z = new complex(this), i = Math.floor(abs(n));
 		this.one;
 		while (i > 0){
 			if (i % 2 == 1) this.zmul(z);
@@ -476,7 +481,8 @@ class complex {
 		} else {
 			var d = new complex(D).zsub(this); // d = D - this
 			if (d.is0){// (A z² + B z + C) z = 0
-				this.put.zero.obj(this.z3).quadraticeq(A, B, C).pop; // z3 = 0, rest is quadratic, preserve this
+				d.obj(this.z3); // z3 = 0
+				this.quadraticeq(A, B, C); // rest is quadratic
 			} else {
 				const r = new complex(-1, sqrt(3)).div(2); // cis 120°; r³ = 1
 				var b = new complex(B); // b = B
@@ -509,8 +515,7 @@ class complex {
 			new complex(z2).zsub(z1).mul(3),                   // C = 3 (z2 - z1)
 			new complex(z1)                                    // D = z1
 		);
-		this.asg(this.z1)
-			.asg(this.z2, abs(this.y) > abs(this.z2.y))
+		this.iff(this.z1, this.z2, abs(this.z1.y) < abs(this.z2.y))
 			.asg(this.z3, abs(this.y) > abs(this.z3.y));
 		return this;
 	}
@@ -582,7 +587,7 @@ class complex {
 			this.times(z1, z2).conjg.inter(z1, z2);
 		return this;
 	}
-	dist(x, y){// absolute distance of this to point (x, y)
+	dist(x, y = 0){// absolute distance of this to point (x, y)
 		return new complex(x, y).zsub(this).abs;
 	}
 	zdist(z1, z2){// absolute distance to point or line
@@ -597,7 +602,7 @@ class complex {
 	zazimuth(z){
 		return azimuth(z.x, z.y);
 	}
-	linedist(z1, z2 = {x: 0, y: 0}){// directed distance of this to line z1--z2 
+	linedist(z1, z2){// directed distance of this to line z1--z2 
 		return new complex(z1).zdist(z2) * new complex(this).times(z1, z2).y;
 	}
 	toward(x, y, len = 1){
@@ -842,14 +847,14 @@ class complex {
 			this.Nagel = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Nagel line (contains G, I, Na, Sp, ...)
 			this.Soddy = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Soddy line (contains I, L, Ge, SO, SI, ...)
 			if (a != b || b != c){ // no lines for equilateral triangle
-				var O = this.SO; // lines as circle chords
-				this.linecircle(this.O, this.G, O)
+				var O = this.SO; // lines as this circle chords
+				this.linecircle(this.O, this.G, O) // O--G
 					.asg(this.z1).obj(this.Euler.z1)
 					.asg(this.z2).obj(this.Euler.z2);
-				this.linecircle(this.G, this.I, O)
+				this.linecircle(this.G, this.I, O) // G--I
 					.asg(this.z1).obj(this.Nagel.z1)
 					.asg(this.z2).obj(this.Nagel.z2);
-				this.linecircle(this.I, this.L, O)
+				this.linecircle(this.I, this.L, O) // I--L
 					.asg(this.z1).obj(this.Soddy.z1)
 					.asg(this.z2).obj(this.Soddy.z2);
 				delete(this.z1); delete(this.z2);
@@ -874,6 +879,15 @@ class complex {
 			this.trivertex(A, B, C, false); // construct from vertices
 		}
 		return this;
+	}
+	trisas(c, A, b, inclination = 0, conjugate = true){// 2 sides and angle between
+		return this.triside(sqrt(b*b + c*c - 2*b*c*cos(A)), b, c, inclination, conjugate); 
+	}
+	triasa(A, c, B, inclination = 0, conjugate = true){// side and 2 angles
+		var C = new complex().intersection(
+			{x: 0, y: 0}, new complex(+1).about(0, 0, +A),
+			{x: c, y: 0}, new complex(-1).about(c, 0, -B));
+		return this.triside(C.dist(c), C.dist(0), c, inclination, conjugate);
 	}
 	trieqlat(a, inclination = 0, conjugate = true){// equilateral triangle
 		return this.triside(a, a, a, inclination, conjugate);
@@ -920,7 +934,7 @@ class complex {
 	}
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		// harmonic addition: a ÷ b = 1/(1/a + 1/b) = (a * b)/(a + b)
-		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // u ÷ v ÷ w
+		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // u ÷ v ÷ w = 1/(1/u + 1/v + 1/w)
 		this.altitude = {a: a, b: b, c: c};
 		var I = o( a,  b,  c); // inradius I
 		var A = o(-a,  b,  c); // exradius A
@@ -1007,12 +1021,14 @@ class complex {
 		return this.tripolarxiy(f(a, b, c), f(b, c, a), f(c, a, b));
 	}
 	toString(p = 0){// for debug
+		const i = 'і';
 		var z = new complex(this); if (p != 0) z.round(abs(p));
 		var n = false; if (p < 0) n = z.x < 0; if (n) z.neg;
 		var x = z.x.toString(), y = abs(z.y).toString(), s = '';
-		y = (abs(z.y) == 1 ? '' : y + ' ') + 'і';
+		y = (abs(z.y) == 1 ? '' : y + ' ') + i;
 		if (z.is0) s = '0'; else
 		if (z.isInf) s = '∞'; else
+		if (z.isNan) s = '?'; else
 		if (z.y == 0) s = x; else
 		if (z.x == 0) 
 			s = (z.y < 0 ? '-' : '') + y;
@@ -1025,8 +1041,7 @@ class complex {
 		return s;
 	}
 	polyvalue(p){
-		var z = new complex(this); 
-		this.zero;
+		var z = {}; this.obj(z).zero;
 		for (var i = p.hi; i >= 0; i--)
 			this.zmul(z).zadd(new complex(p[i]));
 		return this;
@@ -1053,7 +1068,6 @@ class complex {
 	}
 	polytrim(p){
 		while (p.length > 0 && new complex(p[p.hi]).is0) p.length--; // leading zeroes trim
-		return p;
 	}
 	polyarg(p, ...arg){
 		var n, i, a;
@@ -1071,7 +1085,6 @@ class complex {
 				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
 			}
 		}
-		return p;
 	}
 	polysolve(roots, ...arg){// simple Newton polynom roots solver
 	/*
@@ -1241,6 +1254,7 @@ Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: f
 const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const min = Math.min, max = Math.max;
 const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
+const metalicmean = function(x){return (x + Math.hypot(x, 2))/2;} // y = x + 1/y
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
@@ -1264,15 +1278,14 @@ const cis = function(t, a = 1, b = a){// polar ellipse
 const sind = function(x){return sin(pi * x/180);}
 const cosd = function(x){return cos(pi * x/180);}
 const atand = function(s, c = 1){return atan(s, c) * 180/pi;}
-const metalicmean = function(x){return (x + Math.hypot(x, 2))/2;} // x = y - 1/y
-const hsi2rgb = function(h, s, i){
+const hsi2rgb = function(h, s, i){// hue in degrees, saturation and intensity = [0, 1]
 	function div(x, y){return Math.floor(x/y);}
 	function mod(x, y){return x - y * div(x, y);}
 	function cen(x){if (x <= 0) x = 0; else if (x >= 1) x = 1; return x;} // censor x to [0, 1]
 	var r, g, b, a, x, y, z;
-	h = mod(h, 360); i = cen(i) * 85; s = cen(s) * i; // 255/3 = 85
+	h = mod(h, 360); i = cen(i) * 85; s = cen(s) * i; // 255/3 = 85, s * i = chroma
 	a = mod(h, 120); h = div(h, 120);
-	x = i - s; y = i + s * cosd(a)/cosd(a - 60); z = 3 * i - (x + y);
+	x = i - s; z = i + s * cosd(a)/cosd(a - 60); y = 3 * i - (x + z);
 	switch (h){
 		case 0: b = x; g = y; r = z; break;
 		case 1: b = y; g = z; r = x; break;
