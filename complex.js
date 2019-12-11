@@ -223,8 +223,40 @@ class complex {
 	zmod(z){
 		return this.mod(z.x, z.y);
 	}
+	hadd(x, y = 0){
+		if (this.isInf) this.xiy(x, y); else {
+			var z = new complex(x, y);
+			if (z.is0) this.zero; else
+			if (!z.isInf) {
+				z.zadd(this);
+				this.mul(x, y).zdiv(z);
+			}
+		}
+		return this;
+	}
+	zhadd(z){// harmonic addition
+		return this.hadd(z.x, z.y);
+	}
+	hsub(x, y = 0){
+		return this.hadd(-x, -y);
+	}
+	zhsub(z){// harmonic subtraction
+		return this.hdusb(z.x, z.y);
+	}
+	hmul(x, y = 0){
+		return this.div(x, y);
+	}
+	zhmul(z){// harmonc multiplication
+		return this.hmul(z.x, z.y);
+	}
+	hdiv(x, y = 0){
+		return this.mul(x, y);
+	}
+	zhdiv(z){// harmonic division
+		return this.hdiv(z.x, z.y);
+	}
 	get sqr(){// this²
-		return this.xiy((this.x + this.y) * (this.x - this.y), this.x * this.y * 2); // one + less
+		return this.xiy((this.x + this.y) * (this.x - this.y), this.x * this.y * 2);
 		//return this.zmul(this);
 	}
 	get cub(){// this³
@@ -345,8 +377,7 @@ class complex {
 		return this.divi.tanh.muli;
 	}
 	get sinc(){// sin(z)/z
-		var z = new complex(this);
-		return this.is0 ? this.one : this.sin.zdiv(z);
+		var z = {}; return this.is0 ? this.one : this.obj(z).sin.zdiv(z);
 	}
 	get asinh(){// ln(z + sqrt(z² + 1))
 		var z = new complex(this);
@@ -862,7 +893,7 @@ class complex {
 		}
 		return this.asg(this.O);
 	}
-	triside(a, b, c, inclination = 0, conjugate = true){// triangle construction from sides
+	trisss(a, b, c, inclination = 0, conjugate = true){// side side side
 		this.side = {a: a, b: b, c: c};
 		this.success = (a < b + c) && (b < c + a) && (c < a + b);
 		if (this.success){
@@ -880,32 +911,39 @@ class complex {
 		}
 		return this;
 	}
-	trisas(c, A, b, inclination = 0, conjugate = true){// 2 sides and angle between
-		return this.triside(sqrt(b*b + c*c - 2*b*c*cos(A)), b, c, inclination, conjugate); 
+	trisas(c, A, b, inclination = 0, conjugate = true){// side angle side
+		return this.trisss(new complex().cis(b, A).dist(c), b, c, inclination, conjugate); 
 	}
-	triasa(A, c, B, inclination = 0, conjugate = true){// side and 2 angles
+	trissa(c, b, U, inclination = 0, conjugate = true){// side side angle
+		var u = max(b, c), v = min(b, c);
+		return this.trisas(u, pi - (asin(sin(U) * v/u) + U), v, inclination, conjugate); 
+	}
+	triasa(A, c, B, inclination = 0, conjugate = true){// angle side angle
 		var C = new complex().intersection(
 			{x: 0, y: 0}, new complex(+1).about(0, 0, +A),
 			{x: c, y: 0}, new complex(-1).about(c, 0, -B));
-		return this.triside(C.dist(c), C.dist(0), c, inclination, conjugate);
+		return this.trisss(C.dist(c), C.dist(0), c, inclination, conjugate);
 	}
 	trieqlat(a, inclination = 0, conjugate = true){// equilateral triangle
-		return this.triside(a, a, a, inclination, conjugate);
+		return this.trisss(a, a, a, inclination, conjugate);
 	}
-	trignomon(base, side, inclination = 0, conjugate = true){// gnomon (isosceles)
-		return this.triside(side, side, base, inclination, conjugate);
+	triiso(base, side, inclination = 0, conjugate = true){// isosceles
+		return this.trisss(side, side, base, inclination, conjugate);
+	}
+	trignomon(k, base, inclination = 0, conjugate = true){// gnomon
+		return this.triiso(base, base * k, inclination, conjugate);
 	}
 	triright(a, b, inclination = 0, conjugate = true){// right triangle
-		return this.triside(a, b, sqrt(a*a + b*b), inclination, conjugate);
+		return this.trisss(a, b, sqrt(a*a + b*b), inclination, conjugate);
 	}
 	trirightgnomon(a, inclination = 0, conjugate = true){// 45-45-90 triangle
-		return this.triright(a, a, inclination, conjugate);
+		return this.triiso(a * sqrt(2), a, inclination, conjugate);
 	}
 	trimonodrafter(a, inclination = 0, conjugate = true){// 30-60-90 triangle
-		return this.triside(a, a * sqrt(3), a * 2, inclination, conjugate);
+		return this.trisss(a, a * sqrt(3), a * 2, inclination, conjugate);
 	}
 	trimetalic(m, base, inclination = 0, conjugate = true){// metalic triangle
-		return this.trignomon(base, base * metalicmean(m), inclination, conjugate)
+		return this.trignomon(metalicmean(m), base, inclination, conjugate)
 	}
 	trigolden(base, inclination = 0, conjugate = true){// golden triangle
 		return this.trimetalic(1, base, inclination, conjugate)
@@ -917,20 +955,20 @@ class complex {
 		return this.trimetalic(2, base, inclination, conjugate)
 	}
 	triegypt(base, inclination = 0, conjugate = true){// 3-4-5 triangle
-		return this.triside(base * 3/5, base * 4/5, base, inclination, conjugate)
+		return this.trisss(base * 3/5, base * 4/5, base, inclination, conjugate)
 	}
 	triheron(base, inclination = 0, conjugate = true){// Ἥρων ὁ Ἀλεξανδρεύς
-		return this.triside(base * 15/14, base * 13/14, base, inclination, conjugate)
+		return this.trisss(base * 15/14, base * 13/14, base, inclination, conjugate)
 	}
 	trisrba(base, inclination = 0, conjugate = true){// мој омиљени троугао
-		return this.triside(base * 5/8, base * 7/8, base, inclination, conjugate)
+		return this.trisss(base * 5/8, base * 7/8, base, inclination, conjugate)
 	}
 	trikepler(a, inclination = 0, conjugate = true){// Kepler right triangle
-		return this.triside(a, a * sqrt(phi), a * phi, inclination, conjugate)
+		return this.trisss(a, a * sqrt(phi), a * phi, inclination, conjugate)
 	}
 	trikimberling(base, inclination = 0, conjugate = true){// Kimberling golden triangle
 		const k = 1.3797865516812012355584834707971; // angles = {φ : φ : 1}, k = 1/(2cos(πφ/(2φ+1))
-		return this.trignomon(base, base * k, inclination, conjugate)
+		return this.trignomon(k, base, inclination, conjugate)
 	}
 	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		// harmonic addition: a ÷ b = 1/(1/a + 1/b) = (a * b)/(a + b)
@@ -943,7 +981,7 @@ class complex {
 		this.success = (A > 0) && (B > 0) && (C > 0);
 		if (this.success){
 			var S = 2 * sqrt(I * A * B * C); // double area
-			this.triside(S/a, S/b, S/c, inclination, conjugate); // construct from sides
+			this.trisss(S/a, S/b, S/c, inclination, conjugate); // construct from sides
 		}
 		return this;
 	}
@@ -1013,8 +1051,8 @@ class complex {
 		var B = new complex(this.vertex.B); B.r = b;
 		var C = new complex(this.vertex.C); C.r = c;
 		var z = new complex(C).circlecircle(A, B);
-		var u = abs(C.r - new complex(z.z1).zdist(C));
-		var v = abs(C.r - new complex(z.z2).zdist(C));
+		var u = abs(C.r - C.zdist(z.z1));
+		var v = abs(C.r - C.zdist(z.z2));
 		return this.iff(z.z1, z.z2, u < v);
 	}
 	tripolarfun(a, b, c, f){
@@ -1291,7 +1329,8 @@ const hsi2rgb = function(h, s, i){// hue in degrees, saturation and intensity = 
 		case 1: b = y; g = z; r = x; break;
 		case 2: b = z; g = x; r = y; break;
 	}
-	return {r: Math.round(r), g: Math.round(g), b: Math.round(b)};
+	r = Math.round(r); g = Math.round(g); b = Math.round(b);
+	return {r: r, g: g, b: b};
 }
 
 
