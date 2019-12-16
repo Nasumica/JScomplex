@@ -920,9 +920,9 @@ class complex {
 	}
 	triasa(A, c, B, inclination = 0, conjugate = true){// angle side angle
 		var C = new complex().intersection(
-			{x: 0, y: 0}, new complex(+1).about(0, 0, +A),
-			{x: c, y: 0}, new complex(-1).about(c, 0, -B));
-		return this.trisss(C.dist(c), C.dist(0), c, inclination, conjugate);
+			{x: 0, y: 0}, new complex(c, 0).about(0, 0, +A),
+			{x: c, y: 0}, new complex(0, 0).about(c, 0, -B));
+		return this.trisss(C.dist(c, 0), C.dist(0, 0), c, inclination, conjugate);
 	}
 	trieqlat(a, inclination = 0, conjugate = true){// equilateral triangle
 		return this.trisss(a, a, a, inclination, conjugate);
@@ -937,22 +937,25 @@ class complex {
 		return this.trisss(a, b, sqrt(a*a + b*b), inclination, conjugate);
 	}
 	trirightgnomon(a, inclination = 0, conjugate = true){// 45-45-90 triangle
-		return this.triiso(a * sqrt(2), a, inclination, conjugate);
+		return this.triright(a, a, inclination, conjugate);
 	}
 	trimonodrafter(a, inclination = 0, conjugate = true){// 30-60-90 triangle
 		return this.trisss(a, a * sqrt(3), a * 2, inclination, conjugate);
 	}
 	trimetalic(m, base, inclination = 0, conjugate = true){// metalic triangle
-		return this.trignomon(metalicmean(m), base, inclination, conjugate)
+		return this.trignomon((m + Math.hypot(m, 2))/2, base, inclination, conjugate)
 	}
 	trigolden(base, inclination = 0, conjugate = true){// golden triangle
 		return this.trimetalic(1, base, inclination, conjugate)
 	}
-	trigoldengnomon(base, inclination = 0, conjugate = true){// golden gnomon
-		return this.trimetalic(-1, base, inclination, conjugate)
-	}
 	trisilver(base, inclination = 0, conjugate = true){// silver triangle
 		return this.trimetalic(2, base, inclination, conjugate)
+	}
+	tribronze(base, inclination = 0, conjugate = true){// bronze triangle
+		return this.trimetalic(3, base, inclination, conjugate)
+	}
+	trigoldengnomon(base, inclination = 0, conjugate = true){// golden gnomon
+		return this.trimetalic(-1, base, inclination, conjugate)
 	}
 	triegypt(base, inclination = 0, conjugate = true){// 3-4-5 triangle
 		return this.trisss(base * 3/5, base * 4/5, base, inclination, conjugate)
@@ -970,7 +973,7 @@ class complex {
 		const k = 1.3797865516812012355584834707971; // angles = {φ : φ : 1}, k = 1/(2cos(πφ/(2φ+1))
 		return this.trignomon(k, base, inclination, conjugate)
 	}
-	trialt(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
+	trihhh(a, b, c, inclination = 0, conjugate = true){// triangle construction from altitudes (heights)
 		// harmonic addition: a ÷ b = 1/(1/a + 1/b) = (a * b)/(a + b)
 		function o(u, v, w){return (u*v*w)/(u*v + v*w + w*u);} // u ÷ v ÷ w = 1/(1/u + 1/v + 1/w)
 		this.altitude = {a: a, b: b, c: c};
@@ -1078,18 +1081,18 @@ class complex {
 		}
 		return s;
 	}
-	polyvalue(p){
+	polyvalue(p){// evaluate
 		var z = {}; this.obj(z).zero;
 		for (var i = p.hi; i >= 0; i--)
 			this.zmul(z).zadd(new complex(p[i]));
 		return this;
 	}
-	polyprime(p, q){
+	polyprime(p, q){// q = p'
 		q.length = 0;
 		for (var i = 1; i < p.length; i++)
 			q.push(new complex(p[i]).mul(i).z);
 	}
-	polydiv(p, q){
+	polydiv(p, q){// p = p div q
 		var m = p.hi, n = q.hi, l = p.length - q.length;
 		if (l < 0) p = [0]; else {
 			var r = new Array(l + 1);
@@ -1098,7 +1101,7 @@ class complex {
 				var z = new complex(p[n + k]).zdiv(new complex(q[n])).obj(r[k]);
 				for (var j = n; j >= 0; j--)
 					new complex(q[j]).zmul(z).zbus(p[j + k]).obj(p[j + k]);
-			}
+			} // p = mod, r = div
 			p.length = r.length;
 			for (var k = 0; k < r.length; k++)
 				new complex(r[k]).obj(p[k]);
@@ -1108,20 +1111,17 @@ class complex {
 		while (p.length > 0 && new complex(p[p.hi]).is0) p.length--; // leading zeroes trim
 	}
 	polyarg(p, ...arg){
-		var n, i, a;
-		p.length = 0; 
+		var n, i, a;  p.length = 0; 
 		if (arg.length == 1 && Array.isArray(arg[0])) {// only one array parameter
-			a = arg[0]; n = a.hi;
-			for (i = 0; i <= n; i++){ // incremental copy array as complex polynom
-				p.push(new complex(a[i]).z);
-				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
-			}
+			a = arg[0]; n = a.hi; // incremental copy array as complex polynom
+			for (i = 0; i <= n; i++) p.push(new complex(a[i]).z);
 		} else {// zero or more than one parameters or first parameter is not array
-			a = arg; n = a.hi;
-			for (i = n; i >= 0; i--){ //decremental collect parameters
-				p.push(new complex(a[i]).z);
-				if (p.length == 1) new complex(p[0]).zsub(this).obj(p[0]);
-			}
+			a = arg; n = a.hi; // decremental collect parameters
+			for (i = n; i >= 0; i--) p.push(new complex(a[i]).z);
+		}
+		if (this.isNum && !this.is0){// subtract this
+			if (p.length == 0) p.push({}); // impossible
+			new complex(p[0]).zsub(this).obj(p[0]);
 		}
 	}
 	polysolve(roots, ...arg){// simple Newton polynom roots solver
@@ -1171,7 +1171,7 @@ class complex {
 			0, -1, i, -i
 	*/
 		roots.length = 0; // reset roots array
-		function eps(s, t = {x: 0, y: 0}, e = 1e-17){// precision - Kahan summation
+		function eps(s, t = {x: 0, y: 0}, e = 1e-52){// precision - Kahan summation
 			var a = new complex(s).abs, b = new complex(t).abs, c = a - b, d = (c - a) + b;
 			return (abs(c) <= e) && (abs(d) <= e);
 		}
@@ -1210,18 +1210,18 @@ class complex {
 						p.length = 1; // done
 					} else { // Newton part
 						i = n * 4 * 1024; // max iterations
-						this.polyprime(p, q); // q(z) = p'(z)
-						w.xiy(1, 1).polardev; // start with random point in unit circle
+						w.xiy(1, 1).normaldev; // hit random point
 						u.inf;  v.inf;
 						while (i > 0) {
 							i -= 4;
 							u.asg(v);  v.asg(w);   // previous 2 iterations
 							f.asg(w).polyvalue(p); // evaluate p(w)
 							if (f.is0)  break;     // good luck - exact zero
-							if (eps(f)) break;     // good enough
+							//if (eps(f)) break;     // good enough
+							this.polyprime(p, q);  // q(z) = p'(z)
 							g.asg(w).polyvalue(q); // evaluate p'(w)
 							if (g.is0) {           // bad  luck - critical point
-								w.asg(1, 1).polardev;
+								w.xiy(1, 1).normaldev;
 								i += 3; // back 3/4 step
 							} else {
 								w.zsub(f.zdiv(g)); // w -= p(w) / p'(w)
@@ -1292,7 +1292,6 @@ Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: f
 const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const min = Math.min, max = Math.max;
 const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
-const metalicmean = function(x){return (x + Math.hypot(x, 2))/2;} // y = x + 1/y
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
@@ -1323,7 +1322,9 @@ const hsi2rgb = function(h, s, i){// hue in degrees, saturation and intensity = 
 	var r, g, b, a, x, y, z;
 	h = mod(h, 360); i = cen(i) * 85; s = cen(s) * i; // 255/3 = 85, s * i = chroma
 	a = mod(h, 120); h = div(h, 120);
-	x = i - s; z = i + s * cosd(a)/cosd(a - 60); y = 3 * i - (x + z);
+	x = i - s;
+	z = i + s * cosd(a)/cosd(a - 60);
+	y = 3 * i - (x + z);
 	switch (h){
 		case 0: b = x; g = y; r = z; break;
 		case 1: b = y; g = z; r = x; break;
