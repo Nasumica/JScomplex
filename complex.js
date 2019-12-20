@@ -592,9 +592,8 @@ class complex {
 		var d = cross(u, v); // vectors cross product d = u × v
 		if (d == 0){// parallel
 			this.inf;
-		} else {
-			var a = cross(u, z1), b = cross(v, z3);   // (u × z1) * v - (v × z3) * u
-			                                          // ---------------------------
+		} else {                                      // (u × z1) * v - (v × z3) * u
+			var a = cross(u, z1), b = cross(v, z3);   // ---------------------------
 			this.asg(v.mul(a)).zsub(u.mul(b)).div(d); //           u × v
 		}
 		return this;
@@ -642,6 +641,9 @@ class complex {
 	}
 	ztoward(z, len = 1){// go toward z by given length
 		return this.toward(z.x, z.y, len);
+	}
+	slide(z1, z2, len = 1){// slide parallel to z1--z2
+		return this.zadd(new complex(z2).zsub(z1).unit.mul(len));
 	}
 	oncircle(circle){// nearest point on circle
 		if (!this.is(circle)) this.asg(new complex(circle).ztoward(this, circle.r));
@@ -695,29 +697,28 @@ class complex {
 	simouter(circle1, circle2){// external similitude point
 		return this.asg(new complex().similitude(circle1, circle2).z2);
 	}
-	linecircle(point1, point2, circle){// chord, line - circle intersection
+	chord(point1, point2, circle){// line - circle intersection
 	/*
 		                      Z₁
-		                      |
-		                      |
-		                      |
-		(Q------------○-------Z---P)
-		                      |
+		                r   / |
+		                  /   | sqrt(r² - d²)
+		                /     |
+		(-------------○-------Z----)
+		                  d   |
 		                      |
 		                      |
 		                      Z₂
 	*/
-		// ∟PZ₁Q = ∟Z₁ZP = ∟Z₁ZQ = 90°; ΔZ₁ZP ~ ΔQZZ₁ ~ ΔQZ₁P; |ZP| : |ZZ₁| = |ZZ₁| : |ZQ|
 		this.z1 = {x: 1/0, y: 1/0}; this.z2 = {x: 1/0, y: 1/0};
-		var u = new complex(point1).zsub(point2).unit;     // line unit vector = |
-		var z = new complex(circle).ortho(point1, point2); // project center to line
-		var d = z.zdist(circle);                           // |ZO| = d, |ZP| = r - d, |ZQ| = r + d
-		if (d <= circle.r)                                 // Z must be in circle else not intersect
-			u.mul(sqrt((circle.r - d) * (circle.r + d)))   // |ZZ₁|² = |ZP| * |ZQ|
-				.zadd(z).obj(this.z1).opposite(z).obj(this.z2);
+		var z = new complex(circle).ortho(point1, point2);          // project center to line
+		var c = sqr(circle.r) - new complex(z).zsub(circle).sqrabs; // |OZ₁| = r, |OZ| = d, c = r² - d² = |ZZ₁|²
+		if (c > 0)                                                  // Z must be in circle else not intersect
+			new complex(point1).zsub(point2).unit.mul(sqrt(c))      // ZZ₁
+				.zadd(z).obj(this.z1)                               // Z₁
+				.opposite(z).obj(this.z2);                          // Z₂
 		return this;
 	}
-	circlecircle(circle1, circle2){// common chord, circle - circle intersection
+	lens(circle1, circle2){// common chord, circle - circle intersection
 	/*
 		                     |
 		(----------○₁----(---R--)------○₂-------------)
@@ -725,18 +726,15 @@ class complex {
 	*/
 		// points of concurrence lies on radical axis
 		var r = new complex().radical(circle1, circle2); 
-		return this.linecircle(r.z, r.perp(circle1, circle2), circle1);
+		return this.chord(r.z, r.perp(circle1, circle2), circle1);
 	}
-	circletangent(point, circle){// tangent from point to circle
+	tangent(circle){// tangent from point to circle
 	/*
 		(--------(○--------)---C------------P)
 	*/
 		// C is circle with diameter OP; ∟OZ₁P = ∟OZ₂P = 90°
-		var c = new complex(point).halfway(circle); c.r = c.zdist(point);
-		return this.circlecircle(c, circle);
-	}
-	tangent(circle){// simpler usage
-		return this.circletangent(this.z, circle);
+		var c = new complex(this).halfway(circle); c.r = c.zdist(circle);
+		return this.lens(c, circle);
 	}
 	arithSpiral(a, b, t){
 		return this.cis(a + b * t, t);
@@ -864,7 +862,7 @@ class complex {
 			this.unit.mul(this.Oe.c).zadd(this.Oe).obj(this.Oe.F1).opposite(this.Oe).obj(this.Oe.F2); // foci
 			this.Oe.e = this.Oe.c / this.Oe.a;  this.Oe.l = (q - Z*2)/9 / this.Oe.a; // eccentricity, semi-latus rectum
 			this.S = {}; // X99 - Steiner point (intersection of circumcircle and circumellipse)
-			this.barycentricfun(a, b, c, function(a, b, c){return 1/(b*b - c*c);}).obj(this.S);
+			this.barycentricfun(aa, bb, cc, function(a, b, c){return 1/(b - c);}).obj(this.S);
 			// excircles Ja, Jb, Jc
 			this.Ja = {r: D/ra}; this.trilinearxiy(-1,  1,  1).obj(this.Ja);
 			this.Jb = {r: D/rb}; this.trilinearxiy( 1, -1,  1).obj(this.Jb);
@@ -879,13 +877,13 @@ class complex {
 			this.Soddy = {z1: {x: 1/0, y: 1/0}, z2: {x: 1/0, y: 1/0}}; // Soddy line (contains I, L, Ge, SO, SI, ...)
 			if (a != b || b != c){ // no lines for equilateral triangle
 				var O = this.SO; // lines as this circle chords
-				this.linecircle(this.O, this.G, O) // O--G
+				this.chord(this.O, this.G, O) // O--G
 					.asg(this.z1).obj(this.Euler.z1)
 					.asg(this.z2).obj(this.Euler.z2);
-				this.linecircle(this.G, this.I, O) // G--I
+				this.chord(this.G, this.I, O) // G--I
 					.asg(this.z1).obj(this.Nagel.z1)
 					.asg(this.z2).obj(this.Nagel.z2);
-				this.linecircle(this.I, this.L, O) // I--L
+				this.chord(this.I, this.L, O) // I--L
 					.asg(this.z1).obj(this.Soddy.z1)
 					.asg(this.z2).obj(this.Soddy.z2);
 				delete(this.z1); delete(this.z2);
@@ -1053,7 +1051,7 @@ class complex {
 		var A = new complex(this.vertex.A); A.r = a;
 		var B = new complex(this.vertex.B); B.r = b;
 		var C = new complex(this.vertex.C); C.r = c;
-		var z = new complex(C).circlecircle(A, B);
+		var z = new complex(C).lens(A, B);
 		var u = abs(C.r - C.zdist(z.z1));
 		var v = abs(C.r - C.zdist(z.z2));
 		return this.iff(z.z1, z.z2, u < v);
