@@ -167,11 +167,17 @@ class complex {
 	zscl(z){// scale up
 		return this.scl(z.x, z.y);
 	}
+	get dbl(){
+		return this.scl(2);
+	}
 	lcs(x, y = x){
 		return this.xiy(this.x / x, this.y / y);
 	}
 	zlcs(z){// scale down
 		return this.lsc(z.x, z.y);
+	}
+	get half(){
+		return this.lcs(2);
 	}
 	add(x, y = 0){
 		return this.xiy(this.x + x, this.y + y);
@@ -241,7 +247,7 @@ class complex {
 		return this.hadd(-x, -y);
 	}
 	zhsub(z){// harmonic subtraction
-		return this.hdusb(z.x, z.y);
+		return this.hsub(z.x, z.y);
 	}
 	hmul(x, y = 0){
 		return this.div(x, y);
@@ -281,9 +287,6 @@ class complex {
 	get unit(){// unit vector, sign
 		var d = this.abs; return d == 0 ? this : this.div(d);
 	}
-	get hstep(){// Heaviside step
-		return this.unit.add(1).div(2);
-	}
 	get theo(){// spiral of Theodorus
 		// a = 2*sqrt(n) - 2.1577829966594462209291427868295777235
 		// f(n + 1) = (1 + i / sqrt(n + 1)) * f(n)
@@ -292,11 +295,11 @@ class complex {
 			this.zadd(new complex(this).unit.muli);
 		return this;
 	}
-	inc(v = 1){// ρ = |ρ + v|
-		return this.is0 ? this.xiy(v) : this.zadd(new complex(this).unit.mul(v));
+	get inc(){
+		this.x++; return this;
 	}
-	dec(v = 1){// ρ = |ρ - v|
-		return this.inc(-v);
+	get dec(){
+		this.x--; return this;
 	}
 	round(r = 1){
 		return this.scl(r).xiy(Math.round(this.x), Math.round(this.y)).lcs(r); 
@@ -315,6 +318,9 @@ class complex {
 	}
 	zdcp(z){
 		return this.dcp(z.x, z.y);
+	}
+	get agm(){// arithmetic-geometric mean
+		return this.xiy((this.x + this.y)/2, sqrt(this.x * this.y));
 	}
 	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
 		if (this.isEq(0, pi)) return this.xiy(-1); else // to Euler
@@ -358,14 +364,32 @@ class complex {
 		return this.root(z.x, z.y);
 	}
 	get sinh(){// (e^z - e^-z)/2
-		this.exp; return this.zsub(new complex(this).recip).div(2);
+		this.exp; return this.zsub(new complex(this).recip).half;
 	}
 	get cosh(){// (e^z + e^-z)/2
-		this.exp; return this.zadd(new complex(this).recip).div(2);
+		this.exp; return this.zadd(new complex(this).recip).half;
 	}
 	get tanh(){// (e^2z - 1)/(e^2z + 1)
-		this.mul(2).exp; var z = new complex(this).add(1);
-		return this.sub(1).zdiv(z);
+		this.dbl.exp; var z = new complex(this);
+		return this.dec.zdiv(z.inc);
+	}
+	get csch(){// cosecant
+		return this.sinh.recip;
+	}
+	get sech(){// secant
+		return this.cosh.recip;
+	}
+	get coth(){// cotangent
+		return this.tanh.recip;
+	}
+	get asinh(){// ln(z + sqrt(z² + 1))
+		return this.zadd(new complex(this).sqr.inc.sqrt).log;
+	}
+	get acosh(){// ln(z + sqrt(z² - 1))
+		return this.zadd(new complex(this).sqr.dec.sqrt).log;
+	}
+	get atanh(){// ln((1 + z)/(1 - z))/2 = ln(-2/(z - 1) - 1)/2
+		return this.dec.recip.dbl.neg.dec.log.half;
 	}
 	get sin(){// i * sinh(z) = sin(i * z) => sin(z) = sinh(z / i) * i
 		return this.divi.sinh.muli;
@@ -376,20 +400,23 @@ class complex {
 	get tan(){// i * tanh(z) = tan(i * z)
 		return this.divi.tanh.muli;
 	}
+	get csc(){// cosecant
+		return this.sin.recip;
+	}
+	get sec(){// secant
+		return this.cos.recip;
+	}
+	get cot(){// cotangent
+		return this.tan.recip;
+	}
+	get hav(){// haversine
+		return this.half.sin.sqr;
+	}
+	get crd(){// chord
+		return this.half.sin.dbl;
+	}
 	get sinc(){// sin(z)/z
 		var z = {}; return this.is0 ? this.one : this.obj(z).sin.zdiv(z);
-	}
-	get asinh(){// ln(z + sqrt(z² + 1))
-		var z = new complex(this);
-		return this.sqr.add(1).sqrt.zadd(z).log;
-	}
-	get acosh(){// ln(z + sqrt(z² - 1))
-		var z = new complex(this);
-		return this.sqr.sub(1).sqrt.zadd(z).log;
-	}
-	get atanh(){// ln((1 + z)/(1 - z))/2 = (ln(1 + z) - ln(1 - z))/2
-		var z = new complex(1).zsub(this);
-		return this.add(1).zdiv(z).log.div(2);
 	}
 	get asin(){
 		return this.muli.asinh.divi;
@@ -399,6 +426,18 @@ class complex {
 	}
 	get atan(){
 		return this.muli.atanh.divi;
+	}
+	get ahav(){
+		return this.sqrt.asin.dbl;
+	}
+	get acrd(){
+		return this.half.asin.dbl;
+	}
+	geodist(x, y, r = 1){// mean Earth radius r = 6371008.8 m
+		return r * ahav(hav(x - this.x) + hav(y - this.y) * cos(x) * cos(this.x));
+	}
+	zgeodist(z, r = 1){
+		return geodist(z.x, z.y, r);
 	}
 	horner(){// Horner's scheme polynom evaluate
 		var z = {}; this.obj(z).zero;
@@ -559,15 +598,15 @@ class complex {
 	}
 	halfway(z){// ○-----X-----Z
 		//return this.go(z, 1/2);
-		return this.zadd(z).div(2);
+		return this.zadd(z).half;
 	}
 	opposite(z){// ○-----Z-----X
 		return this.go(z, 2);
 	}
-	complement(z){// ○-----.-----Z-----X
+	complement(z){// ○-----+-----Z-----X
 		return this.go(z, 3/2);
 	}
-	anticomplement(z){// ○-----Z-----.-----X
+	anticomplement(z){// ○-----Z-----+-----X
 		return this.go(z, 3);
 	}
 	get metalic(){// metalic mean = this + 1/(this + 1/(this + 1/(this + ...)))
@@ -811,7 +850,7 @@ class complex {
 		if (this.success){
 			var o = A.trap(B) + B.trap(C) + C.trap(A); // signed area
 			this.direction = Math.sign(o); // direction of vertices
-			var P = a + b + c,  s = P/2,  D = abs(o),  S = 2*D;     // D = Δ
+			var P = a + b + c,  s = P/2,  D = abs(o),  S = 2*D; // D = Δ
 			var abc = a*b*c, aa = a*a, bb = b*b, cc = c*c, ss = s*s;     // common
 			var q = aa + bb + cc, p = a*b + b*c + c*a, qq = q*q, pp=p*p; // variables
 			var ra = s - a, rb = s - b, rc = s - c; // vertex touch circle radius
@@ -1303,13 +1342,14 @@ const random = function(a, b){// uniform deviate in given range
 		default: return random(b - a) + a; // [a, b) = a + [0, b - a)
 	}
 }
-
 const xiy = function(x, y = 0){return {x: Number(x), y: Number(y)};} // shortcut
 const cis = function(t, a = 1, b = a){// polar ellipse
 	if (a instanceof Object) return cis(t, a.x, a.y); else
 	var c = cos(t), s = sin(t), r = a == b ? a : a * b / Math.hypot(a * s, b * c);
 	return {x: r * c, y: r * s};
 }
+const hav = function(x){return sqr(sin(x/2));};
+const ahav = function(x){return 2*asin(sqrt(x));};
 const sind = function(x){return sin(pi * x/180);}
 const cosd = function(x){return cos(pi * x/180);}
 const atand = function(s, c = 1){return atan(s, c) * 180/pi;}
