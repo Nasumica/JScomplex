@@ -223,8 +223,8 @@ class complex {
 			return this.conjg.lcs(this.sqrabs);
 	}
 	mod(x = 1, y = 0){
-		var z = new complex(this);
-		return this.div(x, y).floor().mul(x, y).zbus(z);
+		var z = new complex(this).div(x, y).floor().mul(x, y);
+		return this.zsub(z);
 	}
 	zmod(z){
 		return this.mod(z.x, z.y);
@@ -319,8 +319,24 @@ class complex {
 	zdcp(z){
 		return this.dcp(z.x, z.y);
 	}
-	get agm(){// arithmetic-geometric mean
-		return this.xiy((this.x + this.y)/2, sqrt(this.x * this.y));
+	get compmod(){// complementary modulus = sqrt(1 - z²)
+		return this.sqr.neg.inc.sqrt;
+	}
+	pagm(i = 32){// pairwise arithmetic-geometric mean
+		var z = new complex();
+		while (i-- > 0 && this.x != this.y && !this.is(z))
+			this.obj(z).xiy((this.x + this.y)/2, sqrt(this.x * this.y));
+		return this;
+	}
+	agm(z, i = 32){// arithmetic-geometric mean
+		var u = new complex(z), v = new complex();
+		while (i-- > 0 && !this.is(u) && !this.is(v))
+			this.obj(v).halfway(u).nop(u.zmul(v).sqrt);
+		return this;
+	}
+	get ellipticK(){// complete elliptic integral of the first kind, K(0) = π/2
+		this.sqrt; // compatible with Mathematica function EllipticK[m] = K(k²)
+		var z = {}; return this.inc.obj(z).vid(2).dec.agm(1).dbl.zmul(z).vid(pi);
 	}
 	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
 		if (this.isEq(0, pi)) return this.xiy(-1); else // to Euler
@@ -388,8 +404,14 @@ class complex {
 	get acosh(){// ln(z + sqrt(z² - 1))
 		return this.zadd(new complex(this).sqr.dec.sqrt).log;
 	}
-	get atanh(){// ln((1 + z)/(1 - z))/2 = ln(-2/(z - 1) - 1)/2
-		return this.dec.recip.dbl.neg.dec.log.half;
+	get atanh(){// ln((1 + z)/(1 - z))/2
+	//  (1 + z)/(1 - z) = 
+	//  (z + 1)/(1 - z) =
+	// -(z + 1)/(z - 1) = 
+	// -(2 + z - 1)/(z - 1) = 
+	// -2/(z - 1) - (z - 1)/(z - 1) = 
+	// -2/(z - 1) - 1
+		return this.dec.recip.dbl.neg.dec.log.half; // :)
 	}
 	get sin(){// i * sinh(z) = sin(i * z) => sin(z) = sinh(z / i) * i
 		return this.divi.sinh.muli;
@@ -440,7 +462,7 @@ class complex {
 		return geodist(z.x, z.y, r);
 	}
 	horner(){// Horner's scheme polynom evaluate
-		var z = {}; this.obj(z).zero;
+		var z = {}; this.obj(z).zero; // z = this; this = 0;
 		for (var i = 0; i < arguments.length; i++)
 			this.zmul(z).zadd(new complex(arguments[i]));
 		return this;
@@ -502,7 +524,7 @@ class complex {
 		else if (c.is0)// (A z + B) z = 0
 			b.zdiv(a).neg.obj(this.z1).zero.obj(this.z2); // z1 = -B/A, z2 = 0
 		else {// A z² + B z + C = 0
-			var d = new complex(b.neg).sqr.zsub(c.mul(2).zmul(a.mul(2))).sqrt;
+			var d = new complex(b.neg).sqr.zsub(c.dbl.zmul(a.dbl)).sqrt;
 			// b = -B; a = 2 A; c = 4 A C; d = sqrt(B² - 4 A C); 
 			c.asg(b).zadd(d).zdiv(a).obj(this.z1);
 			c.asg(b).zsub(d).zdiv(a).obj(this.z2);
@@ -606,7 +628,7 @@ class complex {
 	complement(z){// ○-----+-----Z-----X
 		return this.go(z, 3/2);
 	}
-	anticomplement(z){// ○-----Z-----+-----X
+	anticomplement(z){// X-----+-----Z-----o
 		return this.go(z, 3);
 	}
 	get metalic(){// metalic mean = this + 1/(this + 1/(this + 1/(this + ...)))
