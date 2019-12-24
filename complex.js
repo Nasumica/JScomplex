@@ -262,11 +262,13 @@ class complex {
 		return this.hdiv(z.x, z.y);
 	}
 	get sqr(){// this²
-		return this.xiy((this.x + this.y) * (this.x - this.y), this.x * this.y * 2);
+		return this.xiy((this.x + this.y) * (this.x - this.y), 2 * this.x * this.y);
 		//return this.zmul(this);
 	}
 	get cub(){// this³
-		return this.zmul(new complex(this).sqr);
+		var xx = this.x * this.x, yy = this.y * this.y;
+		return this.xiy(this.x * (xx - 3*yy), this.y * (3*xx - yy));
+		//return this.zmul(new complex(this).sqr);
 	}
 	get sqrt(){
 		if (this.is0 || this.is1) return this; else
@@ -280,9 +282,10 @@ class complex {
 	get cbrt(){
 		if (this.is0 || this.is1) return this; else
 			if (this.y == 0)
-				return this.xiy(Math.sign(this.x) * pow(abs(this.x), 1/3));
-			else
-				return this.root(3);
+				return this.xiy(Math.sign(this.x) * pow(abs(this.x), 1/3)); else
+			if (this.x == 0)
+				return this.xiy(Math.sign(this.y) * pow(abs(this.y), 1/3)).divi; else
+			return this.root(3);
 	}
 	get unit(){// unit vector, sign
 		var d = this.abs; return d == 0 ? this : this.div(d);
@@ -335,8 +338,11 @@ class complex {
 		return this;
 	}
 	get ellipticK(){// complete elliptic integral of the first kind, K(0) = π/2
-		this.sqrt; // compatible with Mathematica function EllipticK[m] = K(k²)
+		// Mathematica function EllipticK[z] = z.sqrt.ellipticK
 		var z = {}; return this.inc.obj(z).vid(2).dec.agm(1).dbl.zmul(z).vid(pi);
+	}
+	pap(g = 9.80665){// pendulum amplitude period: ρ = length, θ = angle
+		return 4 * sqrt(this.abs/g) * new complex(sin(this.arg/2)).ellipticK.x;
 	}
 	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
 		if (this.isEq(0, pi)) return this.xiy(-1); else // to Euler
@@ -373,6 +379,7 @@ class complex {
 		if (this.is1) return this; else
 		if (y == 0 && x ==  1) return this; else
 		if (y == 0 && x == -1) return this.recip; else
+		if (y == 0 && x ==  2) return this.sqrt; else
 		if (y == 0 && x > 0 && this.is0) return this; else
 			return this.log.div(x, y).exp;
 	}
@@ -455,10 +462,10 @@ class complex {
 	get acrd(){
 		return this.half.asin.dbl;
 	}
-	geodist(x, y, r = 1){// mean Earth radius r = 6371008.8 m
+	geodist(x, y, r = 6371008.8){// mean Earth radius r = 6371008.8 m
 		return r * ahav(hav(x - this.x) + hav(y - this.y) * cos(x) * cos(this.x));
 	}
-	zgeodist(z, r = 1){
+	zgeodist(z, r = 6371008.8){
 		return geodist(z.x, z.y, r);
 	}
 	horner(){// Horner's scheme polynom evaluate
@@ -1393,6 +1400,51 @@ const hsi2rgb = function(h, s, i){// hue in degrees, saturation and intensity = 
 	r = Math.round(r); g = Math.round(g); b = Math.round(b);
 	return {r: r, g: g, b: b};
 }
+
+const gammaPQ = function(x){
+	var p = 1; while (x > 1) p *= --x;
+	var q = 1; while (x < 0) q *= x++;
+	if (x = 1/2) p *= sqrt(pi); else
+	if (x < 1){
+		const c = [0, 1, // sum(c) = 1
+			 0.57721566490153286060651209008240243104215933593992, // = γ (Euler–Mascheroni constant)
+			-0.6558780715202538810770195151453904812798, // = γ²/2 - π²/12
+			-0.0420026350340952355290039348754298187114,
+			 0.1665386113822914895017007951021052357178,
+			-0.0421977345555443367482083012891873913017,
+			-9.62197152787697356211492e-03,
+			 7.21894324666309954239501e-03,
+			-1.16516759185906511211397e-03,
+			-2.15241674114950972815730e-04,
+			 1.28050282388116186153199e-04,
+			-2.01348547807882386556894e-05,
+			-1.25049348214267065734536e-06,
+			 1.13302723198169588237413e-06,
+			-2.05633841697760710345015e-07,
+			 6.11609510448141581786250e-09,
+			 5.00200764446922293005567e-09,
+			-1.18127457048702014458813e-09,
+			 1.04342671169110051049154e-10,
+			 7.78226343990507125404994e-12,
+			-3.69680561864220570818782e-12,
+			 5.10037028745447597901548e-13,
+			-2.05832605356650678322243e-14,
+			-5.34812253942301798237002e-15,
+			 1.22677862823826079015889e-15,
+			-1.18125930169745876951376e-16,
+			 1.18669225475160033257978e-18,
+			 1.41238065531803178155580e-18,
+			-2.29874568443537020659248e-19,
+			 1.71440632192733743338396e-20,
+			 1.33735173049369311486478e-22];
+		var r = 0;
+		for (var i = c.length - 1; i >= 0; i--) r = r * x + c[i];
+		q *= r;
+	}
+	return {p: p, q: q};
+}
+const gamma = function(x){var s = gammaPQ(x); return s.p/s.q;} // Γ(x) = (x - 1)!
+const ammag = function(x){var s = gammaPQ(x); return s.q/s.p;} // Γ⁻¹(x) = 1/Γ(x) is more usefull
 
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'begin', {
