@@ -1320,8 +1320,9 @@ class complex {
 				.zmul(new complex(z).gamma) // Γ(z)
 				.zmul(z.add(1/2).gamma);    // Γ(z + 1/2)
 		} else {// Γ(z + 1) = z Γ(z)
-			var p = new complex(1); while (this.x  > 1) {this.dec; p.zmul(this);} 
+			var p = new complex(1); while (this.x >  1) {this.dec; p.zmul(this);} 
 			var q = new complex(1); while (this.x <= 0) {q.zmul(this); this.inc;}
+			// 0 < Re ≤ 1, |Im| ≤ 1
 			if (this.isEq(1/2)) p.mul(sqrtpi); else
 			if (this.x < 1 || this.y != 0) // no-trivial case
 				q.zmul(this.polyvalue(GammaRecipTaylor));
