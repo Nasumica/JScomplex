@@ -388,7 +388,13 @@ class complex {
 		return this.root(z.x, z.y);
 	}
 	get pow2(){// 2^z (must improve)
-		return this.mul(0.69314718055994530941723212145818).exp;
+		return this.lcs(1.442695040888963407359924681001892137427).exp;
+	}
+	get powpi(){// pi^z (must improve)
+		return this.scl(1.144729885849400174143427351353058711647).exp;
+	}
+	get pow10(){// 10^z (must improve)
+		return this.scl(2.302585092994045684017991454684364207601).exp;
 	}
 	get sinh(){// (e^z - e^-z)/2
 		return this.exp.zsub(new complex(this).recip).half;
@@ -1333,6 +1339,14 @@ class complex {
 	get factorial(){// z! = Γ(z + 1)
 		return this.inc.gamma;
 	}
+	get factorial2(){// z!! (improve for naturals)
+		// Mathematica: Factorial2[z] // FunctionExpand
+		var w = new complex(this).scl(pi).cos.dec
+			.scl(0.1128956763223637161815488074737205358929) // ln(pi/2)/4
+			.exp.zmul(new complex(this.half).pow2); 
+		this.inc.gamma.zmul(w); // Γ(z/2 + 1) * w
+		return this;
+	}
 	beta(z){// Β(u, v) = Γ(u) Γ(v) / Γ(u + v)
 		return this.asg(new complex(this).gamma.zmul(new complex(z).gamma).zdiv(this.zadd(z).gamma));
 	}
@@ -1340,6 +1354,9 @@ class complex {
 		if (z.x != 1 || z.y != 0) if (z.x == 0 && z.y == 0 || this.is(z)) this.one; else
 		this.asg(new complex(this).factorial.zdiv(new complex(z).factorial.zmul(this.zsub(z).factorial)));
 		return this;
+	}
+	pochhammer(z){// Γ(this + z) / Γ(this)
+		return this.asg(new complex(this).zadd(z).gamma.zdiv(this.gamma));
 	}
 	get sto(){// storage status
 		return typeof this.mem === 'undefined' ? -1 : this.mem.length;
