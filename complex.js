@@ -218,6 +218,7 @@ class complex {
 		return this.vid(z.x, z.y);
 	}
 	get recip(){// 1 / this
+		if (this.isInf) return this.zero; else
 		if (this.y == 0) return this.xiy(1 / this.x); else 
 		if (this.x == 0) return this.xiy(1 / this.y).divi; else
 			return this.conjg.lcs(this.sqrabs);
@@ -386,11 +387,14 @@ class complex {
 	zroot(z){
 		return this.root(z.x, z.y);
 	}
+	get pow2(){// 2^z (must improve)
+		return this.mul(0.69314718055994530941723212145818).exp;
+	}
 	get sinh(){// (e^z - e^-z)/2
-		this.exp; return this.zsub(new complex(this).recip).half;
+		return this.exp.zsub(new complex(this).recip).half;
 	}
 	get cosh(){// (e^z + e^-z)/2
-		this.exp; return this.zadd(new complex(this).recip).half;
+		return this.exp.zadd(new complex(this).recip).half;
 	}
 	get tanh(){// (e^2z - 1)/(e^2z + 1)
 		this.dbl.exp; var z = new complex(this);
@@ -1307,55 +1311,33 @@ class complex {
 		return this;
 	}
 	get gamma(){// Γ function
-		const sqrtpi = 1.7724538509055160272981674833411; // sqrt(π)
 		if (abs(this.y) > 1 || abs(this.x) > 128){// Legendre duplication formula
-			//         Γ(z) Γ(z + 1/2)
-			// Γ(2z) = ---------------
-			//         2^(1 - 2z)  √ π
+			//         2^(2z - 1)
+			// Γ(2z) = ---------- Γ(z) Γ(z + 1/2)
+			//            √ π
 			var z = new complex(this).half;
-			this.xiy(1)
-				.zmul(new complex(z).gamma)              // Γ(z)
-				.zmul(new complex(z).add(1/2).gamma)     // Γ(z + 1/2)
-				.zdiv(new complex(2).zpow(z.dbl.bus(1))) // 2^(1 - 2z)
-				.div(sqrtpi);                            // sqrt(π)
+			this.dec.pow2.div(sqrtpi)       // 2^(2z - 1) / sqrt(π)
+				.zmul(new complex(z).gamma) // Γ(z)
+				.zmul(z.add(1/2).gamma);    // Γ(z + 1/2)
 		} else {// Γ(z + 1) = z Γ(z)
-			var p = new complex(1); while (this.x > 1) {this.dec; p.zmul(this);} 
-			var q = new complex(1); while (this.x < 0) {q.zmul(this); this.inc;}
+			var p = new complex(1); while (this.x  > 1) {this.dec; p.zmul(this);} 
+			var q = new complex(1); while (this.x <= 0) {q.zmul(this); this.inc;}
 			if (this.isEq(1/2)) p.mul(sqrtpi); else
-			if (0 < this.x && this.x < 1 || this.y != 0)
-				q.zmul(this.polyvalue([0, 1, // N[CoefficientList[Series[1/Gamma[x], {x, 0, 30}], x], 24]
-					 0.57721566490153286060651209008240243104215933593992, // = γ (Euler–Mascheroni constant)
-					-0.6558780715202538810770195151453904812798, // = γ²/2 - π²/12
-					-0.0420026350340952355290039348754298187114,
-					 0.1665386113822914895017007951021052357178,
-					-0.0421977345555443367482083012891873913017,
-					-9.62197152787697356211492e-03,
-					 7.21894324666309954239501e-03,
-					-1.16516759185906511211397e-03,
-					-2.15241674114950972815730e-04,
-					 1.28050282388116186153199e-04,
-					-2.01348547807882386556894e-05,
-					-1.25049348214267065734536e-06,
-					 1.13302723198169588237413e-06,
-					-2.05633841697760710345015e-07,
-					 6.11609510448141581786250e-09,
-					 5.00200764446922293005567e-09,
-					-1.18127457048702014458813e-09,
-					 1.04342671169110051049154e-10,
-					 7.78226343990507125404994e-12,
-					-3.69680561864220570818782e-12,
-					 5.10037028745447597901548e-13,
-					-2.05832605356650678322243e-14,
-					-5.34812253942301798237002e-15,
-					 1.22677862823826079015889e-15,
-					-1.18125930169745876951376e-16,
-					 1.18669225475160033257978e-18,
-					 1.41238065531803178155580e-18,
-					-2.29874568443537020659248e-19,
-					 1.71440632192733743338396e-20,
-					 1.33735173049369311486478e-22]));
+			if (this.x < 1 || this.y != 0) // no-trivial case
+				q.zmul(this.polyvalue(GammaRecipTaylor));
 			this.asg(p).zdiv(q);
 		}
+		return this;
+	}
+	get factorial(){// z! = Γ(z + 1)
+		return this.inc.gamma;
+	}
+	beta(z){// Β(u, v) = Γ(u) Γ(v) / Γ(u + v)
+		return this.asg(new complex(this).gamma.zmul(new complex(z).gamma).zdiv(this.zadd(z).gamma));
+	}
+	binomial(z){// this! / (z! (this - z)!)
+		if (z.x != 1 || z.y != 0) if (z.x == 0 && z.y == 0 || this.is(z)) this.one; else
+		this.asg(new complex(this).factorial.zdiv(new complex(z).factorial.zmul(this.zsub(z).factorial)));
 		return this;
 	}
 	get sto(){// storage status
@@ -1404,12 +1386,43 @@ class complex {
 Object.defineProperty(Array.prototype, 'lo', {enumerable: false, configurable: false, get() { return 0; }});
 Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: false, get() { return this.length - 1; }});
 
+const GammaRecipTaylor = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 30}], z], 24]
+	 0.57721566490153286060651209008240243104215933593992, // γ (Euler–Mascheroni constant)
+	-0.6558780715202538810770195151453904812798, // (γ² - π²/6)/2
+	-0.0420026350340952355290039348754298187114,
+	 0.1665386113822914895017007951021052357178,
+	-0.0421977345555443367482083012891873913017,
+	-9.62197152787697356211492e-03,
+	 7.21894324666309954239501e-03,
+	-1.16516759185906511211397e-03,
+	-2.15241674114950972815730e-04,
+	 1.28050282388116186153199e-04,
+	-2.01348547807882386556894e-05,
+	-1.25049348214267065734536e-06,
+	 1.13302723198169588237413e-06,
+	-2.05633841697760710345015e-07,
+	 6.11609510448141581786250e-09,
+	 5.00200764446922293005567e-09,
+	-1.18127457048702014458813e-09,
+	 1.04342671169110051049154e-10,
+	 7.78226343990507125404994e-12,
+	-3.69680561864220570818782e-12,
+	 5.10037028745447597901548e-13,
+	-2.05832605356650678322243e-14,
+	-5.34812253942301798237002e-15,
+	 1.22677862823826079015889e-15,
+	-1.18125930169745876951376e-16,
+	 1.18669225475160033257978e-18,
+	 1.41238065531803178155580e-18,
+	-2.29874568443537020659248e-19,
+	 1.71440632192733743338396e-20,
+	 1.33735173049369311486478e-22];
 
 // Не могу више да куцам Math; ја сам паскал програмер.
-// https://www.youtube.com/watch?v=ZPv1UV0rD8U
-const pi = Math.PI, tau = 2 * pi; // π = 3.1415926535897932384626433832795, τ = 2π
 const min = Math.min, max = Math.max;
 const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
+// https://www.youtube.com/watch?v=ZPv1UV0rD8U
+const pi = Math.PI, tau = 2*pi, sqrtpi = sqrt(pi); // π = 3.1415926535897932384626433832795, τ = 2π, sqrt(π)
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
@@ -1735,3 +1748,5 @@ CanvasRenderingContext2D.prototype.TextC = function(z, text){
 	var m = this.measureText(text);
 	return this.TextL(new complex(z).sub(m.width/2), text);
 }
+
+// ... to be continued
