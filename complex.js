@@ -1342,7 +1342,7 @@ class complex {
 	get factorial2(){// z!! (improve for naturals)
 		// Mathematica: Factorial2[z] // FunctionExpand
 		var w = new complex(this).scl(pi).cos.dec
-			.scl(0.1128956763223637161815488074737205358929) // ln(pi/2)/4
+			.scl(0.1128956763223637161815488074737205358929) // ln(π/2)/4
 			.exp.zmul(new complex(this.half).pow2); 
 		this.inc.gamma.zmul(w); // Γ(z/2 + 1) * w
 		return this;
