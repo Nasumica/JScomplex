@@ -1158,9 +1158,8 @@ class complex {
 		return s;
 	}
 	polyvalue(p){// evaluate
-		var z = {}; this.obj(z).zero;
-		for (var i = p.hi; i >= 0; i--)
-			this.zmul(z).zadd(new complex(p[i]));
+		var i = p.length, z = {}; this.obj(z).zero;
+		while (0 < i--) this.zmul(z).zadd(new complex(p[i]));
 		return this;
 	}
 	polyprime(p, q){// q = p'
@@ -1317,6 +1316,7 @@ class complex {
 		return this;
 	}
 	get gamma(){// Γ function
+		// local positive minimum at Γ(1.461632144968362341262659542325721328468)
 		if (abs(this.y) > 1 || abs(this.x) > 128){// Legendre duplication formula
 			//         2^(2z - 1)
 			// Γ(2z) = ---------- Γ(z) Γ(z + 1/2)
@@ -1329,9 +1329,9 @@ class complex {
 			var p = new complex(1); while (this.x >  1) {this.dec; p.zmul(this);} 
 			var q = new complex(1); while (this.x <= 0) {q.zmul(this); this.inc;}
 			// 0 < Re ≤ 1, |Im| ≤ 1
-			if (this.isEq(1/2)) p.mul(sqrtpi); else
 			if (this.x < 1 || this.y != 0) // no-trivial case
-				q.zmul(this.polyvalue(GammaRecipTaylor));
+				if (this.isEq(1/2)) p.mul(sqrtpi); else
+				q.zmul(this.polyvalue(tsgr));
 			this.asg(p).zdiv(q);
 		}
 		return this;
@@ -1341,10 +1341,10 @@ class complex {
 	}
 	get factorial2(){// z!! (improve for naturals)
 		// Mathematica: Factorial2[z] // FunctionExpand
-		var w = new complex(this).scl(pi).cos.dec
+		var w = new complex(this).scl(pi).cos.dec // cos(πz) - 1
 			.scl(0.1128956763223637161815488074737205358929) // ln(π/2)/4
-			.exp.zmul(new complex(this.half).pow2); 
-		this.inc.gamma.zmul(w); // Γ(z/2 + 1) * w
+			.exp.zmul(new complex(this.half).pow2); // (2/π)^(1/4 - cos(πz)/4) * 2^(z/2) 
+		this.factorial.zmul(w); // (z/2)! * w
 		return this;
 	}
 	beta(z){// Β(u, v) = Γ(u) Γ(v) / Γ(u + v)
@@ -1404,7 +1404,8 @@ class complex {
 Object.defineProperty(Array.prototype, 'lo', {enumerable: false, configurable: false, get() { return 0; }});
 Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: false, get() { return this.length - 1; }});
 
-const GammaRecipTaylor = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 30}], z], 24]
+// Taylor Serie - Gamma Reciprocal
+const tsgr = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 30}], z], 24]
 	 0.57721566490153286060651209008240243104215933593992, // γ (Euler–Mascheroni constant)
 	-0.6558780715202538810770195151453904812798, // (γ² - π²/6)/2
 	-0.0420026350340952355290039348754298187114,
@@ -1435,6 +1436,7 @@ const GammaRecipTaylor = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 3
 	-2.29874568443537020659248e-19,
 	 1.71440632192733743338396e-20,
 	 1.33735173049369311486478e-22];
+	 
 
 // Не могу више да куцам Math; ја сам паскал програмер.
 const min = Math.min, max = Math.max;
