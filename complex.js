@@ -2,6 +2,8 @@ class complex {
 /*
 	Complex arithmetic with canvas extension
 	
+	NOT FREE FOR COMMERCIAL USE, FREE FOR OTHERS
+	
 	JavaScript implementation by Србислав Д. Нешић, November 2019
 	srbislav.nesic@gmail.com
 	Nasumica Agencija
@@ -107,8 +109,20 @@ class complex {
 	get isNaN(){
 		return Number.isNaN(this.x) || Number.isNaN(this.y);
 	}
+	get isReal(){
+		return this.y == 0;
+	}
+	get isInt(){
+		return this.isReal && Number.isSafeInteger(this.x);
+	}
+	get isMid(){
+		return this.isReal && (abs(this.x) % 1 == 1/2);
+	}
 	isEps(z = {x: 0, y: 0}, eps = 1e-15){// with respect to epsilon
 		return abs(this.x - z.x) + abs(this.y - z.y) < eps; // must improve
+	}
+	get asNumber(){
+		return this.isReal ? this.x : (this.isInf ? 1/0 : (this.isNaN ? 0/0 : this.z));
 	}
 	get zero(){
 		return this.xiy(0);
@@ -263,8 +277,15 @@ class complex {
 		return this.hdiv(z.x, z.y);
 	}
 	get sqr(){// this²
-		return this.xiy((this.x + this.y) * (this.x - this.y), 2 * this.x * this.y);
 		//return this.zmul(this);
+		if (this.y == 0)
+			if (abs(this.x) == sqrtpi) this.xiy(pi); else
+				this.xiy(this.x * this.x); else
+		if (this.x == 0) 
+			if (abs(this.y) == sqrtpi) this.xiy(-pi); else
+				this.xiy(-this.y * this.y); else
+		this.xiy((this.x + this.y) * (this.x - this.y), 2 * this.x * this.y);
+		return this;
 	}
 	get cub(){// this³
 		var xx = this.x * this.x, yy = this.y * this.y;
@@ -289,7 +310,7 @@ class complex {
 			return this.root(3);
 	}
 	get unit(){// unit vector, sign
-		var d = this.abs; return d == 0 ? this : this.div(d);
+		var d = this.sqrabs; return d == 0 ? this : this.div(sqrt(d));
 	}
 	get theo(){// spiral of Theodorus
 		// a = 2*sqrt(n) - 2.1577829966594462209291427868295777235
@@ -339,7 +360,7 @@ class complex {
 		return this;
 	}
 	get ellipticK(){// complete elliptic integral of the first kind, K(0) = π/2
-		// Mathematica function EllipticK[z] = z.sqrt.ellipticK
+		// Mathematica: EllipticK[z] = z.sqrt.ellipticK
 		var z = {}; return this.inc.obj(z).vid(2).dec.agm(1).dbl.zmul(z).vid(pi);
 	}
 	pap(g = 9.80665){// pendulum amplitude period: ρ = length, θ = angle
@@ -352,6 +373,12 @@ class complex {
 	get log(){// ln(ρ cis θ) = ln(ρ * e^(iθ)) = ln ρ + ln(e^(iθ)) = ln ρ + iθ
 		if (this.isEq(-1)) return this.xiy(0, pi); else // ditto
 		return this.xiy(log(this.abs), this.arg);
+	}
+	get mone(){ // (-1)^this = exp(this * ln(-1)) = exp(this π i); (-1)ⁿ for integer
+		if (this.isInt) this.xiy(this.x % 2 == 0 ? 1 : -1); else
+		if (this.isMid) this.xiy(0, ((this.x % 1) - 1/2) % 2 == 0 ? 1 : -1); else
+			this.scl(pi).muli.exp; // polar
+		return this;
 	}
 	pow(x, y = 0){
 		if (this.is1) return this; else
@@ -381,6 +408,7 @@ class complex {
 		if (y == 0 && x ==  1) return this; else
 		if (y == 0 && x == -1) return this.recip; else
 		if (y == 0 && x ==  2) return this.sqrt; else
+		if (y == 0 && x ==  3) return this.cbrt; else
 		if (y == 0 && x > 0 && this.is0) return this; else
 			return this.log.div(x, y).exp;
 	}
@@ -388,18 +416,21 @@ class complex {
 		return this.root(z.x, z.y);
 	}
 	get pow2(){// 2^z (must improve)
-		return this.lcs(1.442695040888963407359924681001892137427).exp;
+		// return this.lcs(1.442695040888963407359924681001892137427).exp;
+		return this.asg(new complex(2).zpow(this));
 	}
 	get powpi(){// pi^z (must improve)
-		return this.scl(1.144729885849400174143427351353058711647).exp;
+		// return this.scl(1.144729885849400174143427351353058711647).exp;
+		return this.asg(new complex(pi).zpow(this));
 	}
 	get pow10(){// 10^z (must improve)
-		return this.scl(2.302585092994045684017991454684364207601).exp;
+		// return this.scl(2.302585092994045684017991454684364207601).exp;
+		return this.asg(new complex(10).zpow(this));
 	}
-	get sinh(){// (e^z - e^-z)/2
+	get sinh(){// (e^z - 1/e^z)/2
 		return this.exp.zsub(new complex(this).recip).half;
 	}
-	get cosh(){// (e^z + e^-z)/2
+	get cosh(){// (e^z + 1/e^z)/2
 		return this.exp.zadd(new complex(this).recip).half;
 	}
 	get tanh(){// (e^2z - 1)/(e^2z + 1)
@@ -421,13 +452,12 @@ class complex {
 	get acosh(){// ln(z + sqrt(z² - 1))
 		return this.zadd(new complex(this).sqr.dec.sqrt).log;
 	}
-	get atanh(){// ln((1 + z)/(1 - z))/2
-	//  (1 + z)/(1 - z) = 
-	//  (z + 1)/(1 - z) =
-	// -(z + 1)/(z - 1) = 
-	// -(2 + z - 1)/(z - 1) = 
-	// -2/(z - 1) - (z - 1)/(z - 1) = 
-	// -2/(z - 1) - 1
+	get atanh(){// ln((1 + z)/(1 - z))/2 = 
+		// ln((z + 1)/(1 - z))/2 =
+		// ln(-(z + 1)/(z - 1))/2 = 
+		// ln(-(2 + z - 1)/(z - 1))/2 = 
+		// ln(-2/(z - 1) - (z - 1)/(z - 1))/2 = 
+		// ln(-2/(z - 1) - 1)/2
 		return this.dec.recip.dbl.neg.dec.log.half; // :)
 	}
 	get sin(){// i * sinh(z) = sin(i * z) => sin(z) = sinh(z / i) * i
@@ -665,12 +695,12 @@ class complex {
 	}
 	intersection(z1, z2, z3, z4){// line (z1--z2) - line (z3--z4) intersection point
 		function cross(p, q){return p.x * q.y - p.y * q.x;} // p × q
-		var u = new complex(z2).zsub(z1); // line1 distance vector z2 - z1
-		var v = new complex(z4).zsub(z3); // line2 distance vector z4 - z3
+		var u = new complex(z2).zsub(z1); // line1 distance vector u = z2 - z1
+		var v = new complex(z4).zsub(z3); // line2 distance vector v = z4 - z3
 		var d = cross(u, v); // vectors cross product d = u × v
 		if (d == 0){// parallel
 			this.inf;
-		} else {                                      // (u × z1) * v - (v × z3) * u
+		} else {                                      // (u × z1) · v - (v × z3) · u
 			var a = cross(u, z1), b = cross(v, z3);   // ---------------------------
 			this.asg(v.mul(a)).zsub(u.mul(b)).div(d); //           u × v
 		}
@@ -1194,10 +1224,6 @@ class complex {
 			a = arg; n = a.hi; // decremental collect parameters
 			for (i = n; i >= 0; i--) p.push(new complex(a[i]).z);
 		}
-		if (this.isNum && !this.is0){// subtract this
-			if (p.length == 0) p.push({}); // impossible
-			new complex(p[0]).zsub(this).obj(p[0]);
-		}
 	}
 	polysolve(roots, ...arg){// simple Newton polynom roots solver
 	/*
@@ -1252,6 +1278,10 @@ class complex {
 		}
 		var p = [], n, i; // polynom array, degree and index
 		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
+		if (this.isNum && !this.is0){// subtract this from polynom
+			if (p.length == 0) p.push({}); // impossible
+			new complex(p[0]).zsub(this).obj(p[0]);
+		}
 		// for (i = p.hi; i >= p.lo; i--) console.log('p[',i,'] =',new complex(p[i]).toString(100000)); // (debug)
 		this.del; for (i = p.lo; i <= p.hi; i++) this.put.asg(p[i]).exc; // put polynom into storage (debug)
 		i = 0; while (i < p.length && new complex(p[i]).isNum) i++; // check consistency
@@ -1317,46 +1347,168 @@ class complex {
 	}
 	get gamma(){// Γ function
 		// local positive minimum at Γ(1.461632144968362341262659542325721328468)
-		if (abs(this.y) > 1 || abs(this.x) > 128){// Legendre duplication formula
+		var z = new complex(this);
+		if (abs(z.y) > 1 || abs(z.x) > 32){// number too big, use Legendre duplication formula
+			z.half;
 			//         2^(2z - 1)
 			// Γ(2z) = ---------- Γ(z) Γ(z + 1/2)
 			//            √ π
-			var z = new complex(this).half;
 			this.dec.pow2.div(sqrtpi)       // 2^(2z - 1) / sqrt(π)
 				.zmul(new complex(z).gamma) // Γ(z)
 				.zmul(z.add(1/2).gamma);    // Γ(z + 1/2)
-		} else {// Γ(z + 1) = z Γ(z)
-			var p = new complex(1); while (this.x >  1) {this.dec; p.zmul(this);} 
-			var q = new complex(1); while (this.x <= 0) {q.zmul(this); this.inc;}
+		} else { 
+			this.one;
+			while (z.x >  1) {z.dec; this.zmul(z);} // Γ(z + 1) = z * Γ(z)
+			while (z.x <= 0) {this.zdiv(z); z.inc;} // Γ(z) = Γ(z + 1) / z
 			// 0 < Re ≤ 1, |Im| ≤ 1
-			if (this.x < 1 || this.y != 0) // no-trivial case
-				if (this.isEq(1/2)) p.mul(sqrtpi); else
-				q.zmul(this.polyvalue(tsgr));
-			this.asg(p).zdiv(q);
+			if (!z.is1) // no integer case
+				if (z.isEq(1/2)) 
+					this.mul(sqrtpi); // half odd integer case
+				else
+					this.zdiv(z.polyvalue(tsgr)); // series case
 		}
 		return this;
 	}
-	get factorial(){// z! = Γ(z + 1)
+	get factorial(){// z! = z Γ(z) = Γ(z + 1)
 		return this.inc.gamma;
 	}
-	get factorial2(){// z!! (improve for naturals)
+	get romanrecip(){// Γ⁻¹(z + 1), for internal use: called only for negative integers
+		if (this.isInt && this.x < 0){
+			var s = new complex(this).mone.x; // (-1)ⁿ
+			this.neg.gamma.scl(-s); // -(-1)ⁿ Γ(-n)
+		} else {
+			this.factorial.recip; // 1/n! not used, for completeness only
+		}
+		return this;
+	}
+	get romanfact(){// Roman factorial
+	/*
+		          ┌
+		   ─┐     │ -(-1)ⁿ / Γ(-n)   n is integer and n < 0,
+		│ n │ ! = ┤
+		└─        │ n!               else.
+		          └
+	*/
+		// Mathematica: RomanFact[n_] := If[n \[Element] Integers && n < 0, -(-1)^n/Gamma[-n], n!];
+		// TeX: \def\romanfact#1!{{\left\lfloor#1\right\rceil!\,}} % notation suggested by Knuth
+		// $$\romanfact n!=\cases{-(-1)^n/\Gamma(-n)&$n\in{\cal Z}\land n<0$,\cr n!&elsewhere.\cr}$$
+		if (this.isInt && this.x < 0){
+			this.romanrecip.recip;
+		} else {
+			this.factorial;
+		}
+		return this;
+	}
+	get factorial2(){// z!!
 		// Mathematica: Factorial2[z] // FunctionExpand
+		var i = this.isInt && this.x >= 0;
 		var w = new complex(this).scl(pi).cos.dec // cos(πz) - 1
 			.scl(0.1128956763223637161815488074737205358929) // ln(π/2)/4
 			.exp.zmul(new complex(this.half).pow2); // (2/π)^(1/4 - cos(πz)/4) * 2^(z/2) 
-		this.factorial.zmul(w); // (z/2)! * w
+		this.romanfact.zmul(w); // (z/2)! * w
+		if (i) this.integer;
 		return this;
 	}
-	beta(z){// Β(u, v) = Γ(u) Γ(v) / Γ(u + v)
-		return this.asg(new complex(this).gamma.zmul(new complex(z).gamma).zdiv(this.zadd(z).gamma));
-	}
-	binomial(z){// this! / (z! (this - z)!)
-		if (z.x != 1 || z.y != 0) if (z.x == 0 && z.y == 0 || this.is(z)) this.one; else
-		this.asg(new complex(this).factorial.zdiv(new complex(z).factorial.zmul(this.zsub(z).factorial)));
+	beta(z){// Β(u, v) = Γ(u) Γ(v) / Γ(u + v), uuuhhh... 
+		// Β(u, v) = Β(v, u)
+		// Β(n, -n) = 0, for n <> 0 else ComplexInfinity
+		// Β(1, z) = 1/z
+		// Β(z, 1 - z) = π / sin(πz)
+		// TeX: \def\Beta{{\rm B}} % original greek pronounce: "veeta" not "beta"
+		var u = new complex(this), v = new complex(z); 
+		this.zadd(v);  if (u.x > v.x) u.swap(v);
+		if (u.isInt && v.isInt){// integers case
+			// var m = u.x, n = v.x;
+			if (this.x == 0) {// -m = n
+				if (u.x == v.x)
+					this.inf; // m = 0, n = 0, Β(0, 0)
+				else
+					this.xiy(1/v.x).scl(v.mone.x); // n > 0, Β(-n, n) = (-1)ⁿ / n
+			} else 
+			if (u.x == 0 || v.x == 0) this.inf; else
+			if (u.x < 0) {// m < 0
+				if (v.x < 0) this.inf; else
+				if (this.x > u.x && this.x < 0)
+					this.asg(v.gamma.zmul(this.dec.romanrecip).zdiv(u.dec.romanrecip));
+				else
+					this.inf;
+			} else // m > 0, n > 0
+				if (u.x == v.x)
+					this.asg(u.gamma.sqr.zdiv(this.gamma)); 
+				else
+					this.asg(u.gamma.zmul(v.gamma).zdiv(this.gamma));
+		} else {// real or complex case
+			if (u.is0 || v.is0) this.inf; else
+			if (u.isInt && u.x < 0) this.inf; else
+			if (v.isInt && v.x < 0) this.inf; else
+			if (u.is1) this.asg(v.recip); else
+			if (v.is1) this.asg(u.recip); else
+			if (this.is1 && u.is(v)) this.xiy(pi); else
+			if (!this.is0) {// u > 0, v > 0
+				if (this.is1) this.xiy(pi).zdiv(v.scl(pi).sin); else
+				if (u.is(v)) // Β(z, z) = Γ²(z) / Γ(2z) = 2^(1 - 2z) √π Γ(z) / Γ(z + 1/2)
+					this.asg(u.gamma.sqr.zdiv(this.gamma)); // Γ²(u) / Γ(2u)
+				else // Γ(u) Γ(v) / Γ(u + v)
+					this.asg(u.gamma.zmul(v.gamma).zdiv(this.gamma));
+			} // else this.zero; is already
+		}
 		return this;
 	}
-	pochhammer(z){// Γ(this + z) / Γ(this)
-		return this.asg(new complex(this).zadd(z).gamma.zdiv(this.gamma));
+	binomial(z){// ${n \choose k}$
+		// A generalization of the binomial coefficient
+		// Mathematica: Binomial[n, k]
+		// TeX: \def\romanchoose{\atopwithdelims\lfloor\rceil}
+		// $${n \romanchoose k} = {\romanfact n! \over \romanfact k! \romanfact n-k!}$$
+		var k = new complex(z), l = new complex(this).zsub(k);
+		if (!k.is1 && !l.is1){
+			if (k.is0 || l.is0) this.one; else {
+				this.romanfact;
+				if (k.is(l)) {
+					this.zdiv(k.romanfact.sqr);
+				} else {
+					this.zdiv(k.romanfact.zmul(l.romanfact));
+				}
+			}
+		} // else ${n \choose 1} = {n \choose n-1} = n$
+		return this;
+	}
+	multinomial(...arg){// (this + k₀ + k₁ + k₂ + ···)! / (this! k₀! k₁! k₂! ...)
+		// Mathematica: Multinomial[...]
+		var k = []; this.polyarg(k, ...arg);
+		var z = new complex(this); this.one;
+		for (var i = 0; i < k.length; i++)
+			this.zmul(new complex(z.zadd(k[i])).binomial(k[i]));
+		return this;
+	}
+	fallfact(z){// falling factorial = this! / (this - z)!
+		// Mathematica: FactorialPower[z, n] // TraditionalForm
+		// TeX: \def\fallfact#1^#2{#1^{\underline{#2}}} % (pronounce: "z to the n falling"), obsolete $z^{(n)}$
+		// $$\fallfact z^n = {z \choose n} n!$$
+		return this.asg(new complex(this).romanfact.zdiv(new complex(z).zbus(this).romanfact));
+	}
+	risefact(z){// rising factorial = Γ(this + z) / Γ(this) = (this - 1 + z)! / (this - 1)!
+		// Mathematica: Pochhammer[z, n] // TraditionalForm
+		// TeX: \def\risefact#1^#2{#1^{\overline{#2}}} % (pronounce: "z to the n rising"), obsolete $(z)_n$
+		// $$\risefact z^n = {\Gamma(n) \over \Beta(z, n)$$
+		// $${\risefact z^n \over \fallfact (-z)^n} = sin(πz)/sin(π(z + n))$$
+		// $${\risefact z^n \over \fallfact (-z)^n} = (-1)^n$$ for integer n
+		return this.dec.asg(new complex(z).zadd(this).romanfact.zdiv(this.romanfact));
+	}
+	get ballvolume(){// this-dimensional ball volume
+		// local positive maximum in 5.256946404860576780132838356322304872823 dimensional space
+		return this.half.asg(new complex(this).powpi.zdiv(this.romanfact));
+	}
+	get spherearea(){// this-dimensional sphere area
+		// local positive maximum in 7.037756834625563398652450564101933558192 dimensional space
+		return this.sub(2).ballvolume.scl(tau);
+	}
+	get simplexvolume(){// this-dimensional simplex volume
+		// local positive maximum in 0.4579025983372424711028850650496504162183 dimensional space
+		return this.asg(new complex(this).inc.zdiv(new complex(this).pow2).sqrt.zdiv(this.romanfact));
+	}
+	get simplexarea(){// this-dimensional simplex area
+		// local positive maximum in 1.803297731507736634254778656569547361324 dimensional space
+		return this.asg(new complex(this).dec.simplexvolume.zmul(this.inc));
 	}
 	get sto(){// storage status
 		return typeof this.mem === 'undefined' ? -1 : this.mem.length;
@@ -1443,6 +1595,7 @@ const min = Math.min, max = Math.max;
 const sqrt = Math.sqrt, phi = (sqrt(5) + 1)/2; // φ = 1.6180339887498948482045868343656
 // https://www.youtube.com/watch?v=ZPv1UV0rD8U
 const pi = Math.PI, tau = 2*pi, sqrtpi = sqrt(pi); // π = 3.1415926535897932384626433832795, τ = 2π, sqrt(π)
+// π pronounce "pee" not "pie"
 const exp = Math.exp, log = Math.log, pow = Math.pow;
 const sin = Math.sin, cos = Math.cos, tan = Math.tan;
 const asin = Math.asin, acos = Math.acos;
@@ -1460,7 +1613,7 @@ const xiy = function(x, y = 0){return {x: Number(x), y: Number(y)};} // shortcut
 const cis = function(t, a = 1, b = a){// polar ellipse
 	if (a instanceof Object) return cis(t, a.x, a.y); else
 	var c = cos(t), s = sin(t), r = a == b ? a : a * b / Math.hypot(a * s, b * c);
-	return {x: r * c, y: r * s};
+	return xiy(r * c, r * s);
 }
 const hav = function(x){return sqr(sin(x/2));};
 const ahav = function(x){return 2*asin(sqrt(x));};
@@ -1768,5 +1921,44 @@ CanvasRenderingContext2D.prototype.TextC = function(z, text){
 	var m = this.measureText(text);
 	return this.TextL(new complex(z).sub(m.width/2), text);
 }
+
+
+const Exp = function(z){return new complex(z).exp.asNumber;}
+const Log = function(z){return new complex(z).log.asNumber;}
+const Power = function(u, v){return new complex(u).pow(new complex(v)).asNumber;}
+const Root = function(u, v){return new complex(u).root(new complex(v)).asNumber;}
+
+const Sqrt = function(z){return Root(z, 2);}
+const Sqr = function(z){return Power(z, 2);}
+const Abs = function(z){return new complex(z).abs;}
+const Arg = function(z){return new complex(z).arg;}
+const Distance = function(z, u, v){return new complex(z).linedist(new complex(u), new complex(v));}
+
+const Sin = function(z){return new complex(z).sin.asNumber;}
+const Cos = function(z){return new complex(z).cos.asNumber;}
+const Tan = function(z){return new complex(z).tan.asNumber;}
+const ArcSin = function(z){return new complex(z).asin.asNumber;}
+const ArcCos = function(z){return new complex(z).acos.asNumber;}
+const ArcTan = function(z){return new complex(z).atan.asNumber;}
+const Sinc = function(z){return new complex(z).sinc.asNumber;}
+
+const Sinh = function(z){return new complex(z).sinh.asNumber;}
+const Cosh = function(z){return new complex(z).cosh.asNumber;}
+const Tanh = function(z){return new complex(z).tanh.asNumber;}
+const ArcSinh = function(z){return new complex(z).asinh.asNumber;}
+const ArcCosh = function(z){return new complex(z).acosh.asNumber;}
+const ArcTanh = function(z){return new complex(z).atanh.asNumber;}
+
+const Gamma = function(z){return new complex(z).gamma.asNumber;}
+const Beta = function(u, v){return new complex(u).beta(new complex(v)).asNumber;}
+const Factorial = function(z){return new complex(z).factorial.asNumber;}
+const Fact = function(z){return new complex(z).romanfact.asNumber;}
+const Factorial2 = function(z){return new complex(z).factorial2.asNumber;}
+const FactorialPower = function(z, n){return new complex(z).fallfact(new complex(n)).asNumber;}
+const Pochhammer = function(z, n){return new complex(z).risefact(new complex(n)).asNumber;}
+const Binomial = function(n, k){return new complex(n).binomial(new complex(k)).asNumber;}
+const Multinomial = function(...arg){return new complex().multinomial(...arg).asNumber;}
+
+const I = {x: 0, y: 1};
 
 // ... to be continued
