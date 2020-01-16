@@ -237,6 +237,9 @@ class complex {
 		if (this.x == 0) return this.xiy(1 / this.y).divi; else
 			return this.conjg.lcs(this.sqrabs);
 	}
+	get oneg(){// 1 - z
+		return this.neg.inc;
+	}
 	mod(x = 1, y = 0){
 		var z = new complex(this).div(x, y).floor().mul(x, y);
 		return this.zsub(z);
@@ -529,7 +532,7 @@ class complex {
 		var x = this.x;
 		if (x >=  1) this.x = 1; else
 		if (x <=  0) this.x = 0; else
-		if (x > 0.5) this.bus(1).smoothstep.bus(1); else
+		if (x > 0.5) this.oneg.smoothstep.oneg; else
 		if (x < 0.5) this.x = x * x * (3 - 2 * x); // Hermite cubic spline
 		return this;
 	}
@@ -1346,6 +1349,7 @@ class complex {
 		return this;
 	}
 	get gamma(){// Γ function
+		// Mathematica: Gamma[z]
 		// local positive minimum at Γ(1.461632144968362341262659542325721328468)
 		var z = new complex(this);
 		if (abs(z.y) > 1 || abs(z.x) > 32){// number too big, use Legendre duplication formula
@@ -1414,6 +1418,7 @@ class complex {
 		// Β(n, -n) = 0, for n <> 0 else ComplexInfinity
 		// Β(1, z) = 1/z
 		// Β(z, 1 - z) = π / sin(πz)
+		// Mathematica: Beta[u, v]
 		// TeX: \def\Beta{{\rm B}} % original greek pronounce: "veeta" not "beta"
 		var u = new complex(this), v = new complex(z); 
 		this.zadd(v);  if (u.x > v.x) u.swap(v);
@@ -1510,6 +1515,49 @@ class complex {
 		// local positive maximum in 1.803297731507736634254778656569547361324 dimensional space
 		return this.asg(new complex(this).dec.simplexvolume.zmul(this.inc));
 	}
+	get zeta(){// Riemann zeta function, ζ(z) = ∑ (n = 1, ..., ∞) 1/n^z
+		// Mathematica: Zeta[z]
+		// ζ(2n) = (-1)^(n + 1) · (2π)^(2n)/2 · B[2n] / (2n)! (Bernoulli number B = [1, -1/2, 1/6, 0, -1/30, ...])
+		// ζ(0) = -1 · 1/2 · 1/0! = -1/2
+		// ζ(-1) = 1 + 2 + 3 + ··· = -1/12, Ramanujan summation
+		// ζ(2) = π²/6, Basel problem solved by Euler 1735.
+		// ζ(z) = 2^z π^(z - 1) sin(πz/2) Γ(1 - z) ζ(1 - z), Riemann's functional equation
+		// trivial zeroes at negative even integers
+		// non-trivial zeroes lies on (1/2 ± i t) line (Riemann hypothesis)
+		// first non-trivial zero at t = 14.1347251417346937904572519836
+		// Mathematica: ZetaZero[n]
+		if (this.isInt && this.x < 0 && (this.x % 2 == 0)) this.zero; else
+		if (this.isInf)    this.one; else 
+		if (this.is1)      this.inf; else
+		if (this.is0)      this.xiy(-1/2); else 
+		if (this.isEq(-1)) this.xiy(-1/12); else 
+		if (this.isEq( 2)) this.xiy(pi * pi / 6); else 
+		{
+			var z = new complex(this);
+			if (this.x < 0){// Riemann's functional equation
+				this.xiy(tau).zpow(z).lcs(pi)           // (2π)^z/π = 2^z π^(z - 1)
+					.zmul(new complex(z).scl(pi/2).sin) // sin(πz/2)
+					.zmul(new complex(z.oneg).gamma)    // Γ(1 - z)
+					.zmul(z.zeta);                      // ζ(1 - z)
+			} else {
+				if (zetacoef.length == 0) createzetaserie(32); // call once
+				this.zero;                                              // this = 0
+				for (var k = 1; k < zetacoef.length; k++)               // k = 1, ..., n
+					this.zadd(new complex(k).zpow(z).vid(zetacoef[k])); // this += coef[k] / k^z
+				this.zdiv(z.oneg.pow2.oneg);                            // this /= 1 - 2^(1 - z)
+			}
+		}
+		return this;
+	}
+	get dirichleteta(){// Dirichlet Eta function, η(z) = (1 - 2^(1 - z)) ζ(z), η(1) = ln(2)
+		// Mathematica: DirichletEta[z]
+		if (this.isInf) this.one; else
+		if (this.is1)   this.xiy(2).log; else {
+			var z = new complex(this).oneg.pow2.oneg; // 1 - 2^(1 - z)
+			this.zeta.zmul(z);
+		}
+		return this;
+	}
 	get sto(){// storage status
 		return typeof this.mem === 'undefined' ? -1 : this.mem.length;
 	}
@@ -1588,7 +1636,29 @@ const tsgr = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 30}], z], 24]
 	-2.29874568443537020659248e-19,
 	 1.71440632192733743338396e-20,
 	 1.33735173049369311486478e-22];
-	 
+
+const zetacoef = [];
+function createzetaserie(n = 64){
+/*
+	http://www.cecm.sfu.ca/personal/pborwein/PAPERS/P155.pdf
+	a[i] = ((n + i - 1)! 4^i) / ((n - i)! (2i)!) (closed form)
+	a[0] = 1/n
+	a[1] = 2*n
+	a[i] = a[i - 1] * 2 * ((n + i - 1) * (n - i + 1)) / (i * (2 * i - 1)) (recurrence)
+	d[k] = n ∑ (i = 0, ..., k) a[i]
+*/
+	zetacoef.length = 0; zetacoef.push(0); // reset (coef[0] not used)
+	var i = 0, a = 1/n, s = a, d = 1; // init
+	while (zetacoef.length <= n){
+		zetacoef.push(d);
+		if (++i == 1) a = 2 * n; else
+		a *= 2 * ((n + i - 1) * (n - i + 1)) / (i * (2 * i - 1));
+		s += a;  d = n * s;
+	}
+	// regularize coefficients
+	for (i = 1, s = 1; i < zetacoef.length; i++, s = -s)
+		zetacoef[i] = (1 - zetacoef[i]/d) * s;
+}
 
 // Не могу више да куцам Math; ја сам паскал програмер.
 const min = Math.min, max = Math.max;
@@ -1923,6 +1993,20 @@ CanvasRenderingContext2D.prototype.TextC = function(z, text){
 }
 
 
+const I = {x: 0, y: 1};
+
+const ComplexString = function(z, r = 1000000){return new complex(z).toString(r);}
+
+const Re = function(z){return new complex(z).real.asNumber;}
+const Im = function(z){return new complex(z).imag.divi.asNumber;}
+
+const Plus = function(u, v){return new complex(u).zadd(new complex(v)).asNumber;}
+const Subtract = function(u, v){return new complex(u).zsub(new complex(v)).asNumber;}
+const Times = function(u, v){return new complex(u).zmul(new complex(v)).asNumber;}
+const Divide = function(u, v){return new complex(u).zdiv(new complex(v)).asNumber;}
+const Minus = function(z){return new complex(z).neg.asNumber;}
+const Conjugate = function(z){return new complex(z).conjg.asNumber;}
+
 const Exp = function(z){return new complex(z).exp.asNumber;}
 const Log = function(z){return new complex(z).log.asNumber;}
 const Power = function(u, v){return new complex(u).pow(new complex(v)).asNumber;}
@@ -1930,9 +2014,14 @@ const Root = function(u, v){return new complex(u).root(new complex(v)).asNumber;
 
 const Sqrt = function(z){return Root(z, 2);}
 const Sqr = function(z){return Power(z, 2);}
+const SqrAbs = function(z){return new complex(z).sqrabs;}
 const Abs = function(z){return new complex(z).abs;}
 const Arg = function(z){return new complex(z).arg;}
-const Distance = function(z, u, v){return new complex(z).linedist(new complex(u), new complex(v));}
+const Sign = function(z){return new complex(z).unit.asNumber;}
+const Distance = function(z, u, v = u){
+	var p = new complex(u), q = new complex(v);
+	if (p.is(q)) return new complex(z).zsub(p).abs; else return new complex(z).linedist(p, q);
+}
 
 const Sin = function(z){return new complex(z).sin.asNumber;}
 const Cos = function(z){return new complex(z).cos.asNumber;}
@@ -1941,6 +2030,10 @@ const ArcSin = function(z){return new complex(z).asin.asNumber;}
 const ArcCos = function(z){return new complex(z).acos.asNumber;}
 const ArcTan = function(z){return new complex(z).atan.asNumber;}
 const Sinc = function(z){return new complex(z).sinc.asNumber;}
+
+const Sind = function(z){return new complex(z).scl(pi/180).sin.asNumber;}
+const Cosd = function(z){return new complex(z).scl(pi/180).cos.asNumber;}
+const ArcTand = function(z){return new complex(z).atan.scl(180/pi).asNumber;}
 
 const Sinh = function(z){return new complex(z).sinh.asNumber;}
 const Cosh = function(z){return new complex(z).cosh.asNumber;}
@@ -1959,6 +2052,7 @@ const Pochhammer = function(z, n){return new complex(z).risefact(new complex(n))
 const Binomial = function(n, k){return new complex(n).binomial(new complex(k)).asNumber;}
 const Multinomial = function(...arg){return new complex().multinomial(...arg).asNumber;}
 
-const I = {x: 0, y: 1};
+const Zeta = function(z){return new complex(z).zeta.asNumber;}
+const DirichletEta = function(z){return new complex(z).dirichleteta.asNumber;}
 
 // ... to be continued
