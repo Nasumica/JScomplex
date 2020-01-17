@@ -1522,6 +1522,7 @@ class complex {
 		// ζ(-1) = 1 + 2 + 3 + ··· = -1/12, Ramanujan summation
 		// ζ(2) = π²/6, Basel problem solved by Euler 1735.
 		// ζ(z) = 2^z π^(z - 1) sin(πz/2) Γ(1 - z) ζ(1 - z), Riemann's functional equation
+		// ζ(z') = ζ'(z) conjugate
 		// trivial zeroes at negative even integers
 		// non-trivial zeroes lies on (1/2 ± i t) line (Riemann hypothesis)
 		// first non-trivial zero at t = 14.1347251417346937904572519836
@@ -1540,14 +1541,14 @@ class complex {
 					.zmul(new complex(z.oneg).gamma)    // Γ(1 - z)
 					.zmul(z.zeta);                      // ζ(1 - z)
 			} else {
-				if (zetacoef.length == 0) createzetaserie(32); // call once
+				if (zetacoef.length == 0) createzetaserie(64); // call once
 				this.zero;                                              // this = 0
 				for (var k = 1; k < zetacoef.length; k++)               // k = 1, ..., n
 					this.zadd(new complex(k).zpow(z).vid(zetacoef[k])); // this += coef[k] / k^z
 				this.zdiv(z.oneg.pow2.oneg);                            // this /= 1 - 2^(1 - z)
 			}
 		}
-		return this;
+		return this; // (*issue*) inaccurate for |Im| >> 0, must be improved
 	}
 	get dirichleteta(){// Dirichlet Eta function, η(z) = (1 - 2^(1 - z)) ζ(z), η(1) = ln(2)
 		// Mathematica: DirichletEta[z]
