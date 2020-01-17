@@ -517,12 +517,13 @@ class complex {
 			this.zmul(z).zadd(new complex(arguments[i]));
 		return this;
 	}
-	spline(){// first arg for this = 0, last arg for this = 1, else somewhere between smoothly
-		if (arguments.length > 0){
-			var t = new complex(this), s = new complex(1).zsub(t); // t = this, s = 1 - t
-			var n = arguments.hi, m = 0, b = 1;  this.zero;
+	spline(...arg){// first arg for this = 0, last arg for this = 1, else somewhere between smoothly
+		var p = []; this.polyarg(p, ...arg);
+		if (p.length > 0){
+			var n = p.hi, m = 0, b = 1, t = {}, s = {};
+			this.obj(t).oneg.obj(s).zero; // t = this, s = 1 - t, this = 0
 			while (n >= 0){// $b = {arguments.hi \choose n}$
-				this.zadd(new complex(arguments[n]).mul(b).zmul(new complex(s).npow(m)).zmul(new complex(t).npow(n)));
+				this.zadd(new complex(p[n]).mul(b).zmul(new complex(s).npow(m)).zmul(new complex(t).npow(n)));
 				m++; b *= n; b /= m; n--;
 			}
 		}
