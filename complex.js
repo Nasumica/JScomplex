@@ -391,6 +391,7 @@ class complex {
 		if (y == 0 && x ==  2) return this.sqr; else
 		if (y == 0 && x ==  3) return this.cub; else
 		if (y == 0 && x > 0 && this.is0) return this; else
+		if (y == 0 && Number.isSafeInteger(x)) return this.npow(x); else
 			return this.log.mul(x, y).exp;
 	}
 	zpow(z){
@@ -813,7 +814,7 @@ class complex {
 	/*
 		                      Z₁
 		                r   / |
-		                  /   | sqrt(r² - d²)
+		                  /   | sqrt(r² - d²) = sqrt(c)
 		                /     |
 		(-------------○-------Z----)
 		                  d   |
@@ -1353,7 +1354,7 @@ class complex {
 		// Mathematica: Gamma[z]
 		// local positive minimum at Γ(1.461632144968362341262659542325721328468)
 		var z = new complex(this);
-		if (abs(z.y) > 1 || abs(z.x) > 32){// number too big, use Legendre duplication formula
+		if (abs(z.y) > 1 || abs(z.x) > 44){// number too big, use Legendre duplication formula
 			z.half;
 			//         2^(2z - 1)
 			// Γ(2z) = ---------- Γ(z) Γ(z + 1/2)
@@ -1375,16 +1376,11 @@ class complex {
 		return this;
 	}
 	get factorial(){// z! = z Γ(z) = Γ(z + 1)
+		// max double precision value 170.62437695630272! = 2¹⁰²⁴ (approx)
+		// max double precision exact value 22! have 50 bit "normalized" mantissa
+		// 22! = 1124000727777607680000 = 2143861251406875 · 2¹⁹ =
+		// (1 + .1110011101 1101010010 0110000101 0110011111 0000011011) · 2⁶⁹
 		return this.inc.gamma;
-	}
-	get romanrecip(){// Γ⁻¹(z + 1), for internal use: called only for negative integers
-		if (this.isInt && this.x < 0){
-			var s = new complex(this).mone.x; // (-1)ⁿ
-			this.neg.gamma.scl(-s); // -(-1)ⁿ Γ(-n)
-		} else {
-			this.factorial.recip; // 1/n! not used, for completeness only
-		}
-		return this;
 	}
 	get romanfact(){// Roman factorial
 	/*
@@ -1394,14 +1390,14 @@ class complex {
 		└─        │ n!               else.
 		          └
 	*/
-		// Mathematica: RomanFact[n_] := If[n \[Element] Integers && n < 0, -(-1)^n/Gamma[-n], n!];
+		// Mathematica: RomanFact[n_] := If[n \[Element] Integers && n < 0, -If[OddQ[n], -1, 1]/Gamma[-n], n!];
 		// TeX: \def\romanfact#1!{{\left\lfloor#1\right\rceil!\,}} % notation suggested by Knuth
 		// $$\romanfact n!=\cases{-(-1)^n/\Gamma(-n)&$n\in{\cal Z}\land n<0$,\cr n!&elsewhere.\cr}$$
 		if (this.isInt && this.x < 0){
-			var s = this.x & 1 ? 1 : -1; // -(-1)ⁿ
-			this.neg.gamma.scl(s).recip; // -(-1)ⁿ / Γ(-n)
+			var s = this.x & 1 ? 1 : -1; // -(-1)ⁿ for integer n
+			this.neg.gamma.recip.scl(s); // -(-1)ⁿ / Γ(-n)
 		} else {
-			this.factorial;
+			this.factorial; // n!
 		}
 		return this;
 	}
@@ -1413,6 +1409,16 @@ class complex {
 			.exp.zmul(new complex(this.half).pow2); // (2/π)^(1/4 - cos(πz)/4) * 2^(z/2) 
 		this.romanfact.zmul(w); // (z/2)! * w
 		if (i) this.integer;
+		return this;
+	}
+	get romanrecip(){// 1/Γ(z + 1), for internal use: called only for negative integers
+		if (this.isInt && this.x < 0){
+			//var s = -new complex(this).mone.x; // -(-1)ⁿ
+			var s = this.x & 1 ? 1 : -1; // -(-1)ⁿ
+			this.neg.gamma.scl(s); // -(-1)ⁿ Γ(-n)
+		} else {
+			this.factorial.recip; // 1/n! not used, for completeness only
+		}
 		return this;
 	}
 	beta(z){// Β(u, v) = Γ(u) Γ(v) / Γ(u + v), uuuhhh... 
@@ -1461,28 +1467,42 @@ class complex {
 		}
 		return this;
 	}
+	multibeta(...arg){// Β(k₀, k₁, k₂, ...) = Γ(k₀) Γ(k₁) Γ(k₂) ... / Γ(k₀ + k₁ + k₂ + ···)
+		// Β(k[0], k[1], ..., k[i - 1], k[i]) = recurrence =
+		// Β(k[0], k[1], ..., k[i - 1]) · Β(k[0] + k[1] + ··· + k[i - 1], k[i])
+		var k = []; this.polyarg(k, ...arg);
+		if (k.length == 0) this.inf; else
+		if (k.length == 1) this.one; else 
+		{
+			this.asg(k[0]).beta(k[1]); // Β(k[0], k[1]);
+			var z = new complex(k[0]).zadd(k[1]);
+			for (var i = 2; !this.isInf && i < k.length; i++){
+				this.zmul(new complex(z).beta(k[i]));
+				z.zadd(k[i]);
+			}
+		}
+		return this;
+	}
 	binomial(z){// ${n \choose k}$
 		// A generalization of the binomial coefficient
 		// Mathematica: Binomial[n, k]
 		// TeX: \def\romanchoose{\atopwithdelims\lfloor\rceil}
 		// $${n \romanchoose k} = {\romanfact n! \over \romanfact k! \romanfact n-k!}$$
 		var k = new complex(z), l = new complex(this).zsub(k);
-		if (!k.is1 && !l.is1){
-			if (k.is0 || l.is0) this.one; else {
-				this.romanfact;
-				if (k.is(l)) {
-					this.zdiv(k.romanfact.sqr);
-				} else {
-					this.zdiv(k.romanfact.zmul(l.romanfact));
-				}
-			}
+		if ( k.is0 ||  l.is0) this.one; else
+		if (!k.is1 && !l.is1) {
+			this.romanfact;
+			if (k.is(l))
+				this.zdiv(k.romanfact.sqr); // k = n/2 = l
+			else 
+				this.zdiv(k.romanfact.zmul(l.romanfact));
 		} // else ${n \choose 1} = {n \choose n-1} = n$
 		return this;
 	}
-	multinomial(...arg){// (this + k₀ + k₁ + k₂ + ···)! / (this! k₀! k₁! k₂! ...)
+	multinomial(...arg){// (k₀ + k₁ + k₂ + ···)! / (k₀! k₁! k₂! ...)
 		// Mathematica: Multinomial[...]
 		var k = []; this.polyarg(k, ...arg);
-		var z = new complex(this); this.one;
+		var z = new complex(); this.one;
 		for (var i = 0; i < k.length; i++)
 			this.zmul(new complex(z.zadd(k[i])).binomial(k[i]));
 		return this;
@@ -1550,29 +1570,41 @@ class complex {
 		return this;
 	}
 	get dirichleteta(){// Dirichlet Eta function, 
-		// η(z) = (1 - 2^(1 - z)) ζ(z)
+		// η(z) = ζ(z) (1 - 2^(1 - z))
 		// η(1) = ln(2)
 		// Mathematica: DirichletEta[z]
 		if (this.isInt && this.x < 0 && (this.x % 2 == 0)) this.zero; else
 		if (this.isInf)    this.one; else
-		if (this.is1)      this.xiy(2).log; else 
+		if (this.is1)      this.xiy(0.69314718055994530941723212145818); else 
 		if (this.is0)      this.xiy(1/2); else
 		if (this.isEq(-1)) this.xiy(1/4); else 
 		if (this.isEq( 2)) this.xiy(pi * pi / 12); else 
-		if (this.sqrabs <= 1) this.polyvalue(tseta); /* use Taylor series */ else
-		{//	Borwein method
+		if (this.sqrabs > 1) {// Borwein method
 			var z = new complex(this);  
 			if (this.x < 0){
-				z.oneg.pow2.oneg; // 1 - 2^(1 - z)
-				this.zeta.zmul(z); // η(z) = ζ(z) * (1 - 2^(1 - z))
+				this.zeta.zmul(z.oneg.pow2.oneg); // η(z) = ζ(z) (1 - 2^(1 - z))
 			} else {
 				if (etacoef.length == 0) createetacoef(128); // call once
 				this.zero;
 				for (var k = 1; k < etacoef.length; k++)               // k = 1, ..., n
 					this.zadd(new complex(k).zpow(z).vid(etacoef[k])); // this += coef[k] / k^z
 			}
-		}
+		} else this.polyvalue(tseta); // use Taylor series
 		return this; // (*issue*) inaccurate for |Im| >> 0
+	}
+	get bernoulliB(){
+		// Mathematica: BernoulliB[n]
+		if (this.x < -64) this.neg; /* out of double precision */ else
+		if (this.isInt && this.x > 1 && (this.x % 2 != 0)) this.zero; else
+		if (this.isInf)   this.inf; else
+		if (this.is0)     this.one; else
+		if (this.is1)     this.xiy(1/2); else
+		if (this.isEq(2)) this.xiy(1/6); else
+		if (this.isEq(4)) this.xiy(-1/30); else
+		if (this.isEq(6)) this.xiy(1/42); else
+		if (this.isEq(8)) this.xiy(-1/30); else
+			this.zmul(new complex(this).oneg.zeta).neg; // B(n) = -n ζ(1 - n)
+		return this;
 	}
 	get sto(){// storage status
 		return typeof this.mem === 'undefined' ? -1 : this.mem.length;
@@ -1619,6 +1651,8 @@ class complex {
 
 Object.defineProperty(Array.prototype, 'lo', {enumerable: false, configurable: false, get() { return 0; }});
 Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: false, get() { return this.length - 1; }});
+
+// 2¹⁰²⁴ = 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137216
 
 // Taylor Serie - Gamma Reciprocal
 const tsgr = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 30}], z], 24]
@@ -2096,17 +2130,25 @@ const ComplexString = function(z, r = 1000000){return new complex(z).toString(r)
 const Re = function(z){return new complex(z).real.asNumber;}
 const Im = function(z){return new complex(z).imag.divi.asNumber;}
 
-const Plus = function(u, v){return new complex(u).zadd(new complex(v)).asNumber;}
+const Plus = function(u, ...v){
+	var z = new complex(u);
+	for (var i = 0; i < v.length; i++) z.zadd(new complex(v[i]));
+	return z.asNumber;}
+//const Plus = function(u, v){return new complex(u).zadd(new complex(v)).asNumber;}
 const Subtract = function(u, v){return new complex(u).zsub(new complex(v)).asNumber;}
-const Times = function(u, v){return new complex(u).zmul(new complex(v)).asNumber;}
+const Times = function(u, ...v){
+	var z = new complex(u);
+	for (var i = 0; i < v.length; i++) z.zmul(new complex(v[i]));
+	return z.asNumber;}
+//const Times = function(u, v){return new complex(u).zmul(new complex(v)).asNumber;}
 const Divide = function(u, v){return new complex(u).zdiv(new complex(v)).asNumber;}
 const Minus = function(z){return new complex(z).neg.asNumber;}
 const Conjugate = function(z){return new complex(z).conjg.asNumber;}
 
 const Exp = function(z){return new complex(z).exp.asNumber;}
 const Log = function(z){return new complex(z).log.asNumber;}
-const Power = function(u, v){return new complex(u).pow(new complex(v)).asNumber;}
-const Root = function(u, v){return new complex(u).root(new complex(v)).asNumber;}
+const Power = function(u, v){return new complex(u).zpow(new complex(v)).asNumber;}
+const Root = function(u, v){return new complex(u).zroot(new complex(v)).asNumber;}
 
 const Sqrt = function(z){return Root(z, 2);}
 const Sqr = function(z){return Power(z, 2);}
@@ -2146,9 +2188,11 @@ const Factorial2 = function(z){return new complex(z).factorial2.asNumber;}
 const FactorialPower = function(z, n){return new complex(z).fallfact(new complex(n)).asNumber;}
 const Pochhammer = function(z, n){return new complex(z).risefact(new complex(n)).asNumber;}
 const Binomial = function(n, k){return new complex(n).binomial(new complex(k)).asNumber;}
+const MultiBeta = function(...arg){return new complex().multibeta(...arg).asNumber;}
 const Multinomial = function(...arg){return new complex().multinomial(...arg).asNumber;}
 
 const Zeta = function(z){return new complex(z).zeta.asNumber;}
 const DirichletEta = function(z){return new complex(z).dirichleteta.asNumber;}
+const BernoulliB = function(z){return new complex(z).bernoulliB.asNumber;}
 
 // ... to be continued
