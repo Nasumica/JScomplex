@@ -295,14 +295,30 @@ class complex {
 		return this.xiy(this.x * (xx - 3*yy), this.y * (3*xx - yy));
 		//return this.zmul(new complex(this).sqr);
 	}
-	get sqrt(){
-		if (this.is0 || this.is1) return this; else
-			if (this.y == 0){
-				if (this.x < 0)
-					return this.xiy(sqrt(-this.x)).muli;
-				else
-					return this.xiy(sqrt(this.x));
-			} else return this.cis(sqrt(this.abs), this.arg/2);
+	get sqrt(){// returns branch Re ≥ 0
+		if (!(this.is0 || this.is1))
+		if (this.y == 0){// real
+			if (this.x < 0)
+				this.xiy(0, sqrt(-this.x));
+			else
+				this.xiy(sqrt(this.x));
+		} else 
+		if (this.x == 0){// imag
+			this.x = sqrt(abs(this.y)/2);
+			this.y = this.y < 0 ? -this.x : this.x;
+		} else {// complex
+			//this.cis(sqrt(this.abs), this.arg/2);
+			// this = (x + iy)² = x² - y² + 2ixy
+			// 2xy = this.y
+			// x² - y² = this.x
+			// x² + y² = this.abs
+			// 2x² = this.x + this.abs
+			// x = sqrt((this.x + this.abs)/2)
+			// y = this.y/(2x)
+			this.x = sqrt((this.x + this.abs)/2);
+			this.y /= 2*this.x;
+		}
+		return this;
 	}
 	get cbrt(){
 		if (this.is0 || this.is1) return this; else
@@ -350,24 +366,44 @@ class complex {
 	get compmod(){// complementary modulus = sqrt(1 - z²)
 		return this.sqr.neg.inc.sqrt;
 	}
-	pagm(i = 32){// pairwise arithmetic-geometric mean
-		var z = new complex();
-		while (i-- > 0 && this.x != this.y && !this.is(z))
-			this.obj(z).xiy((this.x + this.y)/2, sqrt(this.x * this.y));
+	gmean(z){// geometric mean
+		var u = new complex(z), v = new complex(this);
+		if (!(this.is0 || this.is(u))){
+			this.zmul(u).sqrt;
+			if (abs(2*this.arg - (u.arg + v.arg)) >= pi) this.neg; // select branch (must improve)
+		}
 		return this;
 	}
-	agm(z, i = 32){// arithmetic-geometric mean
-		var u = new complex(z), v = new complex();
-		while (i-- > 0 && !this.is(u) && !this.is(v))
-			this.obj(v).halfway(u).nop(u.zmul(v).sqrt);
+	agm(z, i = 64){// M(p, q) arithmetic-geometric mean
+		// M(0, 0) = M(0, z) = M(z, 0) = M(z, -z) = 0
+		// M(z, z) = z
+		// M(1 - z, 1 + z) = M(1, ± sqrt(1 - z²)), care with sign
+		var u = new complex(z), v = new complex(u).neg;
+		if (!(this.is0 || this.is(u)))
+		if (this.is(v) || u.is0) this.zero; else
+			do {
+				this.obj(v).halfway(u); 
+				u.gmean(v); i--;
+			} while (!(i < 0 || this.is0 || this.is(u) || this.is(v)));
 		return this;
 	}
-	get ellipticK(){// complete elliptic integral of the first kind, K(0) = π/2
+	get ellipticK(){// K(z) complete elliptic integral of the first kind
+		// K(z) = π/2 / M(1 - z, 1 + z), K(0) = π/2
 		// Mathematica: EllipticK[z] = z.sqrt.ellipticK
-		var z = {}; return this.inc.obj(z).vid(2).dec.agm(1).dbl.zmul(z).vid(pi);
+		if (this.isInf) this.zero; else
+		if (this.is0)   this.xiy(pi/2); else
+		if (this.is1)   this.inf; else {
+			var z = new complex(this), r = this.y == 0 && this.x < 1;
+			this.inc.agm(z.oneg).vid(pi/2); if (r) this.real;
+		}
+		return this;
 	}
-	pap(g = 9.80665){// pendulum amplitude period: ρ = length, θ = angle
-		return 4 * sqrt(this.abs/g) * new complex(sin(this.arg/2)).ellipticK.x;
+	pap(gravity = 9.80665){// T(ρ, θ) pendulum amplitude period
+		// ρ = length, θ = angle, default gravity = 1 g
+		// ρ = 0.99267579068852586860 m, θ = 5°, t = 2 s
+		// ρ = 0.24816894767213146715 m, θ = 5°, t = 1 s
+		// θ = 180°, t = infinity (unstable equilibrium)
+		return 4 * sqrt(this.abs/gravity) * new complex(this.arg).half.sin.ellipticK.x;
 	}
 	get exp(){// e^(x + iy) = e^x * e^(iy) = e^x * (cos y + i sin y) = e^x cis y
 		if (this.isEq(0, pi)) return this.xiy(-1); else // to Euler
@@ -401,7 +437,7 @@ class complex {
 		var z = new complex(this), i = Math.floor(abs(n));
 		this.one;
 		while (i > 0){
-			if (i % 2 == 1) this.zmul(z);
+			if (i & 1) this.zmul(z);
 			z.sqr;  i >>>= 1;
 		}
 		if (n < 0) this.recip;
@@ -2155,6 +2191,7 @@ const Sqr = function(z){return Power(z, 2);}
 const SqrAbs = function(z){return new complex(z).sqrabs;}
 const Abs = function(z){return new complex(z).abs;}
 const Arg = function(z){return new complex(z).arg;}
+const Agm = function(u, v){return new complex(u).agm(new complex(v)).asNumber;}
 const Sign = function(z){return new complex(z).unit.asNumber;}
 const Distance = function(z, u, v = u){
 	var p = new complex(u), q = new complex(v);
@@ -2194,5 +2231,8 @@ const Multinomial = function(...arg){return new complex().multinomial(...arg).as
 const Zeta = function(z){return new complex(z).zeta.asNumber;}
 const DirichletEta = function(z){return new complex(z).dirichleteta.asNumber;}
 const BernoulliB = function(z){return new complex(z).bernoulliB.asNumber;}
+
+const EllipticK = function(z){return new complex(z).sqrt.ellipticK.asNumber;} // same as Mathematica: EllipticK[z]
+const PendulumPeriod = function(length, degrees, gravity = 9.80665){return new complex(cis(degrees*pi/180, length)).pap(gravity);}
 
 // ... to be continued
