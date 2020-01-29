@@ -91,6 +91,9 @@ class complex {
 	is(z){
 		return this.isEq(z.x, z.y);
 	}
+	isNeg(z){
+		return this.isEq(-z.x, -z.y);
+	}
 	get is0(){
 		return this.isEq(0);
 	}
@@ -110,19 +113,28 @@ class complex {
 		return Number.isNaN(this.x) || Number.isNaN(this.y);
 	}
 	get isReal(){
-		return this.y == 0;
+		return this.isNum && this.y == 0;
 	}
 	get isInt(){
 		return this.isReal && Number.isSafeInteger(this.x);
 	}
-	get isMid(){
+	get isIntG(){// is Gaussian integer
+		return Number.isSafeInteger(this.x) && Number.isSafeInteger(this.y);
+	}
+	get isSqr(){// is perfect square
+		return new complex(this).sqrt.isIntG;
+	}
+	get isMid(){// is half of odd integer
 		return this.isReal && (abs(this.x) % 1 == 1/2);
 	}
 	isEps(z = {x: 0, y: 0}, eps = 1e-15){// with respect to epsilon
 		return abs(this.x - z.x) + abs(this.y - z.y) < eps; // must improve
 	}
 	get asNumber(){
-		return this.isReal ? this.x : (this.isInf ? 1/0 : (this.isNaN ? 0/0 : this.z));
+		if (this.osNaN)  return 0/0;    else
+		if (this.isInf)  return 1/0;    else
+		if (this.isReal) return this.x; else
+			return this.z;
 	}
 	get zero(){
 		return this.xiy(0);
@@ -296,7 +308,7 @@ class complex {
 		//return this.zmul(new complex(this).sqr);
 	}
 	get sqrt(){// returns branch Re ≥ 0
-		if (!(this.is0 || this.is1))
+		if (!(this.is0 || this.is1 || this.isInf || this.isNaN))
 		if (this.y == 0){// real
 			if (this.x < 0)
 				this.xiy(0, sqrt(-this.x));
@@ -307,16 +319,53 @@ class complex {
 			this.x = sqrt(abs(this.y)/2);
 			this.y = this.y < 0 ? -this.x : this.x;
 		} else {// complex
-			//this.cis(sqrt(this.abs), this.arg/2);
-			// this = (x + iy)² = x² - y² + 2ixy
-			// 2xy = this.y
-			// x² - y² = this.x
-			// x² + y² = this.abs
-			// 2x² = this.x + this.abs
-			// x = sqrt((this.x + this.abs)/2)
-			// y = this.y/(2x)
+		/*
+			sqrt(z) = x + iy
+			z = (x + iy)² 
+			  = x² - y² + 2ixy
+			2xy = z.y
+			x² - y² = z.x
+			x² + y² = |z|
+			2x² = z.x + |z|
+			x = sqrt((z.x + |z|)/2)
+			y = z.y/(2x)
+		*/
 			this.x = sqrt((this.x + this.abs)/2);
 			this.y /= 2*this.x;
+		}
+		//this.cis(sqrt(this.abs), this.arg/2);
+		return this;
+	}
+	gmean(z = {x: 1, y: 0}){// geometric mean G(u, v) = sqrt(u * v)
+		var u = new complex(z), v = new complex(this);
+		/*
+			          ┌   ____       │ u + v    ____ │   │ u + v    ____ │
+			          │ -√ u v   for │ ───── - √ u v │ > │ ───── + √ u v │,
+			          │              │   2           │   │   2           │
+			G(u, v) = ┤
+			          │   ____
+			          │  √ u v   else.
+			          └
+			G(u, v) = ±sqrt(u * v) closer to (u + v)/2 (arithmetic mean), if equal select branch with Re ≥ 0
+			G(0, z) = G(z, 0) = G(0, 0) = 0
+			G(1, z) = G(z, 1) = sqrt(z)
+			G(-1, z) = G(z, -1) = i sqrt(z)
+			G(z, z) = z
+			G(z, -z) = z * i or z / i (with Re(z) ≥ 0)
+			G(z, z') = |z| * sign of z.x
+			Mathematica: GMean[u_, v_] := If[Abs[(u + v)/2 - Sqrt[u v]] > Abs[(u + v)/2 + Sqrt[u v]], -Sqrt[u v], Sqrt[u v]]
+		*/
+		if (!(this.is0 || this.is(u))){
+			if (u.is0)    this.zero;   else 
+			if (u.is1)    this.sqrt; else
+			if (this.is1) this.asg(u).sqrt; else
+			if (this.isNeg(u)) {
+				if (this.x < 0) this.muli; else this.divi;
+			} else {
+				this.zmul(u).sqrt; v.zadd(u).half; 
+				u.asg(v).zsub(this); v.zadd(this);
+				if (u.sqrabs > v.sqrabs) this.neg;
+			}
 		}
 		return this;
 	}
@@ -364,15 +413,7 @@ class complex {
 		return this.dcp(z.x, z.y);
 	}
 	get compmod(){// complementary modulus = sqrt(1 - z²)
-		return this.sqr.neg.inc.sqrt;
-	}
-	gmean(z){// geometric mean
-		var u = new complex(z), v = new complex(this);
-		if (!(this.is0 || this.is(u))){
-			this.zmul(u).sqrt;
-			if (abs(2*this.arg - (u.arg + v.arg)) >= pi) this.neg; // select branch (must improve)
-		}
-		return this;
+		return this.sqr.oneg.sqrt;
 	}
 	agm(z, i = 64){// M(p, q) arithmetic-geometric mean
 		// M(0, 0) = M(0, z) = M(z, 0) = M(z, -z) = 0
@@ -393,8 +434,9 @@ class complex {
 		if (this.isInf) this.zero; else
 		if (this.is0)   this.xiy(pi/2); else
 		if (this.is1)   this.inf; else {
-			var z = new complex(this), r = this.y == 0 && this.x < 1;
-			this.inc.agm(z.oneg).vid(pi/2); if (r) this.real;
+			var r = this.y == 0 && this.x < 1;
+			this.compmod.agm(1).vid(pi/2); 
+			if (r) this.real;
 		}
 		return this;
 	}
@@ -490,7 +532,9 @@ class complex {
 		return this.zadd(new complex(this).sqr.inc.sqrt).log;
 	}
 	get acosh(){// ln(z + sqrt(z² - 1))
-		return this.zadd(new complex(this).sqr.dec.sqrt).log;
+		//return this.zadd(new complex(this).sqr.dec.sqrt).log;
+		return this.zadd(new complex(this).inc.gmean(new complex(this).dec)).log;
+		//return this.zadd(new complex(this).inc.sqrt.zmul(new complex(this).dec.sqrt)).log;
 	}
 	get atanh(){// ln((1 + z)/(1 - z))/2 = 
 		// ln((z + 1)/(1 - z))/2 =
@@ -504,6 +548,7 @@ class complex {
 		return this.divi.sinh.muli;
 	}
 	get cos(){// cosh(z) = cos(i * z) => cos(z) = cosh(z / i)
+		// but cos(-iz) = cos(iz), cos(z/i) = cos(z*i)
 		return this.divi.cosh;
 	}
 	get tan(){// i * tanh(z) = tan(i * z)
@@ -528,13 +573,23 @@ class complex {
 		var z = {}; return this.is0 ? this.one : this.obj(z).sin.zdiv(z);
 	}
 	get asin(){
-		return this.muli.asinh.divi;
+		var r = this.isReal && abs(this.x) <= 1;
+		this.muli.asinh.divi;
+		if (r) this.y = 0;
+		return this;
 	}
 	get acos(){
-		return this.acosh.divi;
+		var r = this.isReal && abs(this.x) <= 1;
+		if (this.y < 0) this.conjg.acos.conjg; else
+		if (this.y == 0 && this.x > 1) this.acosh.muli; else this.acosh.divi;
+		if (r) this.y = 0;
+		return this;
 	}
 	get atan(){
-		return this.muli.atanh.divi;
+		var r = this.isReal;
+		this.muli.atanh.divi;
+		if (r) this.y = 0;
+		return this;
 	}
 	get ahav(){
 		return this.sqrt.asin.dbl;
@@ -742,7 +797,7 @@ class complex {
 		if (d == 0){// parallel
 			this.inf;
 		} else {                                      // (u × z1) · v - (v × z3) · u
-			var a = cross(u, z1), b = cross(v, z3);   // ---------------------------
+			var a = cross(u, z1), b = cross(v, z3);   // ───────────────────────────
 			this.asg(v.mul(a)).zsub(u.mul(b)).div(d); //           u × v
 		}
 		return this;
@@ -1393,7 +1448,7 @@ class complex {
 		if (abs(z.y) > 1 || abs(z.x) > 44){// number too big, use Legendre duplication formula
 			z.half;
 			//         2^(2z - 1)
-			// Γ(2z) = ---------- Γ(z) Γ(z + 1/2)
+			// Γ(2z) = ────────── Γ(z) Γ(z + 1/2)
 			//            √ π
 			this.dec.pow2.div(sqrtpi)       // 2^(2z - 1) / sqrt(π)
 				.zmul(new complex(z).gamma) // Γ(z)
@@ -2163,8 +2218,8 @@ const I = {x: 0, y: 1};
 
 const ComplexString = function(z, r = 1000000){return new complex(z).toString(r);}
 
-const Re = function(z){return new complex(z).real.asNumber;}
-const Im = function(z){return new complex(z).imag.divi.asNumber;}
+const Re = function(z){return new complex(z).x;}
+const Im = function(z){return new complex(z).y;}
 
 const Plus = function(u, ...v){
 	var z = new complex(u);
@@ -2216,6 +2271,10 @@ const Tanh = function(z){return new complex(z).tanh.asNumber;}
 const ArcSinh = function(z){return new complex(z).asinh.asNumber;}
 const ArcCosh = function(z){return new complex(z).acosh.asNumber;}
 const ArcTanh = function(z){return new complex(z).atanh.asNumber;}
+
+const AMean = function(u, v){return new complex(u).halfway(new complex(v)).asNumber;}
+const HMean = function(u, v){return new complex(u).zhadd(new complex(v)).dbl.asNumber;}
+const GMean = function(u, v){return new complex(u).gmean(new complex(v)).asNumber;}
 
 const Gamma = function(z){return new complex(z).gamma.asNumber;}
 const Beta = function(u, v){return new complex(u).beta(new complex(v)).asNumber;}
