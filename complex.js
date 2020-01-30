@@ -175,6 +175,11 @@ class complex {
 	get inv(){// reflection to line x = y
 		return this.xiy(this.y, this.x);
 	}
+	get eis(){// Eisenstein integer = x + y (sqrt(-3) - 1)/2 = (x - y/2) + i (y/2 sqrt(3))
+		// if this is Gaussian integer then result is Eisenstein integer
+		// .xiy(1, 1).eis = .cis(pi/3)
+		this.y /= 2; return this.xiy(this.x - this.y, this.y * 1.7320508075688772935274463415059);
+	}
 	rect(z){// rectangle area
 		return (this.x - z.x) * (this.y - z.y);
 	}
@@ -375,7 +380,7 @@ class complex {
 				return this.xiy(Math.sign(this.x) * pow(abs(this.x), 1/3)); else
 			if (this.x == 0)
 				return this.xiy(Math.sign(this.y) * pow(abs(this.y), 1/3)).divi; else
-			return this.root(3);
+			return this.log.div(3).exp;
 	}
 	get unit(){// unit vector, sign
 		var d = this.sqrabs; return d == 0 ? this : this.div(sqrt(d));
@@ -719,7 +724,7 @@ class complex {
 				d.obj(this.z3); // z3 = 0
 				this.quadraticeq(A, B, C); // rest is quadratic
 			} else {
-				const r = new complex(-1, sqrt(3)).div(2); // cis 120°; r³ = 1
+				const r = new complex().i.eis; // cis 120°; r³ = 1
 				var b = new complex(B); // b = B
 				var c = new complex(C); // c = C
 				if (b.is0 && c.is0){// A z³ + D = 0
@@ -1294,9 +1299,10 @@ class complex {
 			q.push(new complex(p[i]).mul(i).z);
 	}
 	polydiv(p, q){// p = p div q
-		var m = p.hi, n = q.hi, l = p.length - q.length;
+		var m = p.hi, n = q.hi, l = m - n;
 		if (l < 0) p = [0]; else {
-			var r = new Array(l + 1);
+			//var r = new Array(l + 1);
+			var r = []; r.length = l + 1;
 			for (var k = l; k >= 0; k--){
 				r[k] = {};
 				var z = new complex(p[n + k]).zdiv(new complex(q[n])).obj(r[k]);
@@ -1307,6 +1313,28 @@ class complex {
 			for (var k = 0; k < r.length; k++)
 				new complex(r[k]).obj(p[k]);
 		}
+	}
+	polymul(p, q){// p = p mul q;
+		var m = p.hi, n = q.hi, l = m + n;
+		var r = []; r.length = l + 1;
+		for (var k = 0; k < r.length; k++) r[k] = {};
+		for (var i = 0; i < p.length; i++)
+		for (var j = 0; j < q.length; j++)
+		{
+			var k = i + j;
+			new complex(r[k]).zadd(new complex(p[i]).zmul(new complex(q[j]))).obj(r[k]);
+		}
+		p.length = r.length;
+		for (var k = 0; k < r.length; k++){
+			p[k] = {};
+			new complex(r[k]).obj(p[k]);
+		}
+	}
+	polyaddroot(p){
+		this.polymul(p, [new complex(this).neg.z, 1]);
+	}
+	polysubroot(p){
+		this.polydiv(p, [new complex(this).neg.z, 1]);
 	}
 	polytrim(p){
 		while (p.length > 0 && new complex(p[p.hi]).is0) p.length--; // leading zeroes trim
@@ -1368,9 +1396,9 @@ class complex {
 			0, -1, i, -i
 	*/
 		roots.length = 0; // reset roots array
-		function eps(s, t = {x: 0, y: 0}, e = 1e-52){// precision - Kahan summation
+		function eps(s, t = {x: 0, y: 0}, e = 1e-51){// precision - Kahan summation
 			var a = new complex(s).abs, b = new complex(t).abs, c = a - b, d = (c - a) + b;
-			return (abs(c) <= e) && (abs(d) <= e);
+			return (abs(c) <= e);// && (abs(d) <= e);
 		}
 		var p = [], n, i; // polynom array, degree and index
 		this.polyarg(p, ...arg); this.polytrim(p); // get and trim
@@ -1434,7 +1462,7 @@ class complex {
 				}
 				if (p.length > 1){
 					roots.push(w.z); // put root in list
-					this.polydiv(p, [w.neg.z, 1]); // p /= (z - w) removes root w from polynom p
+					w.polysubroot(p); // p /= (z - w) removes root w from polynom p
 				}
 			}
 		}
@@ -1929,6 +1957,7 @@ const hsi2rgb = function(h, s, i){// hue in degrees, saturation and intensity = 
 	r = Math.round(r); g = Math.round(g); b = Math.round(b);
 	return {r: r, g: g, b: b};
 }
+const Catalan = 0.91596559417721901505460351493238;
 
 
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'begin', {
