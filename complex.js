@@ -1473,7 +1473,7 @@ class complex {
 		// Mathematica: Gamma[z]
 		// local positive minimum at Γ(1.461632144968362341262659542325721328468)
 		var z = new complex(this);
-		if (abs(z.y) > 1 || abs(z.x) > 44){// number too big, use Legendre duplication formula
+		if (abs(z.y) > 1 || abs(z.x) > 23){// number too big, use Legendre duplication formula
 			z.half;
 			//         2^(2z - 1)
 			// Γ(2z) = ────────── Γ(z) Γ(z + 1/2)
@@ -1488,17 +1488,18 @@ class complex {
 			// 0 < Re ≤ 1, |Im| ≤ 1
 			if (!z.is1) // no integer case
 				if (z.isEq(1/2)) 
-					this.mul(sqrtpi); // half odd integer case
+					this.mul(sqrtpi); // half odd integer case, Γ(1/2) = √ π
 				else
 					this.zdiv(z.polyvalue(tsgr)); // Taylor series case
 		}
 		return this;
 	}
 	get factorial(){// z! = z Γ(z) = Γ(z + 1)
-		// max double precision value 170.62437695630272! = 2¹⁰²⁴ (approx)
+		// max double precision value 170.624376956302720812444! = 2¹⁰²⁴ (approx)
 		// max double precision exact value 22! have 50 bit "normalized" mantissa
 		// 22! = 1124000727777607680000 = 2143861251406875 · 2¹⁹ =
 		// (1 + .1110011101 1101010010 0110000101 0110011111 0000011011) · 2⁶⁹
+		// (2n)! = n! (n - 1/2)! 2ⁿ / √ π (from Legendre formula)
 		return this.inc.gamma;
 	}
 	get romanfact(){// Roman factorial
@@ -1522,10 +1523,12 @@ class complex {
 	}
 	get factorial2(){// z!!
 		// Mathematica: Factorial2[z] // FunctionExpand
-		var i = this.isInt && this.x >= 0;
+		// z!! = (z/2)! (π/2)^((cos(πz) - 1)/4) 2^(z/2)
+		// (π/2)^((cos(πz) - 1)/4) = 1 for even integer, or = sqrt(2/π) for odd integer
+		var i = this.isInt && (this.x >= -1 || this.x == -3);
 		var w = new complex(this).scl(pi).cos.dec // cos(πz) - 1
 			.scl(0.1128956763223637161815488074737205358929) // ln(π/2)/4
-			.exp.zmul(new complex(this.half).pow2); // (2/π)^(1/4 - cos(πz)/4) * 2^(z/2) 
+			.exp.zmul(new complex(this.half).pow2); // (π/2)^((cos(πz) - 1)/4) 2^(z/2)
 		this.romanfact.zmul(w); // (z/2)! * w
 		if (i) this.integer;
 		return this;
@@ -1713,7 +1716,7 @@ class complex {
 	}
 	get bernoulliB(){
 		// Mathematica: BernoulliB[n]
-		if (this.x < -64) this.neg; /* out of double precision */ else
+		if (this.x < -58) this.neg; /* out of double precision */ else
 		if (this.isInt && this.x > 1 && (this.x % 2 != 0)) this.zero; else
 		if (this.isInf)   this.inf; else
 		if (this.is0)     this.one; else
@@ -1771,7 +1774,13 @@ class complex {
 Object.defineProperty(Array.prototype, 'lo', {enumerable: false, configurable: false, get() { return 0; }});
 Object.defineProperty(Array.prototype, 'hi', {enumerable: false, configurable: false, get() { return this.length - 1; }});
 
-// 2¹⁰²⁴ = 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137216
+/*
+2¹⁰²⁴ = 
+	1797693134862315907729305190789024733617976978942306572734300811577326758055009631327084773224075360
+	2112011387987139335765878976881441662249284743063947412437776789342486548527630221960124609411945308
+	2952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624
+	224137216
+*/
 
 // Taylor Serie - Gamma Reciprocal
 const tsgr = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 30}], z], 24]
@@ -1806,6 +1815,7 @@ const tsgr = [0, 1, // N[CoefficientList[Series[1/Gamma[z], {z, 0, 30}], z], 24]
 	 1.71440632192733743338396e-20,
 	 1.33735173049369311486478e-22];
 
+// Taylor Serie - Dirichlet Eta
 const tseta = [0.5, 
 	 0.225791352644727432363098,
 	-0.0305145718840280522586220, 
